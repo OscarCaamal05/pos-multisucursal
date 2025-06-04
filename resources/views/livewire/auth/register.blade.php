@@ -71,7 +71,6 @@ new #[Layout('components.layouts.auth')] class extends Component {
             required
             autocomplete="new-password"
             :placeholder="__('Password')"
-            viewable
         />
 
         <!-- Confirm Password -->
@@ -82,7 +81,6 @@ new #[Layout('components.layouts.auth')] class extends Component {
             required
             autocomplete="new-password"
             :placeholder="__('Confirm password')"
-            viewable
         />
 
         <div class="flex items-center justify-end">

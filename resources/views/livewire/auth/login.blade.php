@@ -100,7 +100,6 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 required
                 autocomplete="current-password"
                 :placeholder="__('Password')"
-                viewable
             />
 
             @if (Route::has('password.request'))
