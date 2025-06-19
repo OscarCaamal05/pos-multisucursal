@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RolesController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -11,6 +12,7 @@ Route::get('/', function () {
 })->name('home');
 Route::get('/users/data', [UserController::class, 'getUsers'])->name('users.data');
 Route::get('/roles/data', [RolesController::class, 'getRoles'])->name('roles.data');
+Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
 Route::put('/users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
 
 
@@ -23,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('users', UserController::class)->names('users');
     Route::resource('roles', RolesController::class)->names('roles');
+    Route::resource('permission', PermissionController::class)->names('permission');
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');

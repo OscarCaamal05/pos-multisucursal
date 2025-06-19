@@ -722,7 +722,11 @@
                         </a>
                         <a class="dropdown-item" href="{{ route('roles.index') }}">
                             <i class="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1"></i>
-                            <span class="align-middle">Usuarios</span>
+                            <span class="align-middle">Roles</span>
+                        </a>
+                        <a class="dropdown-item" href="{{ route('permission.index') }}">
+                            <i class="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1"></i>
+                            <span class="align-middle">Permisos</span>
                         </a>
                         <a class="dropdown-item" href="pages-faqs"><i class="mdi mdi-lifebuoy text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Help</span></a>
                         <div class="dropdown-divider"></div>
