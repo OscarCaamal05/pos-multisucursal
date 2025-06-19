@@ -35,8 +35,6 @@ class RolesController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
-        ], [
-            'name.unique' => 'El nombre del rol ya está registrado.', // Mensaje personalizado
         ]);
 
         $role = Role::create(['name' => $request->name]);
@@ -68,8 +66,6 @@ class RolesController extends Controller
         $role = Role::findOrFail($id);
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
-        ], [
-            'name.unique' => 'El nombre del rol ya está registrado.', // Mensaje personalizado
         ]);
 
         $role->update(['name' => $request->name]);
