@@ -25,6 +25,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('users', UserController::class)->names('users');
     Route::resource('roles', RolesController::class)->names('roles');
+    Route::get('/roles/{id}', [RolesController::class, 'show']);
+    Route::put('/roles/assignPermission/{id}', [RolesController::class, 'assignPermission'])->name('roles.assignPermission');
     Route::resource('permission', PermissionController::class)->names('permission');
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');

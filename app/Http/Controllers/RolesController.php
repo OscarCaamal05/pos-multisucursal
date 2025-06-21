@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -13,7 +14,8 @@ class RolesController extends Controller
      */
     public function index()
     {
-        return view('roles.index');
+        $permission = Permission::all();
+        return view('roles.index', compact('permission'));
     }
     public function getRoles()
     {
@@ -47,7 +49,15 @@ class RolesController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $roles = Role::findOrFail($id);
+        $permissions = Permission::all();
+        $rolePermissions = $roles->permissions->pluck('id')->toArray();
+
+        return response()->json([
+            'role' => $roles,
+            'permissions' => $permissions,
+            'rolePermissions' => $rolePermissions,
+        ]);
     }
 
     /**
@@ -82,5 +92,16 @@ class RolesController extends Controller
         $rol->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function assignPermission(Request $request, string $id)
+    {
+        $role = Role::findOrFail($id);
+        $permissionIds = $request->input('permission', []);
+        $permissions = Permission::whereIn('id', $permissionIds)->pluck('name')->toArray();
+        $role->syncPermissions($permissions);
+
+
+        return response()->json(['success' => true, 'message' => 'Permissions assigned successfully.']);
     }
 }
