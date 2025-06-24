@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -46,7 +47,15 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        $roles = Role::all();
+        $userRoles = $user->roles->pluck('id')->toArray();
+
+        return response()->json([
+            'user' => $user,
+            'roles' => $roles,
+            'userRoles' => $userRoles,
+        ]);
     }
 
     /**
@@ -82,5 +91,16 @@ class UserController extends Controller
         $user->save();
 
         return response()->json(['message' => 'Estado actualizado correctamente.']);
+    }
+
+    public function assignRoles(Request $request, string $id)
+    {
+        $user = User::findOrFail($id);
+        $rolesIds = $request->input('roles', []);
+        $roles = Role::whereIn('id', $rolesIds)->pluck('name')->toArray();
+        $user->syncRoles($roles);
+
+
+        return response()->json(['success' => true, 'message' => 'Permissions assigned successfully.']);
     }
 }

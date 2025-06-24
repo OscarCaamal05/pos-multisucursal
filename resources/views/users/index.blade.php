@@ -6,6 +6,34 @@
 @slot('title') Usuarios @endslot
 @endcomponent
 
+<!-- Modal para asignar los roles -->
+<div class="modal zoomIn" id="assignRoles" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title text-center" id="assignPermissionLabel">Asignar roles</h4>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-roles"></button>
+            </div>
+            <form id="formAssignRoles">
+                <div class="modal-body">
+                    <div>
+                        <h5 class="fs-9 mb-1 textUser"></h5>
+                        <p class="text-muted">Lista de roles en el sistema </p>
+
+                        @csrf
+                        <input type="hidden" name="rolId" id="rolIdPermission" value="0">
+                        <select multiple="multiple" name="roles[]" id="roles">
+
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Aplicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- Modal con formulario -->
 <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -101,6 +129,7 @@
 
 <!-- AlpineJS para manejar el modal -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+<script src="{{ URL::asset('build/libs/multi.js/multi.min.js') }}"></script>
 
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
 <script src="{{ URL::asset('build/js/datatable-init.js') }}"></script>
