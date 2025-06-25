@@ -84,7 +84,7 @@
                     <div class="collapse menu-dropdown" id="sidebarInventario">
                         <ul class="nav nav-sm flex-column">
                             <li class="nav-item">
-                                <a href="layouts-vertical" class="nav-link">Departamentos</a>
+                                <a href="{{ route('departments.index') }}" class="nav-link">Departamentos</a>
                             </li>
                             <li class="nav-item">
                                 <a href="layouts-detached" class="nav-link">Categorias</a>
