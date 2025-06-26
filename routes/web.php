@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RolesController;
@@ -13,9 +14,11 @@ Route::get('/', function () {
 })->name('home');
 Route::get('/users/data', [UserController::class, 'getUsers'])->name('users.data');
 Route::get('/roles/data', [RolesController::class, 'getRoles'])->name('roles.data');
+Route::get('/categories/data', [CategoryController::class, 'getCategories'])->name('categories.data');
 Route::get('/departments/data', [DepartmentsController::class, 'getDepartments'])->name('departments.data');
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
 Route::put('/users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
+Route::put('/categories/{category}/status', [CategoryController::class, 'toggleStatus'])->name('categories.toggleStatus');
 
 
 Route::view('dashboard', 'dashboard')
@@ -27,6 +30,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('users', UserController::class)->names('users');
     Route::resource('departments', DepartmentsController::class)->names('departments');
+    Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
     Route::get('/users/{id}', [UserController::class, 'show']);
