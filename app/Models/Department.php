@@ -13,4 +13,10 @@ class Department extends Model
         'name',
         'description',
     ];
+
+     //FUNCION PARA LA RELACION CON EL MODULO CATEGORIAS
+    public function categories()
+    {
+        return $this->hasMany(Category::class);
+    }
 }
