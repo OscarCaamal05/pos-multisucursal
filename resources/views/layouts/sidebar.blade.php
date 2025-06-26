@@ -87,7 +87,7 @@
                                 <a href="{{ route('departments.index') }}" class="nav-link">Departamentos</a>
                             </li>
                             <li class="nav-item">
-                                <a href="layouts-detached" class="nav-link">Categorias</a>
+                                <a href="{{ route('categories.index') }}" class="nav-link">Categorias</a>
                             </li>
                             <li class="nav-item">
                                 <a href="layouts-detached" class="nav-link">Productos</a>
