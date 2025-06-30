@@ -104,7 +104,7 @@
                     <div class="collapse menu-dropdown" id="sidebarClientes">
                         <ul class="nav nav-sm flex-column">
                             <li class="nav-item">
-                                <a href="layouts-vertical" class="nav-link">Lista de Clientes</a>
+                                <a href="{{ route('customers.index') }}" class="nav-link">Lista de Clientes</a>
                             </li>
                             <li class="nav-item">
                                 <a href="layouts-detached" class="nav-link">Historial Crediticio</a>
