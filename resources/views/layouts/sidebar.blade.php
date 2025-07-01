@@ -121,7 +121,7 @@
                     <div class="collapse menu-dropdown" id="sidebarProveedores">
                         <ul class="nav nav-sm flex-column">
                             <li class="nav-item">
-                                <a href="layouts-vertical" class="nav-link">Lista de Proveedores</a>
+                                <a href="{{ route('suppliers.index') }}" class="nav-link">Lista de Proveedores</a>
                             </li>
                             <li class="nav-item">
                                 <a href="layouts-detached" class="nav-link">Historial Crediticio</a>
