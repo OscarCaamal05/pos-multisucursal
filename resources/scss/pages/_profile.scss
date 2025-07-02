@@ -1,3 +1,4 @@
+@use "sass:color";
 //
 // _profile.scss
 //
@@ -32,7 +33,7 @@
         bottom: 0;
         opacity: 0.9;
         background: $primary;
-        background: linear-gradient(to top, darken($primary, 25%), $primary);
+        background: linear-gradient(to top, color.adjust($primary, $lightness: -25%), $primary);
 
     }
 

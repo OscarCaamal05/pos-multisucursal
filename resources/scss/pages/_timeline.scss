@@ -1,3 +1,4 @@
+@use "sass:color";
 //
 // _timeline.scss
 //
@@ -382,7 +383,7 @@
         width: 40px;
         line-height: 40px;
         border-radius: 50%;
-        background-color: lighten($primary, 2.5%);
+        background-color: color.adjust($primary, $lightness: 2.5%);
 
         &::after {
             font-size: 24px;

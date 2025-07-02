@@ -1,3 +1,4 @@
+@use "sass:color";
 // 
 // _fullcalendar.scss
 // 
@@ -162,7 +163,7 @@
     }
 
     td.fc-today {
-        background: lighten($gray-200, 2%);
+        background: color.adjust($gray-200, $lightness: 2%);
     }
 }
 

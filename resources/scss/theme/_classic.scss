@@ -1,3 +1,4 @@
+@use "sass:color";
 @if $theme-classic {
 
     //Google Font
@@ -71,20 +72,20 @@
 
         --#{$prefix}vertical-menu-bg:                                   #{$white};
         --#{$prefix}vertical-menu-border:                               #{$white};
-        --#{$prefix}vertical-menu-item-color:                           #{darken($gray-600, 10%)};
+        --#{$prefix}vertical-menu-item-color:                           #{color.adjust($gray-600, $lightness: -10%)};
         --#{$prefix}vertical-menu-item-bg:                              #{rgba(var(--#{$prefix}primary-rgb), .15)};
         --#{$prefix}vertical-menu-item-hover-color:                     #{var(--#{$prefix}primary)};
         --#{$prefix}vertical-menu-item-active-color:                    #{var(--#{$prefix}primary)};
         --#{$prefix}vertical-menu-item-active-bg:                       #{rgba(var(--#{$prefix}primary-rgb), .15)};
-        --#{$prefix}vertical-menu-sub-item-color:                       #{darken($gray-600, 4%)};
+        --#{$prefix}vertical-menu-sub-item-color:                       #{color.adjust($gray-600, $lightness: -4%)};
         --#{$prefix}vertical-menu-sub-item-hover-color:                 #{var(--#{$prefix}primary)};
         --#{$prefix}vertical-menu-sub-item-active-color:                #{var(--#{$prefix}primary)};
         --#{$prefix}vertical-menu-title-color:                          #919da9;
         --#{$prefix}vertical-menu-box-shadow:                           none;
         --#{$prefix}vertical-menu-dropdown-box-shadow:                  0 2px 4px rgba(15, 34, 58, 0.12);
         --#{$prefix}sidebar-user-bg:                                    #{$light};
-        --#{$prefix}sidebar-user-name-text:                             #{darken($gray-700, 10%)};
-        --#{$prefix}sidebar-user-name-sub-text:                         #{darken($gray-600, 4%)};
+        --#{$prefix}sidebar-user-name-text:                             #{color.adjust($gray-700, $lightness: -10%)};
+        --#{$prefix}sidebar-user-name-sub-text:                         #{color.adjust($gray-600, $lightness: -4%)};
 
         &[data-sidebar="dark"] {
             //vertical dark
@@ -119,8 +120,8 @@
         
         // Topbar - Dark
         &[data-topbar="dark"] {
-            --#{$prefix}header-bg:                                      #{darken($primary, 25%)};
-            --#{$prefix}header-border:                                  #{darken($primary, 25%)};
+            --#{$prefix}header-bg:                                      #{color.adjust($primary, $lightness: -25%)};
+            --#{$prefix}header-border:                                  #{color.adjust($primary, $lightness: -25%)};
             --#{$prefix}header-item-color:                              #{rgba($white, .85)};
             --#{$prefix}header-item-bg:                                 #{rgba($white, .05)};
             --#{$prefix}header-item-sub-color:                          #{tint-color($primary, 60%)};
@@ -130,9 +131,9 @@
         }
 
         &[data-sidebar="gradient"] {
-            --#{$prefix}vertical-menu-bg:                               #{linear-gradient(to top, darken($primary, 25%), darken($primary, 15%))};
-            --#{$prefix}vertical-menu-border:                           #{darken($primary, 15%)};
-            --#{$prefix}twocolumn-menu-iconview-bg:                     #{darken($primary, 25%)};
+            --#{$prefix}vertical-menu-bg:                               #{linear-gradient(to top, color.adjust($primary, $lightness: -25%), color.adjust($primary, $lightness: -15%))};
+            --#{$prefix}vertical-menu-border:                           #{color.adjust($primary, $lightness: -15%)};
+            --#{$prefix}twocolumn-menu-iconview-bg:                     #{color.adjust($primary, $lightness: -25%)};
         }
         
         &[data-sidebar="gradient-2"] {

@@ -1,3 +1,4 @@
+@use "sass:color";
 // 
 // ribbons.scss
 //
@@ -150,7 +151,7 @@
             background: ($value);
 
             &:before {
-                border-color: darken(($value), 10%) transparent transparent;
+                border-color: color.adjust(($value), $lightness: -10%) transparent transparent;
             }
 
             &.ribbon-shape {
@@ -252,13 +253,13 @@
                 background: ($value);
 
                 &:before {
-                    border-left: 3px solid darken(($value), 15%);
-                    border-top: 3px solid darken(($value), 15%);
+                    border-left: 3px solid color.adjust(($value), $lightness: -15%);
+                    border-top: 3px solid color.adjust(($value), $lightness: -15%);
                 }
 
                 &:after {
-                    border-right: 3px solid darken(($value), 15%);
-                    border-top: 3px solid darken(($value), 15%);
+                    border-right: 3px solid color.adjust(($value), $lightness: -15%);
+                    border-top: 3px solid color.adjust(($value), $lightness: -15%);
                 }
             }
         }
@@ -339,7 +340,7 @@ $value in $theme-colors {
             }
 
             &:after {
-                background: darken($value, 10%);
+                background: color.adjust($value, $lightness: -10%);
             }
         }
 
