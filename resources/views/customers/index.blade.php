@@ -2,23 +2,24 @@
 @section('title') @lang('translation.starter') @endsection
 @section('content')
 @component('components.breadcrumb')
-@slot('li_1') Inventario @endslot
-@slot('title') Departamentos @endslot
+@slot('li_1') Clientes @endslot
+@slot('title') Lista de clientes @endslot
 @endcomponent
+
 <!-- Modal para crear/editar -->
-<div class="modal zoomIn" id="departmentModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('departments.store') }}"
-     data-update-url-base="/departments/">
+<div class="modal zoomIn" id="customerModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('customers.store') }}"
+    data-update-url-base="/customers/">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="departmentModalLabel">Agregar Departamento</h5>
+                <h5 class="modal-title" id="customerModalLabel">Agregar Cliente</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal"></button>
             </div>
-            <form id="departmentForm">
+            <form id="customerForm">
                 @csrf
-                <input type="hidden" name="departmentId" id="departmentId" value="0">
+                <input type="hidden" name="customerId" id="customerId" value="0">
                 <div class="modal-body">
-                    @include('departments.form-fields')
+                    @include('customers.form-fields')
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
@@ -34,22 +35,31 @@
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Lista de Departamentos</h4>
+                <h4 class="card-title mb-0 flex-grow-1">Lista de Clientes</h4>
                 <div class="flex-shrink-0">
                     <div class="form-check form-switch form-switch-right form-switch-md">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#departmentModal">Agregar Departamento</button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customerModal">
+                            <span class="me-1">
+                                <i class="ri-user-add-line"></i>
+                            </span>Agregar Cliente</button>
                     </div>
                 </div>
             </div><!-- end card header -->
 
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table align-middle table-nowrap mb-0" id="departmentsTable">
+                    <table class="table align-middle table-nowrap mb-0" id="customersTable">
                         <thead class="table-light">
                             <tr>
                                 <th scope="col">ID</th>
-                                <th scope="col">Nombre</th>
-                                <th scope="col">Descripcion</th>
+                                <th scope="col">Nombre completo</th>
+                                <th scope="col">RFC</th>
+                                <th scope="col">Telefono</th>
+                                <th scope="col">Correo</th>
+                                <th scope="col">Direccion</th>
+                                <th scope="col">Credito disponible</th>
+                                <th scope="col">Credito</th>
+                                <th scope="col">Estado</th>
                                 <th scope="col">Acciones</th>
                             </tr>
                         </thead>
@@ -73,11 +83,11 @@
 
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
-
+<script src="{{ URL::asset('build/libs/cleave.js/cleave.min.js') }}"></script>
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
-
-<script type="module" src="{{ URL::asset('build/js/functionAjaxDepartment.js') }}"></script>
+<script src="{{ URL::asset('build/js/functionAjaxCustomers.js') }}"></script>
 @endsection

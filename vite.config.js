@@ -31,6 +31,18 @@ export default defineConfig({
             },
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                silenceDeprecations: [
+                    'import',
+                    'mixed-decls',
+                    'color-functions',
+                    'global-builtin',
+                ],
+            },
+        },
+    },
     plugins: [
         laravel(
             {
@@ -39,6 +51,7 @@ export default defineConfig({
                     'resources/scss/icons.scss',
                     'resources/scss/app.scss',
                     'resources/scss/custom.scss',
+                    'resources/js/functions_ajax/functionAjaxDepartment.js'
                 ],
                 refresh: [
                     ...refreshPaths,
@@ -91,4 +104,3 @@ export default defineConfig({
 
     ],
 });
-

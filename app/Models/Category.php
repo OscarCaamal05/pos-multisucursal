@@ -27,4 +27,10 @@ class Category extends Model
                 'd.name as department_name'
             );
     }
+
+    //FUNCION PARA LA RELACION CON EL MODULO DEPARTAMENTO
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 }
