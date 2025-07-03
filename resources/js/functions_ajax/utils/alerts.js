@@ -56,11 +56,11 @@ export function handleValidationError(xhr) {
         const errors = xhr.responseJSON.errors;
         const firstError = Object.values(errors)[0][0];
 
-        showAlert({
-            icon: 'error',
-            title: 'Error',
-            text: firstError
-        });
+        showAlert(
+            'error',
+            'Error',
+            firstError
+        );
 
         $.each(errors, function (key, messages) {
             const $input = $('[name="' + key + '"]');
@@ -68,10 +68,10 @@ export function handleValidationError(xhr) {
             $input.after('<div class="invalid-feedback">' + messages[0] + '</div>');
         });
     } else {
-        showAlert({
-            icon: 'error',
-            title: 'Error',
-            text: 'Ocurrió un error al procesar la solicitud.'
-        });
+        showAlert(
+            'error',
+            'Error',
+            'Ocurrió un error al procesar la solicitud.'
+        );
     }
 }
