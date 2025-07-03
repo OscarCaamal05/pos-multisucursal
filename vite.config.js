@@ -47,10 +47,10 @@ export default defineConfig({
         laravel(
             {
                 input: [
-                    /*'resources/scss/bootstrap.scss',
+                    'resources/scss/bootstrap.scss',
                     'resources/scss/icons.scss',
                     'resources/scss/app.scss',
-                    'resources/scss/custom.scss',*/
+                    'resources/scss/custom.scss',
                     'resources/js/functions_ajax/functionAjaxDepartment.js'
                 ],
                 refresh: [

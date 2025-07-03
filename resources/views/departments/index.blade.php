@@ -5,7 +5,6 @@
 @slot('li_1') Inventario @endslot
 @slot('title') Departamentos @endslot
 @endcomponent
-
 <!-- Modal para crear/editar -->
 <div class="modal zoomIn" id="departmentModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('departments.store') }}"
      data-update-url-base="/departments/">
@@ -79,5 +78,6 @@
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
-<script src="{{ URL::asset('build/js/functionAjaxDepartments.js') }}"></script>
+
+<script type="module" src="{{ URL::asset('build/js/functionAjaxDepartment.js') }}"></script>
 @endsection
