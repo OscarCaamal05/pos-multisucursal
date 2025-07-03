@@ -5,10 +5,10 @@
 @slot('li_1') Control de acceso @endslot
 @slot('title') Usuarios @endslot
 @endcomponent
-
+@vite('resources/js/functions_ajax/functionAjaxUsers.js')
 <!-- Modal para asignar los roles -->
 <div class="modal zoomIn" id="assignRoles" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title text-center" id="assignPermissionLabel">Asignar roles</h4>
@@ -21,7 +21,7 @@
                         <p class="text-muted">Lista de roles en el sistema </p>
 
                         @csrf
-                        <input type="hidden" name="rolId" id="rolIdPermission" value="0">
+                        <input type="hidden" name="rolId" id="userIdRol" value="0">
                         <select multiple="multiple" name="roles[]" id="roles">
 
                         </select>
@@ -34,20 +34,21 @@
         </div>
     </div>
 </div>
+
 <!-- Modal con formulario -->
-<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+<div class="modal zoomIn" id="userModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form id="userForm" method="POST" action="{{ route('users.store') }}">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Agregar Usuario</h5>
-                    <button class="btn-close py-0" type="button" id="btn-close-modal" aria-label="Close"></button>
-                </div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Usuario</h5>
+                <button class="btn-close py-0" type="button" id="btn-close-modal" aria-label="Close"></button>
+            </div>
+            <form id="userForm" method="POST" action="{{ route('users.store') }}">
+                @csrf
                 <div class="modal-body">
                     <!-- Campos -->
                     <div class="mb-3">
-                        <label for="name">Nombre</label>
+                        <label for="name">Usuario</label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror"
                             name="name" id="name" value="{{ old('name') }}">
                         @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -72,13 +73,12 @@
                         <input type="password" class="form-control" name="password_confirmation" id="password_confirmation">
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -129,8 +129,8 @@
 
 <!-- AlpineJS para manejar el modal -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
-<script src="{{ URL::asset('build/libs/multi.js/multi.min.js') }}"></script>
 
+<script src="{{ URL::asset('build/libs/multiselect/js/jquery.multi-select.js') }}"></script>
+<script src="{{ URL::asset('build/libs/multiselect/js/jquery.quicksearch.js') }}"></script>
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
-<script src="{{ URL::asset('build/js/datatable-init.js') }}"></script>
 @endsection

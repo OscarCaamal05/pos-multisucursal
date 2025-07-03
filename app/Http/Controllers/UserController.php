@@ -100,7 +100,6 @@ class UserController extends Controller
         $roles = Role::whereIn('id', $rolesIds)->pluck('name')->toArray();
         $user->syncRoles($roles);
 
-
-        return response()->json(['success' => true, 'message' => 'Permissions assigned successfully.']);
+        return response()->json(['success' => true]);
     }
 }

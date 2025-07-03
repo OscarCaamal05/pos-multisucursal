@@ -12,5 +12,5 @@
 
 <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" id="app-style" rel="stylesheet" type="text/css" />
 
-<link href="{{ URL::asset('build/libs/multi.js/multi.min.css') }}" rel="stylesheet">
+<link href="{{ URL::asset('build/libs/multiselect/css/multi-select.css') }}" rel="stylesheet">
 {{-- @yield('css') --}}
