@@ -1,4 +1,3 @@
-@use "sass:color";
 :root {
 
     // card
@@ -181,15 +180,15 @@
         --#{$prefix}boxed-body-bg:                                  #{$boxed-body-bg-dark};
         
         .table-light {
-            --#{$prefix}table-color:                                #{color.adjust($light-dark, $lightness: 100%)};
+            --#{$prefix}table-color:                                #{lighten($light-dark, 100%)};
             --#{$prefix}table-bg:                                   var(--#{$prefix}light);
             --#{$prefix}table-border-color:                         var(--#{$prefix}border-color);
             --#{$prefix}table-striped-bg:                           var(--#{$prefix}light);
-            --#{$prefix}table-striped-color:                        #{color.adjust($light-dark, $lightness: 100%)};
+            --#{$prefix}table-striped-color:                        #{lighten($light-dark, 100%)};
             --#{$prefix}table-active-bg:                            var(--#{$prefix}light);
-            --#{$prefix}table-active-color:                         #{color.adjust($light-dark, $lightness: 100%)};
+            --#{$prefix}table-active-color:                         #{lighten($light-dark, 100%)};
             --#{$prefix}table-hover-bg:                             var(--#{$prefix}light);
-            --#{$prefix}table-hover-color:                          #{color.adjust($light-dark, $lightness: 100%)};
+            --#{$prefix}table-hover-color:                          #{lighten($light-dark, 100%)};
         }
         
         .btn-light,

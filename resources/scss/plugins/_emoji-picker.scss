@@ -1,4 +1,3 @@
-@use "sass:color";
 //
 // emoji-picker.scss
 //
@@ -61,5 +60,5 @@
 }
 
 a.fg-emoji-picker-close-button{
-    background-color: color.adjust($light, $lightness: -4%) !important;
+    background-color: darken($light, 4%) !important;
 }

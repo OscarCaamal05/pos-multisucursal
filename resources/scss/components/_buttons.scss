@@ -1,5 +1,3 @@
-@use "sass:color";
-@use "sass:map";
 // 
 // _buttons.scss
 // 
@@ -45,7 +43,7 @@ a {
 // Soft Buttons
 // 
 
-@each $state in map.keys($theme-colors) {
+@each $state in map-keys($theme-colors) {
 
     .btn-#{$state} {
         --#{$prefix}btn-bg: var(--#{$prefix}#{$state});
@@ -228,7 +226,7 @@ $value in $theme-colors {
 
     :is(.btn-#{$color}, .btn-outline-#{$color}, .btn-soft-#{$color}) {
         &.btn-border {
-            border-bottom: 2px solid color.adjust($value, $lightness: -8%);
+            border-bottom: 2px solid darken($value, 8%);
         }
     }
 

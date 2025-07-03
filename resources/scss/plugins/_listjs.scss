@@ -1,4 +1,3 @@
-@use "sass:color";
 // 
 // _listjs.scss
 // 
@@ -46,7 +45,7 @@
     border: $pagination-border-width solid $pagination-border-color;
     border-radius: $border-radius; 
     &:hover {
-        color: color.adjust($primary, $lightness: 20%);
+        color: lighten($primary, 20%);
     }
 
     &.disabled {
