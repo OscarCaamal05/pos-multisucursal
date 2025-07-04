@@ -1,7 +1,7 @@
 // =========================================
 // IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
 // =========================================
-import { showAlert, showConfirmationAlert, clearValidationErrors } from './utils/alerts';
+import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from './utils/alerts';
 
 // =========================================
 // VARIABLES GLOBALES
