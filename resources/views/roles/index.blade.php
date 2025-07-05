@@ -5,16 +5,16 @@
 @slot('li_1') Control de acceso @endslot
 @slot('title') Roles @endslot
 @endcomponent
-
+@vite('resources/js/functions_ajax/functionAjaxRoles.js')
 <!-- Modal para asignar permisos -->
 <div class="modal zoomIn" id="assignPermission" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title text-center" id="assignPermissionLabel">Asignar permisos</h4>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-permission"></button>
             </div>
-            <form id="formAssignPermission">
+            <form id="assignPermissionForm">
                 <div class="modal-body">
                     <div>
                         <h5 class="fs-9 mb-1 textRol"></h5>
@@ -105,8 +105,7 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 
 <!-- AlpineJS para manejar el modal -->
-<script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
-<script src="{{ URL::asset('build/libs/multi.js/multi.min.js') }}"></script>
+ <script src="{{ URL::asset('build/libs/multiselect/js/jquery.multi-select.js') }}"></script>
+<script src="{{ URL::asset('build/libs/multiselect/js/jquery.quicksearch.js') }}"></script>
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
-<script src="{{ URL::asset('build/js/functionAjaxRoles.js') }}"></script>
 @endsection

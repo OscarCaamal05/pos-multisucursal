@@ -7,7 +7,7 @@ import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidati
 // VARIABLES GLOBALES
 // =========================================
 
-let departmentTable = null;
+let permitsTable = null;
 
 // =========================================
 // INICIALIZACIÓN PRINCIPAL
@@ -15,6 +15,12 @@ let departmentTable = null;
 $(document).ready(function () {
     initializeDataTable();
     bindEvents();
+
+    $('#assignPermission').on('hidden.bs.modal', function () {
+        const $select = $('#permission');
+        $select.multiSelect('destroy');
+        $select.empty();
+    });
 })
 
 function bindEvents() {
@@ -25,19 +31,13 @@ function bindEvents() {
 }
 
 function initializeDataTable() {
-    departmentTable = $('#departmentsTable').DataTable({
+    permitsTable = $('#permitsTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/departments/data',
+        ajax: '/permission/data',
         columns: [
             { data: 'id', name: 'id' },
             { data: 'name', name: 'name' },
-            {
-                data: 'description',
-                name: 'description',
-                orderable: false,
-                searchable: false
-            },
             {
                 data: 'id',
                 name: 'actions',
@@ -59,10 +59,10 @@ function initializeDataTable() {
 function renderActionsColumn(data) {
     return `
         <div class="hstack gap-3 fs-15">
-            <a href="javascript:void(0);" class="link-warning btn-edit-department" data-id="${data}">
+            <a href="javascript:void(0);" class="link-warning btn-edit-permission" data-id="${data}">
                 <i class="ri-edit-2-line"></i>
             </a>
-            <a href="javascript:void(0);" class="link-danger btn-delete-department" data-id="${data}">
+            <a href="javascript:void(0);" class="link-danger btn-delete-permission" data-id="${data}">
                 <i class="ri-delete-bin-5-line"></i>
             </a>
         </div>
@@ -74,31 +74,30 @@ function renderActionsColumn(data) {
 // =========================================
 
 /**
- * Maneja el envío del formulario para crear o actualizar departamento.
+ * Maneja el envío del formulario para crear roles.
  */
 function bindFormSubmit() {
-    $('#departmentForm').on('submit', function (e) {
+    $('#permitsForm').on('submit', function (e) {
         e.preventDefault();
-
         const $form = $(this);
-        const departmentId = $('#departmentId').val();
-        const isEdit = departmentId != 0;
+        const permitsId = $('#permitsId').val();
+        const isEdit = permitsId != 0;
 
         clearValidationErrors();
 
         $.ajax({
-            url: isEdit ? `/departments/${departmentId}` : $form.data('action'),
+            url: isEdit ? `/permission/${permitsId}` : $form.data('action'),
             method: isEdit ? 'PUT' : 'POST',
             data: $form.serialize(),
             success: function (response) {
-                $('#departmentModal').modal('hide');
-                departmentTable.ajax.reload();
+                $('#permissionModal').modal('hide');
+                permitsTable.ajax.reload();
                 showAlert(
                     'success',
                     'Éxito',
                     response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
-                resetDepartmentForm();
+                resetPermitsForm();
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -108,16 +107,16 @@ function bindFormSubmit() {
 }
 
 // =========================================
-// FUNCIÓN: Vincula evento de edición
+// FUNCIÓN: Vincula evento de edicion
 // =========================================
 
 /**
- * Asocia el evento de edición de departamento.
+ * Asocia el evento de edicion de roles.
  */
 function bindEditEvents() {
-    $('#departmentsTable tbody').on('click', '.btn-edit-department', function () {
+    $('#permitsTable tbody').on('click', '.btn-edit-permission', function () {
         const $button = $(this);
-        const rowData = departmentTable.row($button.closest('tr')).data();
+        const rowData = permitsTable.row($button.closest('tr')).data();
 
         showConfirmationAlert(
             '¿Estás seguro?',
@@ -126,10 +125,11 @@ function bindEditEvents() {
             'Cancelar',
             (confirmed) => {
                 if (confirmed) {
-                    showDepartmentModal(rowData);
+                    showPermitsModal(rowData);
                 }
             }
         );
+
     });
 }
 
@@ -138,11 +138,11 @@ function bindEditEvents() {
 // =========================================
 
 /**
- * Asocia el evento de eliminación de categorías.
+ * Asocia el evento de eliminación de roles.
  */
 function bindDeleteEvents() {
-    $('#departmentsTable tbody').on('click', '.btn-delete-department', function () {
-        const departmentId = $(this).data('id');
+    $('#permitsTable tbody').on('click', '.btn-delete-permission', function () {
+        const rolId = $(this).data('id');
 
         showConfirmationAlert(
             '¿Estás seguro?',
@@ -152,7 +152,7 @@ function bindDeleteEvents() {
             (confirmed) => {
                 if (confirmed) {
                     $.ajax({
-                        url: `/departments/${departmentId}`,
+                        url: `/permission/${rolId}`,
                         type: 'DELETE',
                         data: {
                             _token: $('meta[name="csrf-token"]').attr('content')
@@ -163,7 +163,7 @@ function bindDeleteEvents() {
                                 'Éxito',
                                 'El registro fue eliminado exitosamente.'
                             );
-                            departmentTable.ajax.reload(null, false);
+                            permitsTable.ajax.reload(null, false);
                         },
                         error: function () {
                             showAlert(
@@ -190,8 +190,7 @@ function bindModalCloseEvents() {
     $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
         e.preventDefault();
 
-        const hasData = $('#name').val().trim() !== '' || 
-                        $('#description').val().trim() !== '';
+        const hasData = $('#name').val().trim() !== '';
 
         if (hasData) {
             showConfirmationAlert(
@@ -201,40 +200,39 @@ function bindModalCloseEvents() {
                 'No, volver',
                 (confirmed) => {
                     if (confirmed) {
-                        $('#departmentModal').modal('hide');
-                        resetDepartmentForm();
+                        $('#permissionModal').modal('hide');
+                        resetPermitsForm();
                     }
                 }
             );
         } else {
-            $('#departmentModal').modal('hide');
-            resetDepartmentForm();
+            $('#permissionModal').modal('hide');
+            resetPermitsForm();
         }
     });
 }
 
 // =========================================
-// FUNCIÓN: Abre el modal de departamento
+// FUNCIÓN: Abre el modal de roles
 // =========================================
 
 /**
- * Muestra el modal de creación o edición de departamento.
+ * Muestra el modal de creación o edición de roles.
  *
- * @param {Object|null} data - Datos de la departamento o null si es nuevo.
+ * @param {Object|null} data - Datos del rol o null si es nuevo.
  */
-function showDepartmentModal(data = null) {
-    resetDepartmentForm();
+function showPermitsModal(data = null) {
+    resetPermitsForm();
 
     if (data) {
-        $('.modal-title').text('Editar departamento');
+        $('.modal-title').text('Editar permiso');
         $('#name').val(data.name);
-        $('#description').val(data.description);
-        $('#departmentId').val(data.id);
+        $('#permitsId').val(data.id);
     } else {
-        $('.modal-title').text('Agregar departamento');
+        $('.modal-title').text('Agregar permiso');
     }
 
-    $('#departmentModal').modal('show');
+    $('#permissionModal').modal('show');
 }
 
 // =========================================
@@ -242,13 +240,13 @@ function showDepartmentModal(data = null) {
 // =========================================
 
 /**
- * Resetea el formulario de departamento a su estado inicial.
+ * Resetea el formulario de roles a su estado inicial.
  */
-function resetDepartmentForm() {
-    $('#departmentForm')[0].reset();
-    $('#departmentId').val(0);
+function resetPermitsForm() {
+    $('#permitsForm')[0].reset();
+    $('#permitsId').val(0);
     clearValidationErrors();
-    $('.modal-title').text('Agregar Departamento');
+    $('.modal-title').text('Agregar permiso');
 }
 
 // =========================================

@@ -5,7 +5,7 @@
 @slot('li_1') Proveedores @endslot
 @slot('title') Lista de proveedores @endslot
 @endcomponent
-
+@vite('resources/js/functions_ajax/functionAjaxSuppliers.js')
 <!-- Modal para crear/editar -->
 <div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('suppliers.store') }}"
     data-update-url-base="/suppliers/">

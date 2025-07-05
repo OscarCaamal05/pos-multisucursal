@@ -8,7 +8,7 @@
 @slot('li_1') Inventario @endslot
 @slot('title') Categorias @endslot
 @endcomponent
-
+@vite('resources/js/functions_ajax/functionAjaxCategories.js')
 <!-- Modal para crear/editar -->
 <div class="modal zoomIn" id="categoryModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('categories.store') }}"
      data-update-url-base="/categories/">

@@ -5,7 +5,7 @@
 @slot('li_1') Control de acceso @endslot
 @slot('title') Permisos @endslot
 @endcomponent
-
+@vite('resources/js/functions_ajax/functionAjaxPermits.js')
 <!-- Modal para crear/editar -->
 <div class="modal zoomIn" id="permissionModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('permission.store') }}"
      data-update-url-base="/permission/">
@@ -79,5 +79,4 @@
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
-<script src="{{ URL::asset('build/js/functionAjaxPermits.js') }}"></script>
 @endsection
