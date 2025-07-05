@@ -7,15 +7,32 @@ import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidati
 // VARIABLES GLOBALES
 // =========================================
 
-let categoriesTable = null;
+let customersTable = null;
 
 // =========================================
 // INICIALIZACIÓN PRINCIPAL
 // =========================================
 $(document).ready(function () {
     initializeDataTable();
-    initializeSelect2();
     bindEvents();
+
+    // =========================================
+    // EVENTO: Seleccionar el texto al hacer clic en inputs con clase 'select-on-click'
+    // =========================================
+    /*$(document).on('click', '.select-on-click', function () {
+        $(this).trigger('select');
+    });*/
+
+    // =========================================
+    // EVENTO: Para selccionar el primer input del formulario
+    // =========================================
+    $('#customerModal').on('shown.bs.modal', function () {
+        $('#full_name').trigger('focus');
+    });
+
+    $('#credit_available').on('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
 })
 
 function bindEvents() {
@@ -24,46 +41,66 @@ function bindEvents() {
     bindDeleteEvents();
     bindEditEvents();
     bindToggleStatusEvents();
-}
-
-// =========================================
-// FUNCIÓN: Inicializa Select2 en los selects de departamentos
-// =========================================
-
-/**
- * Inicializa el plugin Select2 para los campos de departamento
- * dentro del modal de categorías.
- */
-function initializeSelect2() {
-    $('.departments').select2({
-        dropdownParent: $('#categoryModal'),
-    });
+    formatCleave();
 }
 
 function initializeDataTable() {
-    categoriesTable = $('#categoriesTable').DataTable({
+    customersTable = $('#customersTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/categories/data',
+        ajax: '/customers/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'name', name: 'name' },
+            { data: 'full_name', name: 'full_name' },
             {
-                data: 'description',
-                name: 'description',
+                data: 'rfc',
+                name: 'rfc',
                 orderable: false,
                 searchable: false
             },
             {
-                data: 'department_id',
-                name: 'department_id',
+                data: 'phone',
+                name: 'phone',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    // Si está vacío o null
+                    if (!data) return '';
+
+                    // Quitar todo lo que no sea número
+                    const cleaned = data.replace(/\D/g, '');
+
+                    // Aplicar el formato
+                    if (cleaned.length === 10) {
+                        return `(${cleaned.substr(0, 3)}) ${cleaned.substr(3, 3)}-${cleaned.substr(6, 4)}`;
+                    }
+
+                    // Si no tiene 10 dígitos, devuélvelo tal cual
+                    return data;
+                }
+            },
+            {
+                data: 'email',
+                name: 'email',
+                orderable: false,
+            },
+            {
+                data: 'address',
+                name: 'address',
+                orderable: false,
+                searchable: false,
                 visible: false
             },
             {
-                data: 'department_name',
-                name: 'department_name',
+                data: 'credit_available',
+                name: 'credit_available',
                 orderable: false,
                 searchable: false
+            },
+            {
+                data: 'credit',
+                name: 'credit',
+                visible: false
             },
             {
                 data: 'status',
@@ -104,7 +141,7 @@ function renderStatusColumn(data, type, row) {
                     class="form-check-input toggle-status"
                     type="checkbox"
                     role="switch"
-                    data-category-id="${row.id}"
+                    data-customer-id="${row.id}"
                     ${data == 1 ? 'checked' : ''}
                 >
             </div>
@@ -118,10 +155,10 @@ function renderStatusColumn(data, type, row) {
 function renderActionsColumn(data) {
     return `
         <div class="hstack gap-3 fs-15">
-            <a href="javascript:void(0);" class="link-warning btn-edit-category" data-id="${data}">
+            <a href="javascript:void(0);" class="link-warning btn-edit-customer" data-id="${data}">
                 <i class="ri-edit-2-line"></i>
             </a>
-            <a href="javascript:void(0);" class="link-danger btn-delete-category" data-id="${data}">
+            <a href="javascript:void(0);" class="link-danger btn-delete-customer" data-id="${data}">
                 <i class="ri-delete-bin-5-line"></i>
             </a>
         </div>
@@ -133,31 +170,52 @@ function renderActionsColumn(data) {
 // =========================================
 
 /**
- * Maneja el envío del formulario para crear o actualizar departamento.
+ * Maneja el envío del formulario para crear o actualizar clientes.
  */
 function bindFormSubmit() {
-    $('#categoryForm').on('submit', function (e) {
+    $('#customerForm').on('submit', function (e) {
         e.preventDefault();
 
         const $form = $(this);
-        const categoryId = $('#categoryId').val();
-        const isEdit = categoryId != 0;
+        const customerId = $('#customerId').val();
+        const isEdit = customerId != 0;
 
         clearValidationErrors();
 
+        const formDataArray = $form.serializeArray();
+        const cleanData = {};
+
+        formDataArray.forEach(field => {
+            const input = $(`[name="${field.name}"]`);
+            let rawValue = field.value;
+
+            // Si el input tiene cleave, obtener el valor limpio
+            if (input[0].cleave) {
+                rawValue = input[0].cleave.getRawValue();
+            }
+
+            switch (field.name) {
+                case 'phone':
+                    cleanData[field.name] = rawValue.replace(/[^\d]/g, '');
+                    break;
+                default:
+                    cleanData[field.name] = rawValue.trim();
+            }
+        });
+
         $.ajax({
-            url: isEdit ? `/categories/${categoryId}` : $form.data('action'),
+            url: isEdit ? `/customers/${customerId}` : $form.data('action'),
             method: isEdit ? 'PUT' : 'POST',
-            data: $form.serialize(),
+            data: cleanData,
             success: function (response) {
-                $('#categoryModal').modal('hide');
-                categoriesTable.ajax.reload();
+                $('#customerModal').modal('hide');
+                customersTable.ajax.reload();
                 showAlert(
                     'success',
                     'Éxito',
                     response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
-                resetCategoryForm();
+                resetCustomerForm();
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -171,12 +229,12 @@ function bindFormSubmit() {
 // =========================================
 
 /**
- * Asocia el evento de edición de departamento.
+ * Asocia el evento de edición de clientes.
  */
 function bindEditEvents() {
-    $('#categoriesTable tbody').on('click', '.btn-edit-category', function () {
+    $('#customersTable tbody').on('click', '.btn-edit-customer', function () {
         const $button = $(this);
-        const rowData = categoriesTable.row($button.closest('tr')).data();
+        const rowData = customersTable.row($button.closest('tr')).data();
 
         showConfirmationAlert(
             '¿Estás seguro?',
@@ -185,7 +243,7 @@ function bindEditEvents() {
             'Cancelar',
             (confirmed) => {
                 if (confirmed) {
-                    showDepartmentModal(rowData);
+                    showCustomerModal(rowData);
                 }
             }
         );
@@ -197,11 +255,11 @@ function bindEditEvents() {
 // =========================================
 
 /**
- * Asocia el evento de eliminación de categorías.
+ * Asocia el evento de eliminación de clientes.
  */
 function bindDeleteEvents() {
-    $('#categoriesTable tbody').on('click', '.btn-delete-category', function () {
-        const categoryId = $(this).data('id');
+    $('#customersTable tbody').on('click', '.btn-delete-customer', function () {
+        const customerId = $(this).data('id');
 
         showConfirmationAlert(
             '¿Estás seguro?',
@@ -211,7 +269,7 @@ function bindDeleteEvents() {
             (confirmed) => {
                 if (confirmed) {
                     $.ajax({
-                        url: `/categories/${categoryId}`,
+                        url: `/customers/${customerId}`,
                         type: 'DELETE',
                         data: {
                             _token: $('meta[name="csrf-token"]').attr('content')
@@ -222,7 +280,7 @@ function bindDeleteEvents() {
                                 'Éxito',
                                 'El registro fue eliminado exitosamente.'
                             );
-                            categoriesTable.ajax.reload(null, false);
+                            customersTable.ajax.reload(null, false);
                         },
                         error: function () {
                             showAlert(
@@ -243,11 +301,11 @@ function bindDeleteEvents() {
 // =========================================
 
 /**
- * Asocia el evento de activación/desactivación del estado de la categoría.
+ * Asocia el evento de activación/desactivación del estado del cliente.
  */
 function bindToggleStatusEvents() {
     $(document).on('change', '.toggle-status', function () {
-        const categoryId = $(this).data('category-id');
+        const customerId = $(this).data('customer-id');
         const newStatus = $(this).is(':checked') ? 1 : 0;
         const $switch = $(this);
 
@@ -262,7 +320,7 @@ function bindToggleStatusEvents() {
             'Cancelar',
             (confirmed) => {
                 if (confirmed) {
-                    updateCategoryStatus(categoryId, newStatus);
+                    updateCustomerStatus(customerId, newStatus);
                 } else {
                     $switch.prop('checked', !newStatus);
                 }
@@ -272,18 +330,18 @@ function bindToggleStatusEvents() {
 }
 
 // =========================================
-// FUNCIÓN: Actualiza el estado de la categoría
+// FUNCIÓN: Actualiza el estado de la cliente
 // =========================================
 
 /**
  * Envía la solicitud AJAX para actualizar el estado activo/inactivo.
  *
- * @param {number} categoryId
+ * @param {number} customerId
  * @param {number} status
  */
-function updateCategoryStatus(categoryId, status) {
+function updateCustomerStatus(customerId, status) {
     $.ajax({
-        url: `/categories/${categoryId}/status`,
+        url: `/customers/${customerId}/status`,
         type: 'PUT',
         data: {
             status: status,
@@ -295,7 +353,7 @@ function updateCategoryStatus(categoryId, status) {
                 'Éxito',
                 response.message
             );
-            categoriesTable.ajax.reload(null, false);
+            customersTable.ajax.reload(null, false);
         },
         error: function () {
             showAlert(
@@ -318,8 +376,12 @@ function bindModalCloseEvents() {
     $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
         e.preventDefault();
 
-        const hasData = $('#name').val().trim() !== '' ||
-            $('#description').val().trim() !== '';
+        const hasData = $('#full_name').val().trim() !== '' ||
+            $('#rfc').val().trim() !== '' ||
+            $('#phone').val().trim() !== '' ||
+            $('#email').val().trim() !== '' ||
+            $('#credit_available').val().trim() !== '' ||
+            $('#address').val().trim() !== '';
 
         if (hasData) {
             showConfirmationAlert(
@@ -329,41 +391,44 @@ function bindModalCloseEvents() {
                 'No, volver',
                 (confirmed) => {
                     if (confirmed) {
-                        $('#categoryModal').modal('hide');
-                        resetCategoryForm();
+                        $('#customerModal').modal('hide');
+                        resetCustomerForm();
                     }
                 }
             );
         } else {
-            $('#categoryModal').modal('hide');
-            resetCategoryForm();
+            $('#customerModal').modal('hide');
+            resetCustomerForm();
         }
     });
 }
 
 // =========================================
-// FUNCIÓN: Abre el modal de departamento
+// FUNCIÓN: Abre el modal de clientes
 // =========================================
 
 /**
- * Muestra el modal de creación o edición de departamento.
+ * Muestra el modal de creación o edición de clientes.
  *
- * @param {Object|null} data - Datos de la departamento o null si es nuevo.
+ * @param {Object|null} data - Datos del cliente o null si es nuevo.
  */
-function showDepartmentModal(data = null) {
-    resetCategoryForm();
+function showCustomerModal(data = null) {
+    resetCustomerForm();
 
     if (data) {
-        $('.modal-title').text('Editar Categoria');
-        $('#name').val(data.name);
-        $('#description').val(data.description);
-        $('#department_id').val(data.department_id).trigger('change');
-        $('#categoryId').val(data.id);
+        $('.modal-title').text('Editar Customer');
+        $('#full_name').val(data.full_name);
+        $('#rfc').val(data.rfc);
+        $('#phone').val(data.phone);
+        $('#email').val(data.email);
+        $('#credit_available').val(data.credit_available);
+        $('#address').val(data.address);
+        $('#customerId').val(data.id);
     } else {
         $('.modal-title').text('Agregar Categoria');
     }
-
-    $('#categoryModal').modal('show');
+    formatCleave();
+    $('#customerModal').modal('show');
 }
 
 // =========================================
@@ -371,16 +436,25 @@ function showDepartmentModal(data = null) {
 // =========================================
 
 /**
- * Resetea el formulario de departamento a su estado inicial.
+ * Resetea el formulario de clientes a su estado inicial.
  */
-function resetCategoryForm() {
-    $('#categoryForm')[0].reset();
-    $('#categoryId').val(0);
-    $('#department_id').val(null).trigger('change');
+function resetCustomerForm() {
+    $('#customerForm')[0].reset();
+    $('#customerId').val(0);
     clearValidationErrors();
-    $('.modal-title').text('Agregar Categoria');
+    $('.modal-title').text('Agregar Cliente');
 }
 
+function formatCleave() {
+    if (document.querySelector("#phone")) {
+        var cleaveBlocks = new Cleave('#phone', {
+            delimiters: ['(', ')', '-'],
+            blocks: [0, 3, 3, 4],
+            numericOnly: true
+        });
+    }
+
+}
 // =========================================
 // CONSTANTES: Configuración idioma DataTable
 // =========================================

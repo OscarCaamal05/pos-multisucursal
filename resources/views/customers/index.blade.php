@@ -5,7 +5,7 @@
 @slot('li_1') Clientes @endslot
 @slot('title') Lista de clientes @endslot
 @endcomponent
-
+@vite('resources/js/functions_ajax/functionAjaxCustomers.js')
 <!-- Modal para crear/editar -->
 <div class="modal zoomIn" id="customerModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('customers.store') }}"
     data-update-url-base="/customers/">
@@ -89,5 +89,4 @@
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 <script src="{{ URL::asset('build/libs/cleave.js/cleave.min.js') }}"></script>
 <script src="{{ URL::asset('build/js/app.js') }}"></script>
-<script src="{{ URL::asset('build/js/functionAjaxCustomers.js') }}"></script>
 @endsection
