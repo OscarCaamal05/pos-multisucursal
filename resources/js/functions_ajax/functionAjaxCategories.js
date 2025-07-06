@@ -2,6 +2,7 @@
 // IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
 // =========================================
 import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from './utils/alerts';
+import { bindCategoryFormSubmit, resetCategoryForm } from './helpers/categoryHelper';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -16,10 +17,22 @@ $(document).ready(function () {
     initializeDataTable();
     initializeSelect2();
     bindEvents();
+
+    // =========================================
+    // Inicializando la funcion para crear o actualizar la categoria
+    // =========================================
+    /**
+     * Recibe parametros del modulo, el form, modal, tabla, y una funcion callback para realizar funciones adicionales
+     */
+    bindCategoryFormSubmit({
+        table: categoriesTable,
+        onSuccess: (response) => {
+            resetCategoryForm();
+        }
+    });
 })
 
 function bindEvents() {
-    bindCategoryFormSubmit();
     bindModalCloseEvents();
     bindDeleteEvents();
     bindEditEvents();
@@ -128,69 +141,6 @@ function renderActionsColumn(data) {
         </div>
     `;
 }
-
-/**
- * Asigna el submit de un formulario de categoría con opciones personalizadas.
- *
- * @param {Object} options - Opciones de configuración
- * @param {string} options.formSelector - Selector del formulario
- * @param {string} options.modalSelector - Selector del modal
- * @param {DataTable|null} options.table - Instancia de DataTable a recargar (o null si no hay)
- * @param {Function|null} options.onSuccess - Callback extra después de guardar
- */
-export function bindCategoryFormSubmit({
-    formSelector = '#categoryForm',
-    modalSelector = '#categoryModal',
-    table = null,
-    onSuccess = null
-} = {}) {
-    $(document).off('submit').on('submit', formSelector, function (e) {
-        e.preventDefault();
-
-        const $form = $(this);
-        const categoryId = $form.find('#categoryId').val();
-        const isEdit = categoryId != 0;
-
-        clearValidationErrors();
-
-        $.ajax({
-            url: isEdit ? `/categories/${categoryId}` : $form.data('storeUrl'),
-            method: isEdit ? 'PUT' : 'POST',
-            data: $form.serialize(),
-            success: function (response) {
-                // Cierra el modal
-                $(modalSelector).modal('hide');
-
-                // Si hay DataTable, recargarlo
-                if (table) {
-                    table.ajax.reload();
-                }
-                categoriesTable.ajax.reload(null, false);
-
-                // Mostrar alerta
-                showAlert(
-                    'success',
-                    'Éxito',
-                    response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
-                );
-
-                // Resetear formulario
-                resetCategoryForm();
-
-                
-
-                // Callback extra si se pasa
-                if (typeof onSuccess === 'function') {
-                    onSuccess(response);
-                }
-            },
-            error: function (xhr) {
-                handleValidationError(xhr);
-            }
-        });
-    });
-}
-
 
 // =========================================
 // FUNCIÓN: Vincula evento de edición
@@ -390,21 +340,6 @@ function showDepartmentModal(data = null) {
     }
 
     $('#categoryModal').modal('show');
-}
-
-// =========================================
-// FUNCIÓN: Restablece el formulario del modal
-// =========================================
-
-/**
- * Resetea el formulario de departamento a su estado inicial.
- */
-function resetCategoryForm() {
-    $('#categoryForm')[0].reset();
-    $('#categoryId').val(0);
-    $('#department_id').val(null).trigger('change');
-    clearValidationErrors();
-    $('.modal-title').text('Agregar Categoria');
 }
 
 // =========================================

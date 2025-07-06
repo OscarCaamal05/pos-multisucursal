@@ -2,7 +2,7 @@
 // IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
 // =========================================
 import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from './utils/alerts';
-import { bindCategoryFormSubmit } from './functionAjaxCategories';
+import { bindCategoryFormSubmit, resetCategoryForm } from './helpers/categoryHelper';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -17,7 +17,7 @@ $(document).ready(function () {
     bindCategoryFormSubmit({
         onSuccess: (response) => {
             // Si creaste una nueva categoría y quieres agregarla al <select>
-            if (response.create && response.category) {
+            if (response.status === 'create' && response.category) {
                 // Agrega y selecciona la nueva categoría
                 const newOption = new Option(response.category.name, response.category.id, true, true);
                 $('.categories').append(newOption).val(response.category.id).trigger('change');
@@ -36,6 +36,7 @@ $(document).ready(function () {
                     $('.products_departments').val(deptId).trigger('change');
                 }
             }
+            resetCategoryForm();
         }
     });
     initializeSelect2();

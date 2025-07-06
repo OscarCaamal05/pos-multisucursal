@@ -44,7 +44,7 @@ class CategoryController extends Controller
         $category->load('department');
 
         return response()->json([
-            'create' => true,
+            'status' => 'create',
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -79,7 +79,7 @@ class CategoryController extends Controller
     {
         $category->update($request->validated());
 
-        return response()->json(['update' => true]);
+        return response()->json(['status' => 'update']);
     }
 
     /**
