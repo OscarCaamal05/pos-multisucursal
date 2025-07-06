@@ -39,9 +39,21 @@ class CategoryController extends Controller
      */
     public function store(SaveCategoriesRequest $request)
     {
-        Category::create($request->validated());
+        $category = Category::create($request->validated());
+        // Cargar el departamento relacionado
+        $category->load('department');
 
-        return response()->json(['create' => true]);
+        return response()->json([
+            'create' => true,
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'department' => $category->department ? [
+                    'id' => $category->department->id,
+                    'name' => $category->department->name,
+                ] : null,
+            ]
+        ]);
     }
 
     /**

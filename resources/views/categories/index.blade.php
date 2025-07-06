@@ -10,15 +10,16 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxCategories.js')
 <!-- Modal para crear/editar -->
-<div class="modal zoomIn" id="categoryModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('categories.store') }}"
-     data-update-url-base="/categories/">
+<div class="modal zoomIn" id="categoryModal" data-bs-backdrop="true" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="categoryModalLabel">Agregar Categoria</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal"></button>
             </div>
-            <form id="categoryForm">
+            <form id="categoryForm"
+                data-store-url="{{ route('categories.store') }}"
+                data-update-url-base="/categories/">
                 @csrf
                 <input type="hidden" name="categoryId" id="categoryId" value="0">
                 <div class="modal-body">
@@ -32,6 +33,7 @@
         </div>
     </div>
 </div>
+
 
 
 <div class="row">

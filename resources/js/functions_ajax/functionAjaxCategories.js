@@ -19,7 +19,7 @@ $(document).ready(function () {
 })
 
 function bindEvents() {
-    bindFormSubmit();
+    bindCategoryFormSubmit();
     bindModalCloseEvents();
     bindDeleteEvents();
     bindEditEvents();
@@ -38,6 +38,7 @@ function initializeSelect2() {
     $('.departments').select2({
         dropdownParent: $('#categoryModal'),
     });
+
 }
 
 function initializeDataTable() {
@@ -128,36 +129,60 @@ function renderActionsColumn(data) {
     `;
 }
 
-// =========================================
-// FUNCIÓN: Envío del formulario
-// =========================================
-
 /**
- * Maneja el envío del formulario para crear o actualizar departamento.
+ * Asigna el submit de un formulario de categoría con opciones personalizadas.
+ *
+ * @param {Object} options - Opciones de configuración
+ * @param {string} options.formSelector - Selector del formulario
+ * @param {string} options.modalSelector - Selector del modal
+ * @param {DataTable|null} options.table - Instancia de DataTable a recargar (o null si no hay)
+ * @param {Function|null} options.onSuccess - Callback extra después de guardar
  */
-function bindFormSubmit() {
-    $('#categoryForm').on('submit', function (e) {
+export function bindCategoryFormSubmit({
+    formSelector = '#categoryForm',
+    modalSelector = '#categoryModal',
+    table = null,
+    onSuccess = null
+} = {}) {
+    $(document).off('submit').on('submit', formSelector, function (e) {
         e.preventDefault();
 
         const $form = $(this);
-        const categoryId = $('#categoryId').val();
+        const categoryId = $form.find('#categoryId').val();
         const isEdit = categoryId != 0;
 
         clearValidationErrors();
 
         $.ajax({
-            url: isEdit ? `/categories/${categoryId}` : $form.data('action'),
+            url: isEdit ? `/categories/${categoryId}` : $form.data('storeUrl'),
             method: isEdit ? 'PUT' : 'POST',
             data: $form.serialize(),
             success: function (response) {
-                $('#categoryModal').modal('hide');
-                categoriesTable.ajax.reload();
+                // Cierra el modal
+                $(modalSelector).modal('hide');
+
+                // Si hay DataTable, recargarlo
+                if (table) {
+                    table.ajax.reload();
+                }
+                categoriesTable.ajax.reload(null, false);
+
+                // Mostrar alerta
                 showAlert(
                     'success',
                     'Éxito',
                     response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
+
+                // Resetear formulario
                 resetCategoryForm();
+
+                
+
+                // Callback extra si se pasa
+                if (typeof onSuccess === 'function') {
+                    onSuccess(response);
+                }
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -165,6 +190,7 @@ function bindFormSubmit() {
         });
     });
 }
+
 
 // =========================================
 // FUNCIÓN: Vincula evento de edición
