@@ -10,8 +10,8 @@ class Department extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
+        'department_name',
+        'department_description',
     ];
 
      //FUNCION PARA LA RELACION CON EL MODULO CATEGORIAS

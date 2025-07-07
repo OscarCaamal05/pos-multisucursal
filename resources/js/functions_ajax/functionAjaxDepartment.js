@@ -2,7 +2,7 @@
 // IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
 // =========================================
 import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from './utils/alerts';
-
+import { showDepartmentModal, closeDepartmentModal, resetDepartmentForm, bindDepartmentFormSubmit } from './helpers/departmentHelper';
 // =========================================
 // VARIABLES GLOBALES
 // =========================================
@@ -15,11 +15,21 @@ let departmentTable = null;
 $(document).ready(function () {
     initializeDataTable();
     bindEvents();
+    closeDepartmentModal();
+    resetDepartmentForm();
+
+    // =========================================
+    // Inicializando la funcion para crear o actualizar la categoria
+    // =========================================
+    /**
+     * Recibe parametros del modulo, el form, modal, tabla, y una funcion callback para realizar funciones adicionales
+     */
+    bindDepartmentFormSubmit({
+        table: departmentTable,
+    })
 })
 
 function bindEvents() {
-    bindFormSubmit();
-    bindModalCloseEvents();
     bindDeleteEvents();
     bindEditEvents();
 }
@@ -31,10 +41,10 @@ function initializeDataTable() {
         ajax: '/departments/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'name', name: 'name' },
+            { data: 'department_name', name: 'department_name' },
             {
-                data: 'description',
-                name: 'description',
+                data: 'department_description',
+                name: 'department_description',
                 orderable: false,
                 searchable: false
             },
@@ -67,44 +77,6 @@ function renderActionsColumn(data) {
             </a>
         </div>
     `;
-}
-
-// =========================================
-// FUNCIÓN: Envío del formulario
-// =========================================
-
-/**
- * Maneja el envío del formulario para crear o actualizar departamento.
- */
-function bindFormSubmit() {
-    $('#departmentForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const $form = $(this);
-        const departmentId = $('#departmentId').val();
-        const isEdit = departmentId != 0;
-
-        clearValidationErrors();
-
-        $.ajax({
-            url: isEdit ? `/departments/${departmentId}` : $form.data('action'),
-            method: isEdit ? 'PUT' : 'POST',
-            data: $form.serialize(),
-            success: function (response) {
-                $('#departmentModal').modal('hide');
-                departmentTable.ajax.reload();
-                showAlert(
-                    'success',
-                    'Éxito',
-                    response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
-                );
-                resetDepartmentForm();
-            },
-            error: function (xhr) {
-                handleValidationError(xhr);
-            }
-        });
-    });
 }
 
 // =========================================
@@ -177,78 +149,6 @@ function bindDeleteEvents() {
             }
         );
     });
-}
-
-// =========================================
-// FUNCIÓN: Maneja eventos de cierre del modal
-// =========================================
-
-/**
- * Confirma el cierre del modal si hay datos ingresados.
- */
-function bindModalCloseEvents() {
-    $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
-        e.preventDefault();
-
-        const hasData = $('#name').val().trim() !== '' || 
-                        $('#description').val().trim() !== '';
-
-        if (hasData) {
-            showConfirmationAlert(
-                '¿Estás seguro?',
-                'Perderás los datos ingresados.',
-                'Sí, cancelar',
-                'No, volver',
-                (confirmed) => {
-                    if (confirmed) {
-                        $('#departmentModal').modal('hide');
-                        resetDepartmentForm();
-                    }
-                }
-            );
-        } else {
-            $('#departmentModal').modal('hide');
-            resetDepartmentForm();
-        }
-    });
-}
-
-// =========================================
-// FUNCIÓN: Abre el modal de departamento
-// =========================================
-
-/**
- * Muestra el modal de creación o edición de departamento.
- *
- * @param {Object|null} data - Datos de la departamento o null si es nuevo.
- */
-function showDepartmentModal(data = null) {
-    resetDepartmentForm();
-
-    if (data) {
-        $('.modal-title').text('Editar departamento');
-        $('#name').val(data.name);
-        $('#description').val(data.description);
-        $('#departmentId').val(data.id);
-    } else {
-        $('.modal-title').text('Agregar departamento');
-    }
-
-    $('#departmentModal').modal('show');
-}
-
-// =========================================
-// FUNCIÓN: Restablece el formulario del modal
-// =========================================
-
-/**
- * Resetea el formulario de departamento a su estado inicial.
- */
-function resetDepartmentForm() {
-    $('#departmentForm')[0].reset();
-    $('#departmentId').val(0);
-    clearValidationErrors();
-    $('.modal-title').text('Agregar Departamento');
 }
 
 // =========================================

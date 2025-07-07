@@ -1,7 +1,9 @@
 // =========================================
-// IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
+// IMPORTACION DE FUNCIONES GENERICAS
 // =========================================
-import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from './utils/alerts';
+import { showAlert, showConfirmationAlert, } from './utils/alerts';
+import { bindCategoryFormSubmit, showCategoryModal, closeCategoryModal } from './helpers/categoryHelper';
+import { closeDepartmentModal, bindDepartmentFormSubmit } from './helpers/departmentHelper';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -16,14 +18,61 @@ $(document).ready(function () {
     initializeDataTable();
     initializeSelect2();
     bindEvents();
+
+    // =========================================
+    // Inicializando la funcion para crear o actualizar la el departamento
+    // =========================================
+    /**
+     * Recibe parametros del modulo, el form, modal, tabla, y una funcion callback para realizar funciones adicionales
+     */
+    bindDepartmentFormSubmit({
+        onSuccess: (response) => {
+            //Auto completa el select del modal de categorias cuando el registro se crea desde la vista de categoria
+            if (response.status === 'create' && response.department) {
+                const deptId = response.department.id;
+                const deptName = response.department.department_name;
+
+                // Si el departamento no existe en el select, lo agrega
+                if ($('#department_id option[value="' + deptId + '"]').length === 0) {
+                    const newDeptOption = new Option(deptName, deptId, true, true);
+                    $('#department_id').append(newDeptOption).trigger('change');
+                } else {
+                    $('#department_id').val(deptId).trigger('change');
+                }
+            }
+        }
+    });
+
+    // =========================================
+    // Inicializando la funcion para crear o actualizar la categoria
+    // =========================================
+    /**
+     * Recibe parametros del modulo, el form, modal, tabla, y una funcion callback para realizar funciones adicionales
+     */
+    bindCategoryFormSubmit({
+        table: categoriesTable,
+    });
+
+    closeDepartmentModal();
+
+    // =========================================
+    // EVENTO: Click en el boton dentro del modal de categoria
+    // =========================================
+    /**
+     * Abre el modal de departamento desde categoria para agregar un nuevo departamento
+     */
+    $('#btn-modal-department').on('click', function (e) {
+        e.preventDefault();
+        $('#departmentModal').modal('show');
+    });
+
 })
 
 function bindEvents() {
-    bindFormSubmit();
-    bindModalCloseEvents();
     bindDeleteEvents();
     bindEditEvents();
     bindToggleStatusEvents();
+    closeCategoryModal();
 }
 
 // =========================================
@@ -38,6 +87,7 @@ function initializeSelect2() {
     $('.departments').select2({
         dropdownParent: $('#categoryModal'),
     });
+
 }
 
 function initializeDataTable() {
@@ -47,10 +97,10 @@ function initializeDataTable() {
         ajax: '/categories/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'name', name: 'name' },
+            { data: 'category_name', name: 'category_name' },
             {
-                data: 'description',
-                name: 'description',
+                data: 'category_description',
+                name: 'category_description',
                 orderable: false,
                 searchable: false
             },
@@ -129,44 +179,6 @@ function renderActionsColumn(data) {
 }
 
 // =========================================
-// FUNCIÓN: Envío del formulario
-// =========================================
-
-/**
- * Maneja el envío del formulario para crear o actualizar departamento.
- */
-function bindFormSubmit() {
-    $('#categoryForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const $form = $(this);
-        const categoryId = $('#categoryId').val();
-        const isEdit = categoryId != 0;
-
-        clearValidationErrors();
-
-        $.ajax({
-            url: isEdit ? `/categories/${categoryId}` : $form.data('action'),
-            method: isEdit ? 'PUT' : 'POST',
-            data: $form.serialize(),
-            success: function (response) {
-                $('#categoryModal').modal('hide');
-                categoriesTable.ajax.reload();
-                showAlert(
-                    'success',
-                    'Éxito',
-                    response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
-                );
-                resetCategoryForm();
-            },
-            error: function (xhr) {
-                handleValidationError(xhr);
-            }
-        });
-    });
-}
-
-// =========================================
 // FUNCIÓN: Vincula evento de edición
 // =========================================
 
@@ -185,7 +197,7 @@ function bindEditEvents() {
             'Cancelar',
             (confirmed) => {
                 if (confirmed) {
-                    showDepartmentModal(rowData);
+                    showCategoryModal(rowData);
                 }
             }
         );
@@ -305,80 +317,6 @@ function updateCategoryStatus(categoryId, status) {
             );
         }
     });
-}
-
-// =========================================
-// FUNCIÓN: Maneja eventos de cierre del modal
-// =========================================
-
-/**
- * Confirma el cierre del modal si hay datos ingresados.
- */
-function bindModalCloseEvents() {
-    $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
-        e.preventDefault();
-
-        const hasData = $('#name').val().trim() !== '' ||
-            $('#description').val().trim() !== '';
-
-        if (hasData) {
-            showConfirmationAlert(
-                '¿Estás seguro?',
-                'Perderás los datos ingresados.',
-                'Sí, cancelar',
-                'No, volver',
-                (confirmed) => {
-                    if (confirmed) {
-                        $('#categoryModal').modal('hide');
-                        resetCategoryForm();
-                    }
-                }
-            );
-        } else {
-            $('#categoryModal').modal('hide');
-            resetCategoryForm();
-        }
-    });
-}
-
-// =========================================
-// FUNCIÓN: Abre el modal de departamento
-// =========================================
-
-/**
- * Muestra el modal de creación o edición de departamento.
- *
- * @param {Object|null} data - Datos de la departamento o null si es nuevo.
- */
-function showDepartmentModal(data = null) {
-    resetCategoryForm();
-
-    if (data) {
-        $('.modal-title').text('Editar Categoria');
-        $('#name').val(data.name);
-        $('#description').val(data.description);
-        $('#department_id').val(data.department_id).trigger('change');
-        $('#categoryId').val(data.id);
-    } else {
-        $('.modal-title').text('Agregar Categoria');
-    }
-
-    $('#categoryModal').modal('show');
-}
-
-// =========================================
-// FUNCIÓN: Restablece el formulario del modal
-// =========================================
-
-/**
- * Resetea el formulario de departamento a su estado inicial.
- */
-function resetCategoryForm() {
-    $('#categoryForm')[0].reset();
-    $('#categoryId').val(0);
-    $('#department_id').val(null).trigger('change');
-    clearValidationErrors();
-    $('.modal-title').text('Agregar Categoria');
 }
 
 // =========================================
