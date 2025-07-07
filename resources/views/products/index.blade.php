@@ -68,7 +68,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="categoryModalLabel">Agregar Categoria</h5>
-                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal"></button>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-category"></button>
             </div>
             <form id="categoryForm"
                 data-store-url="{{ route('categories.store') }}"
@@ -79,7 +79,31 @@
                     @include('categories.form-fields')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-category">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal zoomIn" id="departmentModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="departmentModalLabel">Agregar Departamento</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-department"></button>
+            </div>
+            <form id="departmentForm"
+                data-store-url="{{ route('departments.store') }}"
+                data-update-url-base="/departments/">
+                @csrf
+                <input type="hidden" name="departmentId" id="departmentId" value="0">
+                <div class="modal-body">
+                    @include('departments.form-fields')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-department">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>

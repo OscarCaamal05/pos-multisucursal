@@ -63,7 +63,7 @@
                 class="products_departments form-select @error('product_department_id') is-invalid @enderror">
                 @foreach ($departments as $department)
                 <option value="{{ $department->id }}">
-                    {{ $department->name }}
+                    {{ $department->department_name }}
                 </option>
                 @endforeach
             </select>
@@ -83,10 +83,10 @@
             <select
                 name="product_category_id"
                 id="product_category_id"
-                class="categories form-select @error('product_category_id') is-invalid @enderror">
+                class="products_categories form-select @error('product_category_id') is-invalid @enderror">
                 @foreach ($categories as $category)
                 <option value="{{ $category->id }}">
-                    {{ $category->name }}
+                    {{ $category->category_name }}
                 </option>
                 @endforeach
             </select>
