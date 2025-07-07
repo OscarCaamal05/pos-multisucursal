@@ -1,16 +1,16 @@
 import { showAlert, clearValidationErrors, handleValidationError } from '../utils/alerts';
 
 /**
- * Asigna el submit de un formulario de categoría con opciones personalizadas.
+ * Asigna el submit de un formulario de departamento con opciones personalizadas.
  *
  * @param {string} options.formSelector - Selector del formulario
  * @param {string} options.modalSelector - Selector del modal
  * @param {DataTable|null} options.table - Instancia de DataTable a recargar (o null si no hay)
  * @param {Function|null} options.onSuccess - Callback extra después de guardar
  */
-export function bindCategoryFormSubmit({
-    formSelector = '#categoryForm',
-    modalSelector = '#categoryModal',
+export function bindDepartmentFormSubmit({
+    formSelector = '#departmentForm',
+    modalSelector = '#departmentModal',
     table = null,
     onSuccess = null
 } = {}) {
@@ -18,13 +18,13 @@ export function bindCategoryFormSubmit({
         e.preventDefault();
 
         const $form = $(this);
-        const categoryId = $form.find('#categoryId').val();
-        const isEdit = categoryId != 0;
+        const departmentId = $('#departmentId').val();
+        const isEdit = departmentId != 0;
 
         clearValidationErrors();
-
+        console.log('Enviando al bindDepartment');
         $.ajax({
-            url: isEdit ? `/categories/${categoryId}` : $form.data('storeUrl'),
+            url: isEdit ? `/departments/${departmentId}` : $form.data('storeUrl'),
             method: isEdit ? 'PUT' : 'POST',
             data: $form.serialize(),
             success: function (response) {
@@ -42,7 +42,7 @@ export function bindCategoryFormSubmit({
                     'Éxito',
                     response.status === 'create' ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
-                resetCategoryForm();
+                resetDepartmentForm();
 
                 // Callback extra si se pasa
                 if (typeof onSuccess === 'function') {
@@ -63,12 +63,12 @@ export function bindCategoryFormSubmit({
 /**
  * Confirma el cierre del modal si hay datos ingresados.
  */
-export function closeCategoryModal() {
-    $(document).on('click', '#btn-cancelar-category, #btn-close-modal-category', function (e) {
+export function closeDepartmentModal() {
+    $(document).on('click', '#btn-cancelar-department, #btn-close-modal-department', function (e) {
         e.preventDefault();
 
-        const hasData = $('#category_name').val().trim() !== '' ||
-            $('#category_description').val().trim() !== '';
+        const hasData = $('#department_name').val().trim() !== '' ||
+            $('#department_description').val().trim() !== '';
 
         if (hasData) {
             showConfirmationAlert(
@@ -78,53 +78,53 @@ export function closeCategoryModal() {
                 'No, volver',
                 (confirmed) => {
                     if (confirmed) {
-                        $('#categoryModal').modal('hide');
-                        resetCategoryForm();
+                        $('#departmentModal').modal('hide');
+                        resetDepartmentForm();
                     }
                 }
             );
         } else {
-            $('#categoryModal').modal('hide');
-            resetCategoryForm();
+            $('#departmentModal').modal('hide');
+            resetDepartmentForm();
         }
     });
 }
 
+
 // =========================================
-// FUNCIÓN: Abre el modal de categorias
+// FUNCIÓN: Abre el modal de departamento
 // =========================================
 
 /**
- * Muestra el modal de creación o edición de categorias.
+ * Muestra el modal de creación o edición de departamento.
  *
- * @param {Object|null} data - Datos de la categorias o null si es nuevo.
+ * @param {Object|null} data - Datos de la departamento o null si es nuevo.
  */
-export function showCategoryModal(data = null) {
-    resetCategoryForm();
+export function showDepartmentModal(data = null) {
+    resetDepartmentForm();
 
     if (data) {
-        $('#categoryModalLabel').text('Editar Categoria');
-        $('#category_name').val(data.category_name);
-        $('#category_description').val(data.category_description);
-        $('#department_id').val(data.department_id).trigger('change');
-        $('#categoryId').val(data.id);
+        $('#departmentModalLabel').text('Editar departamento');
+        $('#department_name').val(data.department_name);
+        $('#department_description').val(data.department_description);
+        $('#departmentId').val(data.id);
     } else {
-        $('#categoryModalLabel').text('Agregar Categoria');
+        $('#departmentModalLabel').text('Agregar departamento');
     }
 
-    $('#categoryModal').modal('show');
+    $('#departmentModal').modal('show');
 }
+
 // =========================================
 // FUNCIÓN: Restablece el formulario del modal
 // =========================================
 
 /**
- * Resetea el formulario de categorias a su estado inicial.
+ * Resetea el formulario de departamento a su estado inicial.
  */
-export function resetCategoryForm() {
-    $('#categoryForm')[0].reset();
-    $('#categoryId').val(0);
-    $('#department_id').val(null).trigger('change');
+export function resetDepartmentForm() {
+    $('#departmentForm')[0].reset();
+    $('#departmentId').val(0);
     clearValidationErrors();
-    $('#categoryModalLabel').text('Agregar Categoria');
+    $('#departmentModalLabel').text('Agregar Departamento');
 }

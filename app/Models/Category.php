@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\DB;
 class Category extends Model
 {
     protected $fillable = [
-        'name',
-        'description',
+        'category_name',
+        'category_description',
         'status',
         'department_id'
     ];
@@ -20,11 +20,11 @@ class Category extends Model
             ->join('departments as d', 'c.department_id', '=', 'd.id')
             ->select(
                 'c.id',
-                'c.name',
-                'c.description',
+                'c.category_name',
+                'c.category_description',
                 'c.status',
                 'department_id',
-                'd.name as department_name'
+                'd.department_name as department_name'
             );
     }
 

@@ -19,7 +19,7 @@ class DepartmentsController extends Controller
 
     public function getDepartments()
     {
-        return DataTables::of(Department::select('id', 'name', 'description'))->make(true);
+        return DataTables::of(Department::select('id', 'department_name', 'department_description'))->make(true);
     }
 
     /**
@@ -27,9 +27,17 @@ class DepartmentsController extends Controller
      */
     public function store(SaveDepartmentRequest $request)
     {
-        Department::create($request->validated());
+        $department = Department::create($request->validated());
 
-        return response()->json(['create' => true]);
+        return response()->json(
+            [
+                'status' => 'create',
+                'department' => [
+                    'id' => $department->id,
+                    'department_name' => $department->department_name,
+                ]
+            ]
+        );
     }
 
     /**
@@ -39,7 +47,7 @@ class DepartmentsController extends Controller
     {
         $department->update($request->validated());
 
-        return response()->json(['update' => true]);
+        return response()->json(['status' => 'update']);
     }
 
     /**

@@ -10,8 +10,7 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxProducts.js')
 <!-- Modal para crear/editar -->
-<div class="modal zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true" data-store-url="{{ route('products.store') }}"
-    data-update-url-base="/products/">
+<div class="modal zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
@@ -87,7 +86,6 @@
         </div>
     </div>
 </div>
-
 
 <div class="row">
     <div class="col-xl-12">
