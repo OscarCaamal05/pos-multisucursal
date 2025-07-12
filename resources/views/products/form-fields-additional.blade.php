@@ -14,6 +14,7 @@
             <input class="form-check-input"
                 id="is_fractional"
                 name="is_fractional"
+                value="1"
                 type="checkbox">
             <label class="form-check-label" for="is_fractional">Se vende por fraccion</label>
 
@@ -24,7 +25,7 @@
         <div class="mb-3">
             <label for="stock_min">Stock minimo</label>
             <input type="number"
-                class="form-control @error('stock_min') is-invalid @enderror"
+                class="form-control only-numbers @error('stock_min') is-invalid @enderror"
                 name="stock_min"
                 id="stock_min"
                 value="{{ old('stock_min') }}">
@@ -39,7 +40,7 @@
         <div class="mb-3">
             <label for="stock_max">Stock maximo</label>
             <input type="number"
-                class="form-control @error('stock_max') is-invalid @enderror"
+                class="form-control only-numbers @error('stock_max') is-invalid @enderror"
                 name="stock_max"
                 id="stock_max"
                 value="{{ old('stock_max') }}">
