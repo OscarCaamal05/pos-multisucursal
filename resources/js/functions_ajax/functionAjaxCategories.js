@@ -3,7 +3,7 @@
 // =========================================
 import { showAlert, showConfirmationAlert, } from './utils/alerts';
 import { bindCategoryFormSubmit, showCategoryModal, closeCategoryModal } from './helpers/categoryHelper';
-import { closeDepartmentModal, bindDepartmentFormSubmit } from './helpers/departmentHelper';
+import { closeDepartmentModal, bindDepartmentFormSubmit, selectDepartmet } from './helpers/departmentHelper';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -29,16 +29,7 @@ $(document).ready(function () {
         onSuccess: (response) => {
             //Auto completa el select del modal de categorias cuando el registro se crea desde la vista de categoria
             if (response.status === 'create' && response.department) {
-                const deptId = response.department.id;
-                const deptName = response.department.department_name;
-
-                // Si el departamento no existe en el select, lo agrega
-                if ($('#department_id option[value="' + deptId + '"]').length === 0) {
-                    const newDeptOption = new Option(deptName, deptId, true, true);
-                    $('#department_id').append(newDeptOption).trigger('change');
-                } else {
-                    $('#department_id').val(deptId).trigger('change');
-                }
+                selectDepartmet(response.department, '#department_id');
             }
         }
     });

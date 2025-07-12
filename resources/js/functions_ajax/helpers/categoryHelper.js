@@ -128,3 +128,30 @@ export function resetCategoryForm() {
     clearValidationErrors();
     $('#categoryModalLabel').text('Agregar Categoria');
 }
+
+/**
+ * Agrega y selecciona una categoría en el select, y si corresponde, agrega y selecciona el departamento relacionado.
+ * @param {Object} category - Objeto de categoría (debe incluir 'id', 'name' y opcionalmente 'department')
+ * @param {string} categorySelectSelector - Selector del select de categorías (ej: '.categories')
+ * @param {string} departmentSelectSelector - Selector del select de departamentos (ej: '.products_departments')
+ */
+
+export function selectCategoryAndDept(category, categorySelectSelector, departmentSelectSelector) {
+    // Agrega y selecciona la nueva categoría
+    const newOption = new Option(category.category_name, category.id, true, true);
+    $(categorySelectSelector).append(newOption).val(category.id).trigger('change');
+
+    // Si el controlador devuelve el departamento relacionado
+    if (category.department) {
+        const deptId = category.department.id;
+        const deptName = category.department.department_name;
+
+        // Si el departamento no existe en el select, lo agrega
+        if ($(departmentSelectSelector + ' option[value="' + deptId + '"]').length === 0) {
+            const newDeptOption = new Option(deptName, deptId, true, true);
+            $(departmentSelectSelector).append(newDeptOption);
+        }
+        // Selecciona el departamento correspondiente
+        $(departmentSelectSelector).val(deptId).trigger('change');
+    }
+}

@@ -6,7 +6,7 @@
 @section('content')
 @component('components.breadcrumb')
 @slot('li_1') Inventario @endslot
-@slot('title') Categorias @endslot
+@slot('title') Productos @endslot
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxProducts.js')
 <!-- Modal para crear/editar -->
@@ -17,36 +17,44 @@
                 <h5 class="modal-title" id="productsModalLabel">Agregar Producto</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-product"></button>
             </div>
-            <form id="productForm">
+            <form id="productForm"
+                data-store-url="{{ route('products.store') }}"
+                data-update-url-base="/products/">
                 <div class="modal-body">
                     @csrf
                     <input type="hidden" name="productId" id="productId" value="0">
                     <div class="row">
                         <div class="col-md-2">
                             <div class="nav nav-pills flex-column nav-pills-tab custom-verti-nav-pills text-center" role="tablist" aria-orientation="vertical">
-                                <a class="nav-link active show" id="custom-v-pills-home-tab" data-bs-toggle="pill" href="#custom-v-pills-home" role="tab" aria-controls="custom-v-pills-home"
+                                <a class="nav-link active show" id="custom-v-pills-general-tab" data-bs-toggle="pill" href="#custom-v-pills-general" role="tab" aria-controls="custom-v-pills-general"
                                     aria-selected="true">
                                     <i class="ri-home-4-line d-block fs-20 mb-1"></i>
                                     General</a>
-                                <a class="nav-link" id="custom-v-pills-profile-tab" data-bs-toggle="pill" href="#custom-v-pills-profile" role="tab" aria-controls="custom-v-pills-profile"
+                                <a class="nav-link" id="custom-v-pills-additional-tab" data-bs-toggle="pill" href="#custom-v-pills-additional" role="tab" aria-controls="custom-v-pills-additional"
+                                    aria-selected="false">
+                                    <i class="ri-file-add-line  d-block fs-20 mb-1"></i>
+                                    Adicional</a>
+                                <a class="nav-link" id="custom-v-pills-price-suppliers-tab" data-bs-toggle="pill" href="#custom-v-pills-price-suppliers" role="tab" aria-controls="custom-v-pills-price-suppliers"
                                     aria-selected="false">
                                     <i class="ri-user-2-line d-block fs-20 mb-1"></i>
-                                    Adicional</a>
-                                <a class="nav-link" id="custom-v-pills-messages-tab" data-bs-toggle="pill" href="#custom-v-pills-messages" role="tab" aria-controls="custom-v-pills-messages"
+                                    Precio Por Proveedor</a>
+                                <a class="nav-link" id="custom-v-pills-image-tab" data-bs-toggle="pill" href="#custom-v-pills-image" role="tab" aria-controls="custom-v-pills-image"
                                     aria-selected="false">
-                                    <i class="ri-mail-line d-block fs-20 mb-1"></i>
+                                    <i class="ri-image-add-fill d-block fs-20 mb-1"></i>
                                     Imagen</a>
                             </div>
                         </div> <!-- end col-->
                         <div class="col-lg-10">
                             <div class="tab-content text-muted mt-3 mt-lg-0">
-                                <div class="tab-pane fade active show" id="custom-v-pills-home" role="tabpanel" aria-labelledby="custom-v-pills-home-tab">
+                                <div class="tab-pane fade active show" id="custom-v-pills-general" role="tabpanel" aria-labelledby="custom-v-pills-general-tab">
                                     @include('products.form-fields-general')
                                 </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-profile" role="tabpanel" aria-labelledby="custom-v-pills-profile-tab">
+                                <div class="tab-pane fade" id="custom-v-pills-additional" role="tabpanel" aria-labelledby="custom-v-pills-additional-tab">
                                     @include('products.form-fields-additional')
                                 </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-messages" role="tabpanel" aria-labelledby="custom-v-pills-messages-tab">
+                                <div class="tab-pane fade" id="custom-v-pills-price-suppliers" role="tabpanel" aria-labelledby="custom-v-pills-price-suppliers-tab">
+                                </div><!--end tab-pane-->
+                                <div class="tab-pane fade" id="custom-v-pills-image" role="tabpanel" aria-labelledby="custom-v-pills-image-tab">
                                     @include('products.form-fields-image')
                                 </div><!--end tab-pane-->
                             </div>
@@ -68,7 +76,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="categoryModalLabel">Agregar Categoria</h5>
-                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal"></button>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-category"></button>
             </div>
             <form id="categoryForm"
                 data-store-url="{{ route('categories.store') }}"
@@ -79,7 +87,31 @@
                     @include('categories.form-fields')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-category">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal zoomIn" id="departmentModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="departmentModalLabel">Agregar Departamento</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-department"></button>
+            </div>
+            <form id="departmentForm"
+                data-store-url="{{ route('departments.store') }}"
+                data-update-url-base="/departments/">
+                @csrf
+                <input type="hidden" name="departmentId" id="departmentId" value="0">
+                <div class="modal-body">
+                    @include('departments.form-fields')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-department">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
@@ -101,16 +133,19 @@
 
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table align-middle table-nowrap mb-0" id="categoriesTable">
+                    <table class="table align-middle table-nowrap mb-0" id="productsTable">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col">ID</th>
-                                <th scope="col">Nombre</th>
-                                <th scope="col">Descripcion</th>
-                                <th scope="col" style="display: none;">Departamento_id</th>
-                                <th scope="col">Departamento</th>
-                                <th scope="col">Estado</th>
-                                <th scope="col">Acciones</th>
+                                <th scope="col" class="text-center">ID</th>
+                                <th scope="col" class="text-center">Nombre</th>
+                                <th scope="col" class="text-center">Codigo</th>
+                                <th scope="col" class="text-center">Categoria</th>
+                                <th scope="col" class="text-center">Departamento</th>
+                                <th scope="col" class="text-center">Precio venta</th>
+                                <th scope="col" class="text-center">Exist.</th>
+                                <th scope="col" class="text-center">Unit venta</th>
+                                <th scope="col" class="text-center">Estado</th>
+                                <th scope="col" class="text-center">Acciones</th>
                             </tr>
                         </thead>
 

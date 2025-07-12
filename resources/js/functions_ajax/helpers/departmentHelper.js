@@ -128,3 +128,21 @@ export function resetDepartmentForm() {
     clearValidationErrors();
     $('#departmentModalLabel').text('Agregar Departamento');
 }
+
+/**
+ * Agrega y selecciona una departamento en el select.
+ * @param {Object} department - Objeto de departamento (debe incluir 'id', 'name')
+ * @param {string} departmentSelectSelector - Selector del select de departamentos (ej: '.products_departments')
+ */
+export function selectDepartmet(department, departmentSelectSelector) {
+    const deptId = department.id;
+    const deptName = department.department_name;
+
+    // Si el departamento no existe en el select, lo agrega
+    if ($(departmentSelectSelector + ' option[value="' + deptId + '"]').length === 0) {
+        const newDeptOption = new Option(deptName, deptId, true, true);
+        $(departmentSelectSelector).append(newDeptOption).trigger('change');
+    } else {
+        $(departmentSelectSelector).val(deptId).trigger('change');
+    }
+}

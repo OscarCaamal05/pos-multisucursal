@@ -20,12 +20,14 @@ Route::get('/roles/data', [RolesController::class, 'getRoles'])->name('roles.dat
 Route::get('/categories/data', [CategoryController::class, 'getCategories'])->name('categories.data');
 Route::get('/departments/data', [DepartmentsController::class, 'getDepartments'])->name('departments.data');
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
+Route::get('/products/data', [ProductController::class, 'getProducts'])->name('products.data');
 Route::get('/customers/data', [CustomerController::class, 'getCustomers'])->name('customers.data');
 Route::get('/suppliers/data', [SuppliersController::class, 'getSuppliers'])->name('suppliers.data');
 Route::put('/users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
 Route::put('/categories/{category}/status', [CategoryController::class, 'toggleStatus'])->name('categories.toggleStatus');
 Route::put('/customers/{customer}/status', [CustomerController::class, 'toggleStatus'])->name('customers.toggleStatus');
-Route::put('/suppliers/{supplier}/status', [SuppliersController::class, 'toggleStatus'])->name('customers.toggleStatus');
+Route::put('/suppliers/{supplier}/status', [SuppliersController::class, 'toggleStatus'])->name('suppliers.toggleStatus');
+Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus'])->name('products.toggleStatus');
 
 
 Route::view('dashboard', 'dashboard')
