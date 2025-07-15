@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchasesController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\SuppliersController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)->names('customers');
     Route::resource('suppliers', SuppliersController::class)->names('suppliers');
     Route::resource('products', ProductController::class)->names('products');
+    Route::resource('purchases', PurchasesController::class)->names('purchases');
+    Route::get('/purchases/{supplier}/show', [PurchasesController::class, 'show']);
+    Route::get('/purchases/autocompleteSuppliers/{query}', [PurchasesController::class, 'autocompleteSuppliers']);
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
     Route::get('/users/{id}', [UserController::class, 'show']);
