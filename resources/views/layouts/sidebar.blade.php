@@ -67,7 +67,7 @@
                     <div class="collapse menu-dropdown" id="sidebarCompras">
                         <ul class="nav nav-sm flex-column">
                             <li class="nav-item">
-                                <a href="{{ route('purchases.index') }}" class="nav-link">Realizar Compra</a>
+                                <a href="{{ route('temp_purchase.index') }}" class="nav-link">Realizar Compra</a>
                             </li>
                             <li class="nav-item">
                                 <a href="layouts-detached" class="nav-link">Reportes Compras</a>

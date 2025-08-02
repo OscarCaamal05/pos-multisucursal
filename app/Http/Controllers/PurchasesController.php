@@ -13,7 +13,7 @@ class PurchasesController extends Controller
      */
     public function index()
     {
-        return view('purchases.index');
+        
     }
 
     /**
@@ -37,20 +37,7 @@ class PurchasesController extends Controller
      */
     public function show($supplierId)
     {
-        $supplier = Supplier::find($supplierId);
 
-        if(!$supplier) {
-            return response()->json(['error' => 'Proveedor no encontrado'], 404);
-        }
-
-        return response()->json([ 
-            'company_name' => $supplier->company_name,
-            'representative' => $supplier->representative,
-            'phone' => $supplier->phone,
-            'email' => $supplier->email,
-            'rfc' => $supplier->rfc,
-            'credit_available' => $supplier->credit_available,
-        ]);
     }
 
     /**
@@ -77,24 +64,4 @@ class PurchasesController extends Controller
         //
     }
 
-    public function autocompleteSuppliers($query)
-    {
-        $results = Supplier::where('company_name', 'LIKE', '%' . $query . '%')
-            ->orWhere('representative', 'LIKE', '%' . $query . '%')
-            ->limit(10) // Limita la cantidad de resultados
-            ->get([
-                'id',
-                'company_name',
-                'representative',
-            ]);
-
-        return response()->json([
-            'data' => $results->map(function ($supplier) {
-                return [
-                    'id' => $supplier->id,
-                    'value' => $supplier->company_name . ' - ' . $supplier->representative, // <== Este campo se debe llamar "value"
-                ];
-            })
-        ]);
-    }
 }

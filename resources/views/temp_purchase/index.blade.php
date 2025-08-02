@@ -1,0 +1,352 @@
+@extends('layouts.master')
+@section('title') @lang('translation.starter') @endsection
+@section('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" type="text/css" />
+<link href="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/css/autoComplete.css') }}" rel="stylesheet">
+@endsection
+@section('content')
+@component('components.breadcrumb')
+@slot('li_1') Compras @endslot
+@slot('title') Realizar una compra @endslot
+@endcomponent
+@vite('resources/js/functions_ajax/functionAjaxPurchases.js')
+
+<div class="modal zoomIn" id="modal-product-details" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-product-details-Label">Detalles del producto</h5>
+            </div>
+            <form id="productDetails">
+                @csrf
+                <input type="hidden" name="temp_id" id="temp_id" value="0">
+                <input type="hidden" name="product_id" id="product_id" value="0">
+                <input type="hidden" name="temp_purchase_id" id="temp_purchase_id" value="{{ $temp->id_temp_purchase ?? 0 }}">
+                <div class="modal-body">
+                    @include('temp_purchase.form-fields-product-details')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-add-product-details">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal zoomIn" id="modal-products" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-product-details-Label">Productos en almacén</h5>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive table-card">
+                    <table class="table table-nowrap align-middle mb-0" id="tableProducts">
+                        <thead class="table-light text-muted">
+                            <tr>
+                                <th scope="col" class="text-center">ID</th>
+                                <th scope="col" class="text-center">Nombre</th>
+                                <th scope="col" class="text-center">Codigo</th>
+                                <th scope="col" class="text-center">Categoria</th>
+                                <th scope="col" class="text-center">Departamento</th>
+                                <th scope="col" class="text-center">Precio venta</th>
+                                <th scope="col" class="text-center">Exist.</th>
+                                <th scope="col" class="text-center">Unit venta</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btn-close-product">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-9">
+        <div class="card">
+            <div class="card-body">
+                <form action="javascript:void(0);">
+                    <div class="row mb-1 justify-content-between align-items-center">
+
+                        <div class="col-sm-4">
+                            <div class="input-group align-items-center w-100">
+                                <div class="form-icon">
+                                    <input type="text"
+                                        class="form-control form-control-icon"
+                                        name="auto_complete_product"
+                                        id="auto_complete_product"
+                                        value="">
+                                    <i class="ri-barcode-box-line"></i>
+                                </div>
+                                <button type="button" class="btn btn-ghost-dark waves-effect waves-light" id="btn-search-product">
+                                    <i class="ri-search-2-line"></i>
+                                </button>
+                            </div>
+                        </div><!--end col-->
+
+
+                        <div class="col-auto">
+                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y">
+                        </div>
+                        <div class="pb-2 text text-end-muted border-bottom border-light text-center"></div>
+                    </div><!--end row-->
+
+                    <div class="row justify-content-between align-items-center">
+                        <div class="col-sm-3">
+                            <div class="input-group align-items-center">
+                                <label class="form-label me-3" for="autoSizingInputGroup">Documento</label>
+                                <select class="form-select" id="autoSizingSelect">
+                                    <option value="1">Compra</option>
+                                    <option value="2">Gasto</option>
+                                </select>
+                            </div>
+                        </div><!--end col-->
+
+                        <div class="col-sm-3">
+                            <div class="input-group align-items-center">
+                                <label class="form-label me-3" for="autoSizingInputGroup">Comprobante</label>
+                                <select class="form-select" id="autoSizingSelect">
+                                    <option value="1">Ticket</option>
+                                    <option value="2">Factura</option>
+                                </select>
+                            </div>
+                        </div><!--end col-->
+
+                        <div class="col-sm-2">
+                            <div class="input-group align-items-center">
+                                <label class="form-label me-3" for="autoSizingInputGroup">Folio</label>
+                                <input type="text" class="form-control" id="autoSizingInput">
+                            </div>
+                        </div><!--end col-->
+                    </div><!--end row -->
+                </form>
+
+            </div>
+        </div>
+        <div class="d-flex">
+            <div class=" flex-shrink-1  pe-2">
+                <div class="card mb-2">
+                    <div class="card-header m-0">
+                        <p class="m-0 text-center">Opciones</p>
+                    </div>
+                    <button class="btn btn-link waves-effect p-1 mb-1" id="btn-edit-product">
+                        <div class=" d-flex justify-content-center">
+                            <img src="{{URL::asset('build/images/svg-pos/033-editar.svg')}}" alt="" class="avatar-xs" />
+                        </div>
+                        <span class="text-muted" style="font-size: 12px;">Editar (F1)</span>
+                    </button>
+                    <!--<button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                        <div class=" d-flex justify-content-center">
+                            <img src="{{URL::asset('build/images/svg-pos/020-caja-de-carton-1.svg')}}" alt="" class="avatar-xs" />
+                        </div>
+                        <span class="text-muted" style="font-size: 12px;">Cantidad (F1)</span>
+                    </button>
+                    <button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                        <div class=" d-flex justify-content-center">
+                            <img src="{{URL::asset('build/images/svg-pos/035-descuento.svg')}}" alt="" class="avatar-xs" />
+                        </div>
+                        <span class="text-muted" style="font-size: 12px;">Descuento (F3)</span>
+                    </button>-->
+                </div>
+                <div class="card mb-2">
+                    <button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                        <div class=" d-flex justify-content-center">
+                            <img src="{{URL::asset('build/images/svg-pos/034-reloj-de-arena.svg')}}" alt="" class="avatar-xs" />
+                        </div>
+                        <span class="text-muted" style="font-size: 12px;">Espera</span>
+                    </button>
+                    <button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                        <div class=" d-flex justify-content-center">
+                            <img src="{{URL::asset('build/images/svg-pos/reloj-de-arena.svg')}}" alt="" class="avatar-xs" />
+                        </div>
+                        <span class="text-muted" style="font-size: 12px;">Restaurar</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card w-100">
+                <div class="card-body">
+                    <div class="table-responsive table-card">
+                        <table class="table table-nowrap align-middle mb-0" id="tableTempPurchase">
+                            <thead class="table-light text-muted">
+                                <tr>
+                                    <th scope="col" style="display: none">id</th>
+                                    <th scope="col" style="display: none">temp_purchase_id</th>
+                                    <th scope="col" style="display: none">product_id</th>
+                                    <th scope="col" class="text-center">Descripcion</th>
+                                    <th scope="col" class="text-center">Cantidad</th>
+                                    <th scope="col" class="text-center">Factor</th>
+                                    <th scope="col" class="text-center">precio unit.</th>
+                                    <th scope="col" class="text-center">Descuento</th>
+                                    <th scope="col" class="text-center">Total</th>
+                                    <th scope="col" style="display: none">unit</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!--end card-->
+    </div>
+    <!--end col-->
+    <div class="col-xl-3">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <h5 class="card-title flex-grow-1 mb-0">Detalles del proveedor</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-12 mb-3">
+
+                        <input type="text"
+                            class="form-control"
+                            name="auto_complete_supplier"
+                            id="auto_complete_supplier"
+                            dir="ltr"
+                            spellcheck="false"
+                            autocomplete="off"
+                            autocapitalize="off">
+
+                    </div>
+                    <div class="col-sm-12 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <img src="{{ URL::asset('build/images/users/user-dummy-img.jpg') }}" alt="" class="avatar-sm rounded">
+                                <input type="hidden" name="supplier_id" id="supplier_id" value="0">
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="fs-14 mb-1 company_name">No seleccionado</h6>
+                                <p class="text-muted mb-0 name_supplier">Proveedor</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-7 mb-3">
+                        <span>
+                            <i class="ri-mail-line me-2 align-middle text-muted fs-16"></i>
+                            <span class="email_supplier">
+
+                            </span>
+                        </span>
+                    </div>
+                    <div class="col-sm-5 mb-3">
+                        <span>
+                            <i class="ri-phone-line me-2 align-middle text-muted fs-16"></i>
+                            <span class="phone_supplier">
+
+                            </span>
+                        </span>
+                    </div>
+                    <div class="col-sm-6 mb-2">
+                        <span>
+                            <i class="ri-bank-line me-2 align-middle text-muted fs-16"></i>
+                            <span class="rfc_supplier">
+
+                            </span>
+                        </span>
+                    </div>
+                    <div class="col-sm-6 mb-2">
+                        <span>
+                            <i class="ri-wallet-3-line me-2 align-middle text-muted fs-16"></i>
+                            <span class="credit_supplier">
+
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--end card-->
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="ri-secure-payment-line align-bottom me-1 text-muted"></i>
+                    Detalles del pago</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="col-sm-8">
+                        <p class="text-muted mb-0">Descuento:</p>
+                    </div>
+                    <div class="col-ms-4">
+                        <input type="text" class="form-control text-end" id="discount" name="discount" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="flex-shrink-0">
+                        <p class="text-muted mb-0">SubTotal:</p>
+                    </div>
+                    <div class="">
+                        <h4 class="sub-total mb-0"></h4>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="flex-shrink-0">
+                        <p class="text-muted mb-0">impuesto (I.V.A.):</p>
+                    </div>
+                    <div class="">
+                        <h4 class="tax mb-0"></h4>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="flex-shrink-0">
+                        <p class="text-muted mb-0">Total:</p>
+                    </div>
+                    <div class="">
+                        <h4 class="total mb-0"></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex">
+            <button class="btn btn-soft-success btn-lg mt-2 w-100 fs-4 fw-semibold">
+                <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Pagar
+            </button>
+        </div>
+        <div class="d-flex">
+            <button class="btn btn-soft-danger mt-3 w-100 fs-4 fw-semibold">
+                <i class="mdi mdi-archive-remove-outline align-middle me-1"></i> Cancelar
+            </button>
+        </div>
+        <!--end card-->
+    </div>
+    <!--end col-->
+</div>
+@endsection
+
+@section('script')
+
+<!-- jQuery (DEBE estar antes de DataTables) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/autoComplete.min.js') }}"></script>
+
+<!-- AlpineJS para manejar el modal -->
+<script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
+
+<script src="{{ URL::asset('build/js/app.js') }}"></script>
+@endsection
