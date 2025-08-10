@@ -25,6 +25,7 @@ Route::get('/categories/data', [CategoryController::class, 'getCategories'])->na
 Route::get('/departments/data', [DepartmentsController::class, 'getDepartments'])->name('departments.data');
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
 Route::get('/temp_purchases_detail/data', [TempPurchaseDetailController::class, 'getProductDetails'])->name('temp_purchases_detail.data');
+Route::get('/temp_purchases_detail/getPendingPurchases', [TempPurchaseDetailController::class, 'getPendingPurchases']);
 Route::get('/products/data', [ProductController::class, 'getProducts'])->name('products.data');
 Route::get('/customers/data', [CustomerController::class, 'getCustomers'])->name('customers.data');
 Route::get('/suppliers/data', [SuppliersController::class, 'getSuppliers'])->name('suppliers.data');
@@ -56,7 +57,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/temp_purchases_detail/add', [TempPurchaseDetailController::class, 'addProduct']);
     Route::get('/temp_purchases_detail/totals/{temp_purchase_id}', [TempPurchaseDetailController::class, 'getTotals']);
     Route::get('/temp_purchases_detail/getDataProductTemp/{id}', [TempPurchaseDetailController::class, 'getTempDetail']);
+    Route::post('/temp_purchases_detail/set-to-waiting/', [TempPurchaseDetailController::class, 'setToWaiting']);
+    Route::post('/temp_purchases_detail/updateDiscount/', [TempPurchaseDetailController::class, 'updateDiscount']);
     Route::get('/temp_purchases_detail/getDataProduct/{product}', [TempPurchaseDetailController::class, 'getDataProduct']);
+    Route::post('/temp_purchases_detail/getPurchaseOnWaitingList', [TempPurchaseDetailController::class, 'getPurchaseOnWaitingList']);
 
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);

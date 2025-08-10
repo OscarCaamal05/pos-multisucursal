@@ -34,6 +34,37 @@
     </div>
 </div>
 
+<div class="modal zoomIn" id="modal-purchase-waiting" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-product-details-Label">Compras en espera</h5>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive table-card">
+                    <table class="table table-nowrap align-middle mb-0" id="tablePurchaseWaiting">
+                        <thead class="table-light text-muted">
+                            <tr>
+                                <th scope="col" style="display: none">ID</th>
+                                <th scope="col" style="display: none">upplier_id</th>
+                                <th scope="col" class="text-center">Fecha</th>
+                                <th scope="col" class="text-center">Proveedor</th>
+                                <th scope="col" class="text-center">Total</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btn-close-product">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal zoomIn" id="modal-products" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -158,13 +189,13 @@
                     </button>-->
                 </div>
                 <div class="card mb-2">
-                    <button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                    <button class="btn btn-link waves-effect p-1" id="btn-set-waiting">
                         <div class=" d-flex justify-content-center">
                             <img src="{{URL::asset('build/images/svg-pos/034-reloj-de-arena.svg')}}" alt="" class="avatar-xs" />
                         </div>
                         <span class="text-muted" style="font-size: 12px;">Espera</span>
                     </button>
-                    <button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                    <button class="btn btn-link waves-effect p-1" id="btn-purchase-waiting">
                         <div class=" d-flex justify-content-center">
                             <img src="{{URL::asset('build/images/svg-pos/reloj-de-arena.svg')}}" alt="" class="avatar-xs" />
                         </div>
@@ -286,7 +317,13 @@
                         <p class="text-muted mb-0">Descuento:</p>
                     </div>
                     <div class="col-ms-4">
-                        <input type="text" class="form-control text-end" id="discount" name="discount" placeholder="0.00">
+                        <input type="text" class="form-control discount-general text-end"
+                            id="general-discount-number"
+                            name="general-discount-number"
+                            step="0.01"
+                            min="0"
+                            value="0.00"
+                            placeholder="0.00">
                     </div>
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -307,6 +344,22 @@
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="flex-shrink-0">
+                        <p class="text-muted mb-0">SubTotal sin Iva:</p>
+                    </div>
+                    <div class="">
+                        <h4 class="total-tax mb-0"></h4>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="flex-shrink-0">
+                        <p class="text-muted mb-0">SubTotal c/Descuento:</p>
+                    </div>
+                    <div class="">
+                        <h4 class="total-discount mb-0"></h4>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="flex-shrink-0">
                         <p class="text-muted mb-0">Total:</p>
                     </div>
                     <div class="">
@@ -316,12 +369,12 @@
             </div>
         </div>
         <div class="d-flex">
-            <button class="btn btn-soft-success btn-lg mt-2 w-100 fs-4 fw-semibold">
+            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold">
                 <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Pagar
             </button>
         </div>
         <div class="d-flex">
-            <button class="btn btn-soft-danger mt-3 w-100 fs-4 fw-semibold">
+            <button class="btn btn-soft-danger mt-2 w-100 fs-4 fw-semibold">
                 <i class="mdi mdi-archive-remove-outline align-middle me-1"></i> Cancelar
             </button>
         </div>

@@ -23,6 +23,7 @@ class TempPurchaseController extends Controller
                 'user_id' => $userId,
                 'status' => 'abierta',
                 'session_token' => session()->getId(),
+                'supplier_id' => null,
             ]);
         }
 

@@ -29,7 +29,7 @@ class TempPurchaseDetail extends Model
 
     public function tempPurchase()
     {
-        return $this->belongsTo(TempPurchase::class);
+        return $this->belongsTo(TempPurchase::class, 'temp_purchase_id');
     }
 
     public function product()

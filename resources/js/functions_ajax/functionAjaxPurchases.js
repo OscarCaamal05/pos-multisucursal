@@ -7,6 +7,7 @@ import { calculateUnitPrice, calculateMarginFromSalePrice } from './functionAjax
 let tableDetails = null;
 let selectedRowDetail = null;
 let productsTable = null;
+let purchasesTable = null;
 
 $(document).ready(function () {
     const input_date = document.querySelector('input[data-provider="flatpickr"]');
@@ -201,6 +202,42 @@ $(document).ready(function () {
     $('#btn-close-product').on('click', function () {
         $('#modal-products').modal('hide');
     });
+
+    // ============================================================================
+    // EVENTO: Cierra el modal de listado de los productos registrados en la base
+    // de datos.
+    // ============================================================================
+    $('#btn-set-waiting').on('click', function () {
+        sendPurchaseToWait();
+    });
+
+    // ============================================================================
+    // EVENTO: Cierra el modal de listado de los productos registrados en la base
+    // de datos.
+    // ============================================================================
+    $('#btn-purchase-waiting').on('click', function () {
+        $('#modal-purchase-waiting').modal('show');
+        listPendingPurchases();
+    });
+
+    // ============================================================================
+    // EVENTO: Obtiene los datos de la tabla de productos listados y el id se
+    // envia el id al input #product_id y esconde el modal. 
+    // ============================================================================
+    $('#tablePurchaseWaiting tbody').on('dblclick', 'tr', function () {
+        const data = purchasesTable.row(this).data();
+        //Recuperar la venta o cambiar el estado de la venta seleccionada a abierta y si hay uno en proceso enviarlo en espera
+        getPurchaseOnHold(data.id_temp_purchase);
+    })
+
+    // ============================================================================
+    // EVENTO: Obtiene el valor del input para mandarlo al controlador y actualizar el 
+    // descuento general de la compra
+    // ============================================================================
+    $('#general-discount-number').on('blur', function () {
+        const discount = $(this).val();
+        applyDiscount(discount);
+    })
 });
 /**
  * ------------------------------------------ FIN READY -------------------------------------------------
@@ -354,44 +391,27 @@ function bindDeleteEvents() {
     $('#tableTempPurchase tbody').on('click', '.btn-delete-detail', function () {
         const detailId = $(this).data('id');
 
-        showConfirmationAlert(
-            '¿Estás seguro?',
-            '¡No podrás revertir esta acción!',
-            'Sí, eliminar',
-            'Cancelar',
-            (confirmed) => {
-                if (confirmed) {
-                    $.ajax({
-                        url: `/temp_purchases_detail/${detailId}`,
-                        type: 'DELETE',
-                        data: {
-                            _token: $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function (response) {
-                            showAlert(
-                                'success',
-                                'Éxito',
-                                'El registro fue eliminado exitosamente.'
-                            );
-                            tableDetails.ajax.reload(null, false);
-                            $('.sub-total').text(`$${response.total_siva}`);
-                            $('.tax').text(`$${response.tax}`);
-                            $('.total').text(`$${response.total}`);
-                        },
-                        error: function () {
-                            showAlert(
-                                'error',
-                                'Error',
-                                'No se pudo eliminar el registro.'
-                            );
-                        }
-                    });
-                }
+        $.ajax({
+            url: `/temp_purchases_detail/${detailId}`,
+            type: 'DELETE',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                tableDetails.ajax.reload(null, false);
+                showTotals(response);
+            },
+            error: function () {
+                showAlert(
+                    'error',
+                    'Error',
+                    'No se pudo eliminar el registro.'
+                );
             }
-        );
+        });
+
     });
 }
-
 // =========================================
 // FUNCIÓN: Para el autocompletado de proveedores
 // =========================================
@@ -656,9 +676,7 @@ function addProductToTempList() {
             method: isEdit ? 'PUT' : 'POST',
             data: $form,
             success: function (response) {
-                $('.sub-total').text(`$${response.total_siva}`);
-                $('.tax').text(`$${response.tax}`);
-                $('.total').text(`$${response.total}`);
+                showTotals(response);
                 tableDetails.ajax.reload(null, false); // Recarga la tabla sin reiniciar la paginación
                 $('#modal-product-details').modal('hide');
                 $('#temp_id').val(0);
@@ -684,17 +702,234 @@ function loadTotals(temp_purchase_id) {
         method: 'GET',
         dataType: 'json',
         success: function (response) {
-            $('.sub-total').text(`$${response.total_siva}`);
-            $('.tax').text(`$${response.tax}`);
-            $('.total').text(`$${response.total}`);
+            showTotals(response);
         }
     });
 }
 
 // =========================================
+// FUNCIÓN: Para obtener y aplicar un descuento general a la compra y
+// recalcular los totales.
+// =========================================
+function applyDiscount(discount_applied) {
+    const tempId = $('#temp_purchase_id').val();
+    const discount = discount_applied;
+
+    $.ajax({
+        url: '/temp_purchases_detail/updateDiscount/',
+        method: 'POST',
+        data: {
+            _token: $('meta[name="csrf-token"]').attr('content'), // Necesario para POST en Laravel
+            temp_id: tempId,
+            discount: discount,
+        },
+        success: function (response) {
+
+            // Actualizar los totales en la vista
+            showTotals(response);
+
+        },
+        error: function (xhr) {
+            showAlert('error', 'Error', 'Error al actualizar el descuento.');
+        }
+    });
+}
+
+// =========================================
+// FUNCIÓN: Para mostrar los totales de la compra en la vista
+// =========================================
+function showTotals(totals) {
+    $('.sub-total').text(`$${totals.sub_total}`);
+    $('.total-tax').text(`$${totals.total_siva}`);
+    $('.tax').text(`$${totals.tax}`);
+    $('.total').text(`$${totals.total}`);
+    $('.discount-general').val((totals.discount || 0.00.toFixed(2)));
+    $('.total-discount').text(`$${totals.sub_total_discount}`);
+
+}
+// =========================================
+// FUNCIÓN: Para mandar la compra a espera, validando que haya productos en el listado
+// y que este seleccionado algun proveedor para la compra
+// =========================================
+function sendPurchaseToWait() {
+    const tempId = $('#temp_purchase_id').val();
+    const supplierId = $('#supplier_id').val();
+    if (!supplierId || supplierId == 0) {
+        showAlert(
+            'warning',
+            'Alerta',
+            'Seleccione un proveedor para enviar a espera.',
+        );
+        return;
+    }
+
+    $.ajax({
+        url: '/temp_purchases_detail/set-to-waiting/',
+        type: 'POST',
+        data: {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            temp_id: tempId,
+            supplier_id: supplierId,
+        },
+        success: function (response) {
+            localStorage.removeItem("proveedorSeleccionado");
+            showAlert(
+                response.status,
+                'Alerta',
+                response.message,
+            );
+            cleanInputPurchase();
+            tableDetails.ajax.reload();
+            $('#temp_purchase_id').val(response.data.new_temp_purchase_id);
+            loadTotals(response.data.new_temp_purchase_id);
+
+        },
+        error: function (xhr) {
+            let response = {};
+            response = JSON.parse(xhr.responseText);
+            showAlert(
+                response.status,
+                'Alerta',
+                response.message,
+            );
+        }
+    });
+
+}
+
+// =========================================
+// FUNCIÓN: Para obtener la compra en espera que se desea retomar
+// =========================================
+function getPurchaseOnHold(temp_id) {
+    const tempActualId = $('#temp_purchase_id').val();
+    const supplierId = $('#supplier_id').val();
+    const rowCount = tableDetails.rows().count();
+    if (rowCount != 0) {
+        if (!supplierId || supplierId == 0) {
+            showAlert(
+                'warning',
+                'Alerta',
+                'Seleccione un proveedor para enviar a espera.',
+            );
+            return;
+        }
+    }
+
+    $.ajax({
+        url: '/temp_purchases_detail/getPurchaseOnWaitingList',
+        type: 'POST',
+        data: {
+            _token: $('meta[name="csrf-token"]').attr('content'), // Necesario para POST en Laravel
+            temp_id: temp_id,
+            temp_actual_id: tempActualId,
+            supplier_id: supplierId,
+        },
+        success: function (response) {
+
+            $('#supplier_id').val(response.data.supplier_id).trigger('change');
+            $('#temp_purchase_id').val(response.data.temp_purchase_id);
+            loadTotals(response.data.temp_purchase_id);
+            tableDetails.ajax.reload(null, false);
+            $('#modal-purchase-waiting').modal('hide');
+            purchasesTable.ajax.reload();
+        },
+        error: function (xhr) {
+            let response = {};
+            response = JSON.parse(xhr.responseText);
+            showAlert(
+                response.status,
+                'Alerta',
+                response.message,
+            );
+        }
+    });
+
+}
+// =========================================
 // FUNCIÓN: Abre el modal de detalle de producto
 // =========================================
+function listPendingPurchases() {
+    if ($.fn.DataTable.isDataTable('#tablePurchaseWaiting')) {
+        $('#tablePurchaseWaiting').DataTable().destroy();
+        $('#tablePurchaseWaiting tbody').empty();
+    }
 
+    purchasesTable = $('#tablePurchaseWaiting').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '/temp_purchases_detail/getPendingPurchases',
+        columns: [
+            {
+                data: 'id_temp_purchase',
+                name: 'id_temp_purchase',
+                visible: false,
+            },
+            {
+                data: 'supplier_id',
+                name: 'supplier_id',
+                visible: false,
+            },
+            {
+                data: 'date_created',
+                name: 't.created_at',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    if (data) {
+                        let date = new Date(data);
+                        let fechaFormato = date.toLocaleDateString('es-ES');
+                        let horaFormato = date.toLocaleTimeString('es-ES', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+
+                        return `
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <h5 class="fs-13 m-1">${fechaFormato}</h5>
+                                    <small class="text-muted">${horaFormato}</small>
+                                </div>
+                            </div>
+            `;
+                    }
+                    return '';
+                }
+            },
+            {
+                data: null,
+                name: 'description',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    return `
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <h5 class="fs-13 m-1">
+                                ${row.company_name}
+                            </h5>
+                            <p class="text-muted mb-0">${row.representative}</p>
+                        </div>
+                    </div>
+                    `;
+                }
+            },
+            {
+                data: 'total_amount',
+                name: 'total_amount',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    return '$' + parseFloat(data || 0).toFixed(2);
+                }
+            }
+        ],
+        scrollY: 400,
+        deferRender: true,
+        scroller: true,
+        language: idiomaEspanol,
+        searching: false,
+        info: false,
+        lengthChange: false,
+        pageLength: -1,
+    });
+}
 /**
  * Muestra el modal del detalle del producto.
  *
@@ -765,6 +1000,12 @@ function clearProductDetailModal() {
     });
 }
 
+// =========================================
+// FUNCIÓN: Para limpiar los campos de la compra
+// =========================================
+function cleanInputPurchase() {
+    $('#supplier_id').val(0)
+}
 // =========================================
 // FUNCIÓN: Calcula el descuento en porcentaje
 // =========================================
