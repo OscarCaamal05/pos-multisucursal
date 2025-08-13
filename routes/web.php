@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/temp_purchases_detail/set-to-waiting/', [TempPurchaseDetailController::class, 'setToWaiting']);
     Route::post('/temp_purchases_detail/updateDiscount/', [TempPurchaseDetailController::class, 'updateDiscount']);
     Route::get('/temp_purchases_detail/getDataProduct/{product}', [TempPurchaseDetailController::class, 'getDataProduct']);
+    Route::get('/temp_purchases_detail/cancelPurchase/{temp_id}', [TempPurchaseDetailController::class, 'cancelPurchase']);
     Route::post('/temp_purchases_detail/getPurchaseOnWaitingList', [TempPurchaseDetailController::class, 'getPurchaseOnWaitingList']);
 
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);

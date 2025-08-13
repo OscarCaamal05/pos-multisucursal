@@ -325,7 +325,35 @@ class TempPurchaseDetailController extends Controller
         ], $totals));
     }
 
+    public function cancelPurchase($temp_id)
+    {
+        try {
+            // Contar registros existentes
+            $existingCount = TempPurchaseDetail::Where('temp_purchase_id', $temp_id)
+                ->count();
 
+            if ($existingCount === 0) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'No hay productos registrados en esta compra.'
+                ]);
+            }
+
+            // Eliminar los detalles asociados
+            TempPurchaseDetail::where('temp_purchase_id', $temp_id)->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Compra cancelada.'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al cancelar la compra.'
+            ], 500);
+        }
+    }
     public function autoCompleteSuppliers($query)
     {
         $results = Supplier::where('company_name', 'LIKE', '%' . $query . '%')

@@ -60,7 +60,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" id="btn-close-product">Cerrar</button>
+                <button type="button" class="btn btn-danger" id="btn-close-pending">Cerrar</button>
             </div>
         </div>
     </div>
@@ -134,8 +134,8 @@
                     <div class="row justify-content-between align-items-center">
                         <div class="col-sm-3">
                             <div class="input-group align-items-center">
-                                <label class="form-label me-3" for="autoSizingInputGroup">Documento</label>
-                                <select class="form-select" id="autoSizingSelect">
+                                <label class="form-label me-3" for="document-type">Documento</label>
+                                <select class="form-select" id="document-type">
                                     <option value="1">Compra</option>
                                     <option value="2">Gasto</option>
                                 </select>
@@ -144,8 +144,8 @@
 
                         <div class="col-sm-3">
                             <div class="input-group align-items-center">
-                                <label class="form-label me-3" for="autoSizingInputGroup">Comprobante</label>
-                                <select class="form-select" id="autoSizingSelect">
+                                <label class="form-label me-3" for="voucher-type">Comprobante</label>
+                                <select class="form-select" id="voucher-type">
                                     <option value="1">Ticket</option>
                                     <option value="2">Factura</option>
                                 </select>
@@ -154,8 +154,8 @@
 
                         <div class="col-sm-2">
                             <div class="input-group align-items-center">
-                                <label class="form-label me-3" for="autoSizingInputGroup">Folio</label>
-                                <input type="text" class="form-control" id="autoSizingInput">
+                                <label class="form-label me-3" for="folio">Folio</label>
+                                <input type="text" class="form-control" id="folio">
                             </div>
                         </div><!--end col-->
                     </div><!--end row -->
@@ -374,7 +374,7 @@
             </button>
         </div>
         <div class="d-flex">
-            <button class="btn btn-soft-danger mt-2 w-100 fs-4 fw-semibold">
+            <button class="btn btn-soft-danger mt-2 w-100 fs-4 fw-semibold" id="btn-cancel-purchase">
                 <i class="mdi mdi-archive-remove-outline align-middle me-1"></i> Cancelar
             </button>
         </div>

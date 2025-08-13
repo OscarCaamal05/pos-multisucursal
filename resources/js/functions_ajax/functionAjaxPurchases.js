@@ -204,6 +204,13 @@ $(document).ready(function () {
     });
 
     // ============================================================================
+    // EVENTO: Cierra el modal de listado de los compra pendientes
+    // ============================================================================
+    $('#btn-close-pending').on('click', function () {
+        $('#modal-purchase-waiting').modal('hide');
+    });
+
+    // ============================================================================
     // EVENTO: Cierra el modal de listado de los productos registrados en la base
     // de datos.
     // ============================================================================
@@ -238,6 +245,10 @@ $(document).ready(function () {
         const discount = $(this).val();
         applyDiscount(discount);
     })
+
+    $('#btn-cancel-purchase').on('click', function () {
+        cancelTempPurchase();
+    });
 });
 /**
  * ------------------------------------------ FIN READY -------------------------------------------------
@@ -979,6 +990,34 @@ function showProductDetailModal(data, isEdit) {
 }
 
 // =========================================
+// FUNCIÓN: Cancelar la compra
+// =========================================
+/**
+ * Envia el id de temp_purchase para buscar si existen registros en la tabla temporal
+ * en caso de que existan los elimina
+ * 
+ * @param {number} temp_purchase_id - id de la compra
+ */
+function cancelTempPurchase() {
+    const tempActualId = $('#temp_purchase_id').val();
+    $.ajax({
+        url: `/temp_purchases_detail/cancelPurchase/${tempActualId}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            if (response.status === 'warning') {
+                showAlert(response.status, 'Advertencia', response.message);
+                return;
+            } else {
+                cleanInputPurchase();
+                location.reload();
+            }
+
+        }
+    });
+}
+
+// =========================================
 // FUNCIÓN: Limpia todos los datos del modal de detalle de los productos para compra
 // =========================================
 function clearProductDetailModal() {
@@ -1004,7 +1043,39 @@ function clearProductDetailModal() {
 // FUNCIÓN: Para limpiar los campos de la compra
 // =========================================
 function cleanInputPurchase() {
+    // Limpia los campos del proveedor
     $('#supplier_id').val(0)
+    $('.company_name').html('No seleccionado')
+    $('.name_supplier').html('Proveedor')
+    $('.email_supplier').html('')
+    $('.phone_supplier').html('')
+    $('.rfc_supplier').html('')
+    $('.credit_supplier').html('')
+    $('.discount-general').val(0.00);
+
+    // Limpia el campo de autocompletado
+    $('#auto_complete_supplier').val('');
+    $('#auto_complete_product').val('');
+
+    // Para restablecer los selects y inputs de la compra
+    $('#document-type').val(1).trigger('change');
+    $('#voucher-type').val(1).trigger('change');
+    $('#folio').val('');
+
+    // Restablecer la fecha de compra al día actual
+    const dateInput = $('input[data-provider="flatpickr"]')[0];
+    const flatpickrInstance = dateInput._flatpickr;
+
+    if (flatpickrInstance) {
+        const today = new Date();
+        const currentDate = flatpickrInstance.selectedDates[0];
+
+        // Solo cambiar si es diferente a hoy
+        if (!currentDate || currentDate.toDateString() !== today.toDateString()) {
+            flatpickrInstance.setDate(today, true);
+            console.log('Fecha restablecida a hoy');
+        }
+    }
 }
 // =========================================
 // FUNCIÓN: Calcula el descuento en porcentaje
