@@ -136,8 +136,11 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="document-type">Documento</label>
                                 <select class="form-select" id="document-type">
-                                    <option value="1">Compra</option>
-                                    <option value="2">Gasto</option>
+                                    @foreach ($documentTypes as $documents)
+                                    <option value="{{ $documents->id }}">
+                                        {{ $documents->type_name }}
+                                    </option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div><!--end col-->
@@ -146,8 +149,11 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="voucher-type">Comprobante</label>
                                 <select class="form-select" id="voucher-type">
-                                    <option value="1">Ticket</option>
-                                    <option value="2">Factura</option>
+                                    @foreach ($voucherTypes as $voucher)
+                                    <option value="{{ $voucher->id }}">
+                                        {{ $voucher->voucher_name }}
+                                    </option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div><!--end col-->

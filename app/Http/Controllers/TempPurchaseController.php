@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DocumentType;
 use App\Models\TempPurchase;
+use App\Models\VoucherTypes;
 use Illuminate\Http\Request;
 
 class TempPurchaseController extends Controller
@@ -26,8 +28,15 @@ class TempPurchaseController extends Controller
                 'supplier_id' => null,
             ]);
         }
+        // Retorna los datos de la tabla tipo de documento
+        $documentTypes = DocumentType::where('is_active', true)
+        ->whereIn('type_name', ['Compra', 'Gasto'])
+        ->get();
 
-        return view('temp_purchase.index', compact('temp'));
+        // Retorna los datos de la tabla tipo de comprobante
+        $voucherTypes = VoucherTypes::where('is_active', true)
+        ->get();
+        return view('temp_purchase.index', compact('temp', 'documentTypes', 'voucherTypes'));
     }
 
     /**
