@@ -1,5 +1,6 @@
 import { showAlert, clearValidationErrors, handleValidationError, showConfirmationAlert } from './utils/alerts';
 import { calculateUnitPrice, calculateMarginFromSalePrice } from './functionAjaxProducts';
+import { makeNumericInput } from './utils/numericInputs';
 // =========================================
 // VARIABLES GLOBALES
 // =========================================
@@ -29,7 +30,20 @@ $(document).ready(function () {
     loadTotals(temp_purchase_id);
     addProductToTempList();
     bindDeleteEvents();
-
+    // =============================================================================
+    // Validando input numéricos
+    // =============================================================================
+    makeNumericInput('.price-sale', { type: 'decimal', min: 0, decimals: 2 });
+    makeNumericInput('#folio', { type: 'integer', min: 1 });
+    makeNumericInput('#general-discount-number', { type: 'decimal', min: 1 });
+    makeNumericInput('#quantity', { type: 'integer', min: 1 });
+    makeNumericInput('#cost', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#discount-number', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#new_price_sale_1', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#new_price_sale_2', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#new_price_sale_3', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#discount-percentage', { type: 'integer', min: 0, max: 100 });
+    makeNumericInput('#new-factor', { type: 'integer', min: 1 });
     // =============================================================================
     // EVENTO: inicializa el autocompletado para proveedores
     // =============================================================================
@@ -246,9 +260,25 @@ $(document).ready(function () {
         applyDiscount(discount);
     })
 
+    // ============================================================================
+    // EVENTO: Para cancelar la compra, validando que haya productos en el listado
+    // ============================================================================
     $('#btn-cancel-purchase').on('click', function () {
         cancelTempPurchase();
     });
+
+    // ============================================================================
+    // EVENTO: Para aplicar el autoseleccionado a los inputs
+    // ============================================================================
+    $('.auto-select').on('focus', function () {
+        let $this = $(this);
+        $this.trigger('select');
+
+        $this.on('mouseip.selectText', function(e) {
+            e.preventDefault();
+            $this.off('mouseup.selectText');
+        });
+    })
 });
 /**
  * ------------------------------------------ FIN READY -------------------------------------------------

@@ -112,7 +112,7 @@
                             <div class="input-group align-items-center w-100">
                                 <div class="form-icon">
                                     <input type="text"
-                                        class="form-control form-control-icon"
+                                        class="form-control form-control-icon auto-select"
                                         name="auto_complete_product"
                                         id="auto_complete_product"
                                         value="">
@@ -159,7 +159,7 @@
                         </div><!--end col-->
 
                         <div class="col-sm-2">
-                            <div class="input-group align-items-center">
+                            <div class="input-group align-items-center auto-select">
                                 <label class="form-label me-3" for="folio">Folio</label>
                                 <input type="text" class="form-control" id="folio">
                             </div>
@@ -254,7 +254,7 @@
                     <div class="col-sm-12 mb-3">
 
                         <input type="text"
-                            class="form-control"
+                            class="form-control auto-select"
                             name="auto_complete_supplier"
                             id="auto_complete_supplier"
                             dir="ltr"
@@ -323,7 +323,7 @@
                         <p class="text-muted mb-0">Descuento:</p>
                     </div>
                     <div class="col-ms-4">
-                        <input type="text" class="form-control discount-general text-end"
+                        <input type="text" class="form-control discount-general text-end auto-select"
                             id="general-discount-number"
                             name="general-discount-number"
                             step="0.01"
