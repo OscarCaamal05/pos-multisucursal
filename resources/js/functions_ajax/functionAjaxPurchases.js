@@ -30,6 +30,7 @@ $(document).ready(function () {
     loadTotals(temp_purchase_id);
     addProductToTempList();
     bindDeleteEvents();
+    validatePaymentMethod();
     // =============================================================================
     // Validando input numéricos
     // =============================================================================
@@ -274,11 +275,30 @@ $(document).ready(function () {
         let $this = $(this);
         $this.trigger('select');
 
-        $this.on('mouseip.selectText', function(e) {
+        $this.on('mouseip.selectText', function (e) {
             e.preventDefault();
             $this.off('mouseup.selectText');
         });
     })
+
+    // ============================================================================
+    // EVENTO: Mostrar el modal para procesar el pago de la compra
+    // ============================================================================
+    $('#btn-process-purchase').on('click', function (e) {
+        e.preventDefault();
+        $('#modal-payment-detail').modal('show');
+        //Mostrando los datos en el modal de pago
+        let total_final = parseFloat($('.total').text().replace(/[$,]/g, ''));
+        let limit_credit = $('.credit-limit-supplier').val();
+        let credit_available_supplier = parseFloat($('.credit_supplier').text().replace(/[$,]/g, ''));
+        $('#payment-cash').val(total_final.toFixed(2));
+        $('#current-credit').val(total_final.toFixed(2));
+        $('#credit-limit').val(limit_credit);
+        $('.credit_available').val(credit_available_supplier.toFixed(2));
+        $('#days-credit-supplier').prop('disabled', true);
+        $('#due-date').prop('disabled', true);
+        $('#current-credit').prop('disabled', true);
+    });
 });
 /**
  * ------------------------------------------ FIN READY -------------------------------------------------
@@ -551,8 +571,8 @@ function getSupplierData(supplierId) {
             $('.phone_supplier').text(phoneFormat || 'No hay dato');
             $('.rfc_supplier').text(response.rfc || 'No hay dato');
             $('.credit_supplier').text(response.credit_available || 'No hay dato');
+            $('.credit-limit-supplier').val(response.credit_limit || 0);
             $('#supplier_id').val(supplierId || 0);
-
             // Guardar datos en localStorage para permanencia al recargar la pagina
             const supplier = {
                 supplierId: supplierId,
@@ -561,7 +581,8 @@ function getSupplierData(supplierId) {
                 email: response.email,
                 phone: phoneFormat,
                 rfc: response.rfc,
-                credit_available: response.credit_available
+                credit_available: response.credit_available,
+                credit_limit: response.credit_limit
             };
             localStorage.setItem("proveedorSeleccionado", JSON.stringify(supplier));
 
@@ -584,6 +605,7 @@ function initSupplier() {
         $('.phone_supplier').text(data.phone || 'No hay dato');
         $('.rfc_supplier').text(data.rfc || 'No hay dato');
         $('.credit_supplier').text(data.credit_available || 'No hay dato');
+        $('.credit-limit-supplier').val(data.credit_limit || 0);
         $('#supplier_id').val(data.supplierId || 0);
     }
 }
@@ -1193,6 +1215,35 @@ function loadListProducts() {
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
+    });
+}
+// =================================================================================
+// FUNCIÓN: Valida el metodo de pago seleccionado y muestra los campos correspondientes
+// =================================================================================
+function validatePaymentMethod() {
+    // Evento para mostrar/ocultar campos según el método de pago seleccionado
+    $('input[name="payment_method"]').on('change', function () {
+        const selectedMethod = $(this).attr('id');
+        console.log(selectedMethod);
+        if (selectedMethod === 'payment-box') {
+            let total_final_reset = parseFloat($('.total').text().replace(/[$,]/g, ''));
+            $('#payment-cash').val(total_final_reset.toFixed(2)).prop('disabled', false);
+            $('#payment-card').val(0).prop('disabled', false);
+            $('#payment-transfer').val(0).prop('disabled', false);
+            $('#payment-voucher').val(0).prop('disabled', false);
+            $('#credit').prop('disabled', true);
+            $('#credit_available').prop('disabled', true);
+            $('#current-credit').prop('disabled', true);
+            $('#days-credit-supplier').prop('disabled', true);
+        } else if (selectedMethod === 'payment-credit') {
+            $('#current-credit').prop('disabled', false);
+            $('#days-credit-supplier').prop('disabled', false);
+            $('#due-date').prop('disabled', false);
+            $('#payment-cash').val(0).prop('disabled', true);
+            $('#payment-card').val(0).prop('disabled', true);
+            $('#payment-transfer').val(0).prop('disabled', true);
+            $('#payment-voucher').val(0).prop('disabled', true);
+        }
     });
 }
 

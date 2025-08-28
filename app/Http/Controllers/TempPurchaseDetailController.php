@@ -106,14 +106,15 @@ class TempPurchaseDetailController extends Controller
         if (!$supplier) {
             return response()->json(['error' => 'Proveedor no encontrado'], 404);
         }
-
+        $credit_available = round($supplier->credit_available - $supplier->credit, 2);
         return response()->json([
             'company_name' => $supplier->company_name,
             'representative' => $supplier->representative,
             'phone' => $supplier->phone,
             'email' => $supplier->email,
             'rfc' => $supplier->rfc,
-            'credit_available' => $supplier->credit_available,
+            'credit_available' => $credit_available,
+            'credit_limit' => $supplier->credit_available,
         ]);
     }
 

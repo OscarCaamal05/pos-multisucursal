@@ -11,6 +11,26 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxPurchases.js')
 
+<div class="modal zoomIn" id="modal-payment-detail" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-end" id="modal-product-details-Label">Compra</h5>
+            </div>
+            <form id="productDetails">
+                @csrf
+                <div class="modal-body">
+                    @include('temp_purchase.payment-fields-form')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-add-product-details">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal zoomIn" id="modal-product-details" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -268,6 +288,7 @@
                             <div class="flex-shrink-0">
                                 <img src="{{ URL::asset('build/images/users/user-dummy-img.jpg') }}" alt="" class="avatar-sm rounded">
                                 <input type="hidden" name="supplier_id" id="supplier_id" value="0">
+                                <input class="credit-limit-supplier" type="hidden" value="0">
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <h6 class="fs-14 mb-1 company_name">No seleccionado</h6>
@@ -375,7 +396,7 @@
             </div>
         </div>
         <div class="d-flex">
-            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold">
+            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold" id="btn-process-purchase">
                 <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Pagar
             </button>
         </div>
