@@ -1,7 +1,8 @@
 // =========================================
 // IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
 // =========================================
-import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from './utils/alerts';
+import { showAlert, showConfirmationAlert } from './utils/alerts';
+import { bindSupplierFormSubmit, initCreditTermsAndDate, showSupplierModal, closeSupplierModal, formatCleave } from './helpers/supplierHelper';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -17,11 +18,14 @@ $(document).ready(function () {
     bindEvents();
 
     // =========================================
-    // EVENTO: Seleccionar el texto al hacer clic en inputs con clase 'select-on-click'
+    // Inicializando la funcion para crear o actualizar proveedores
     // =========================================
-    /*$(document).on('click', '.select-on-click', function () {
-        $(this).trigger('select');
-    });*/
+    /**
+     * Recibe parametros del modulo, el form, modal, tabla, y una funcion callback para realizar funciones adicionales
+     */
+    bindSupplierFormSubmit({
+        table: suppliersTable,
+    });
 
     // =========================================
     // EVENTO: Para selccionar el primer input del formulario
@@ -30,15 +34,20 @@ $(document).ready(function () {
         $('#representative').trigger('focus');
     });
 
+    $('#credit_available').on('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    initCreditTermsAndDate("#credit_terms", "#credit_due_date", 30);
+
 })
 
 function bindEvents() {
-    bindFormSubmit();
-    bindModalCloseEvents();
     bindDeleteEvents();
     bindEditEvents();
     bindToggleStatusEvents();
     formatCleave();
+    closeSupplierModal();
 }
 
 function initializeDataTable() {
@@ -90,14 +99,27 @@ function initializeDataTable() {
                 visible: false
             },
             {
-                data: 'credit_available',
+                data: null,
                 name: 'credit_available',
                 orderable: false,
-                searchable: false
+                searchable: false,
+                render: function (data, type, row) {
+                    return data.credit_available - data.credit;
+                }
             },
             {
                 data: 'credit',
                 name: 'credit',
+                visible: false
+            },
+            {
+                data: 'credit_due_date',
+                name: 'credit_due_date',
+                visible: false
+            },
+            {
+                data: 'credit_terms',
+                name: 'credit_terms',
                 visible: false
             },
             {
@@ -161,65 +183,6 @@ function renderActionsColumn(data) {
             </a>
         </div>
     `;
-}
-
-// =========================================
-// FUNCIÓN: Envío del formulario
-// =========================================
-
-/**
- * Maneja el envío del formulario para crear o actualizar proveedores.
- */
-function bindFormSubmit() {
-    $('#supplierForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const $form = $(this);
-        const supplierId = $('#supplierId').val();
-        const isEdit = supplierId != 0;
-
-        clearValidationErrors();
-
-        const formDataArray = $form.serializeArray();
-        const cleanData = {};
-
-        formDataArray.forEach(field => {
-            const input = $(`[name="${field.name}"]`);
-            let rawValue = field.value;
-
-            // Si el input tiene cleave, obtener el valor limpio
-            if (input[0].cleave) {
-                rawValue = input[0].cleave.getRawValue();
-            }
-
-            switch (field.name) {
-                case 'phone':
-                    cleanData[field.name] = rawValue.replace(/[^\d]/g, '');
-                    break;
-                default:
-                    cleanData[field.name] = rawValue.trim();
-            }
-        });
-
-        $.ajax({
-            url: isEdit ? `/suppliers/${supplierId}` : $form.data('action'),
-            method: isEdit ? 'PUT' : 'POST',
-            data: cleanData,
-            success: function (response) {
-                $('#supplierModal').modal('hide');
-                suppliersTable.ajax.reload();
-                showAlert(
-                    'success',
-                    'Éxito',
-                    response.create ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
-                );
-                resetSupplierForm();
-            },
-            error: function (xhr) {
-                handleValidationError(xhr);
-            }
-        });
-    });
 }
 
 // =========================================
@@ -363,102 +326,6 @@ function updateSupplierStatus(supplierId, status) {
     });
 }
 
-// =========================================
-// FUNCIÓN: Maneja eventos de cierre del modal
-// =========================================
-
-/**
- * Confirma el cierre del modal si hay datos ingresados.
- */
-function bindModalCloseEvents() {
-    $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
-        e.preventDefault();
-
-        const hasData = $('#representative').val().trim() !== '' ||
-            $('#company_name').val().trim() !== '' ||
-            $('#rfc').val().trim() !== '' ||
-            $('#phone').val().trim() !== '' ||
-            $('#email').val().trim() !== '' ||
-            $('#credit_available').val().trim() !== '' ||
-            $('#address').val().trim() !== '';
-
-        if (hasData) {
-            showConfirmationAlert(
-                '¿Estás seguro?',
-                'Perderás los datos ingresados.',
-                'Sí, cancelar',
-                'No, volver',
-                (confirmed) => {
-                    if (confirmed) {
-                        $('#supplierModal').modal('hide');
-                        resetSupplierForm();
-                    }
-                }
-            );
-        } else {
-            $('#supplierModal').modal('hide');
-            resetSupplierForm();
-        }
-    });
-}
-
-// =========================================
-// FUNCIÓN: Abre el modal de Proveedor
-// =========================================
-
-/**
- * Muestra el modal de creación o edición de Proveedor.
- *
- * @param {Object|null} data - Datos del cliente o null si es nuevo.
- */
-function showSupplierModal(data = null) {
-    resetSupplierForm();
-
-    if (data) {
-        $('.modal-title').text('Editar Proveedor');
-        $('#representative').val(data.representative);
-        $('#company_name').val(data.company_name);
-        $('#rfc').val(data.rfc);
-        $('#phone').val(data.phone);
-        $('#email').val(data.email);
-        $('#credit_available').val(data.credit_available);
-        $('#address').val(data.address);
-        $('#supplierId').val(data.id);
-    } else {
-        $('.modal-title').text('Agregar Proveedor');
-    }
-    formatCleave();
-    $('#supplierModal').modal('show');
-}
-
-// =========================================
-// FUNCIÓN: Restablece el formulario del modal
-// =========================================
-
-/**
- * Resetea el formulario de Proveedor a su estado inicial.
- */
-function resetSupplierForm() {
-    $('#supplierForm')[0].reset();
-    $('#supplierId').val(0);
-    clearValidationErrors();
-    $('.modal-title').text('Agregar Proveedor');
-}
-
-function formatCleave() {
-    if (document.querySelector("#phone")) {
-        var cleaveBlocks = new Cleave('#phone', {
-            delimiters: ['(', ')', '-'],
-            blocks: [0, 3, 3, 4],
-            numericOnly: true
-        });
-    }
-
-    $('#credit_available').on('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
-
-}
 // =========================================
 // CONSTANTES: Configuración idioma DataTable
 // =========================================

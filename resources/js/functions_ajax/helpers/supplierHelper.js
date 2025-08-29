@@ -8,9 +8,9 @@ import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidati
  * @param {DataTable|null} options.table - Instancia de DataTable a recargar (o null si no hay)
  * @param {Function|null} options.onSuccess - Callback extra después de guardar
  */
-export function bindCustomerFormSubmit({
-    formSelector = '#customerForm',
-    modalSelector = '#customerModal',
+export function bindSupplierFormSubmit({
+    formSelector = '#supplierForm',
+    modalSelector = '#supplierModal',
     table = null,
     onSuccess = null
 } = {}) {
@@ -18,8 +18,8 @@ export function bindCustomerFormSubmit({
         e.preventDefault();
 
         const $form = $(this);
-        const customerId = $form.find('#customerId').val();
-        const isEdit = customerId != 0;
+        const supplierId = $('#supplierId').val();
+        const isEdit = supplierId != 0;
 
         clearValidationErrors();
 
@@ -45,7 +45,7 @@ export function bindCustomerFormSubmit({
         });
 
         $.ajax({
-            url: isEdit ? `/customers/${customerId}` : $form.data('action'),
+            url: isEdit ? `/suppliers/${supplierId}` : $form.data('action'),
             method: isEdit ? 'PUT' : 'POST',
             data: cleanData,
             success: function (response) {
@@ -63,12 +63,7 @@ export function bindCustomerFormSubmit({
                     'Éxito',
                     response.status === 'create' ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
-                resetCategoryForm();
-
-                // Callback extra si se pasa
-                if (typeof onSuccess === 'function') {
-                    onSuccess(response);
-                }
+                resetSupplierForm();
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -76,6 +71,7 @@ export function bindCustomerFormSubmit({
         });
     });
 }
+
 // =========================================
 // FUNCIÓN: Para configurar el flatpickr
 // =========================================
@@ -126,11 +122,12 @@ export function initCreditTermsAndDate(daysSelector, dateSelector, defaultDays =
 /**
  * Confirma el cierre del modal si hay datos ingresados.
  */
-export function closeCustomerModal() {
-    $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
+export function closeSupplierModal() {
+    $(document).on('click', '#btn-cancelar-supplier, #btn-close-modal-supplier', function (e) {
         e.preventDefault();
 
-        const hasData = $('#full_name').val().trim() !== '' ||
+        const hasData = $('#representative').val().trim() !== '' ||
+            $('#company_name').val().trim() !== '' ||
             $('#rfc').val().trim() !== '' ||
             $('#phone').val().trim() !== '' ||
             $('#email').val().trim() !== '' ||
@@ -145,29 +142,35 @@ export function closeCustomerModal() {
                 'No, volver',
                 (confirmed) => {
                     if (confirmed) {
-                        $('#customerModal').modal('hide');
-                        resetCustomerForm();
+                        $('#supplierModal').modal('hide');
+                        resetSupplierForm();
                     }
                 }
             );
         } else {
-            $('#customerModal').modal('hide');
-            resetCustomerForm();
+            $('#supplierModal').modal('hide');
+            resetSupplierForm();
         }
     });
 }
 
+
+// =========================================
+// FUNCIÓN: Abre el modal de Proveedor
+// =========================================
+
 /**
- * Muestra el modal de creación o edición de clientes.
+ * Muestra el modal de creación o edición de Proveedor.
  *
  * @param {Object|null} data - Datos del cliente o null si es nuevo.
  */
-export function showCustomerModal(data = null) {
-    resetCustomerForm();
+export function showSupplierModal(data = null) {
+    resetSupplierForm();
 
     if (data) {
-        $('.modal-title').text('Editar Customer');
-        $('#full_name').val(data.full_name);
+        $('.modal-title').text('Editar Proveedor');
+        $('#representative').val(data.representative);
+        $('#company_name').val(data.company_name);
         $('#rfc').val(data.rfc);
         $('#phone').val(data.phone);
         $('#email').val(data.email);
@@ -175,22 +178,26 @@ export function showCustomerModal(data = null) {
         $('#address').val(data.address);
         $('#credit_terms').val(data.credit_terms);
         $('#credit_due_date').val(data.credit_due_date);
-        $('#customerId').val(data.id);
+        $('#supplierId').val(data.id);
     } else {
-        $('.modal-title').text('Agregar Categoria');
+        $('.modal-title').text('Agregar Proveedor');
     }
     formatCleave();
-    $('#customerModal').modal('show');
+    $('#supplierModal').modal('show');
 }
 
+// =========================================
+// FUNCIÓN: Restablece el formulario del modal
+// =========================================
+
 /**
- * Resetea el formulario de clientes a su estado inicial.
+ * Resetea el formulario de Proveedor a su estado inicial.
  */
-export function resetCustomerForm() {
-    $('#customerForm')[0].reset();
-    $('#customerId').val(0);
+function resetSupplierForm() {
+    $('#supplierForm')[0].reset();
+    $('#supplierId').val(0);
     clearValidationErrors();
-    $('.modal-title').text('Agregar Cliente');
+    $('.modal-title').text('Agregar Proveedor');
 }
 
 export function formatCleave() {
@@ -202,5 +209,8 @@ export function formatCleave() {
         });
     }
 
-}
+    $('#credit_available').on('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
 
+}

@@ -13,7 +13,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
-                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal"></button>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
             </div>
             <form id="supplierForm">
                 @csrf
@@ -22,7 +22,7 @@
                     @include('suppliers.form-fields')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-supplier">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
@@ -60,6 +60,8 @@
                                 <th scope="col">Direccion</th>
                                 <th scope="col">Credito disponible</th>
                                 <th scope="col">Credito</th>
+                                <th scope="col">Días</th>
+                                <th scope="col">Vencimiento</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col">Acciones</th>
                             </tr>

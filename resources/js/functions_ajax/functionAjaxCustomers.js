@@ -97,10 +97,13 @@ function initializeDataTable() {
                 visible: false
             },
             {
-                data: 'credit_available',
+                data: null,
                 name: 'credit_available',
                 orderable: false,
-                searchable: false
+                searchable: false,
+                render: function (data, type, row) {
+                    return data.credit_available - data.credit;
+                }
             },
             {
                 data: 'credit',
