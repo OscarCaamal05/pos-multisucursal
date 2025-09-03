@@ -19,7 +19,7 @@ export function bindSupplierFormSubmit({
 
         const $form = $(this);
         const supplierId = $('#supplierId').val();
-        const isEdit = supplierId != 0;
+        const isEdit = supplierId != 0 && supplierId != '0' && supplierId != '';
 
         clearValidationErrors();
 
@@ -31,7 +31,7 @@ export function bindSupplierFormSubmit({
             let rawValue = field.value;
 
             // Si el input tiene cleave, obtener el valor limpio
-            if (input[0].cleave) {
+            if (input[0] && input[0].cleave) {
                 rawValue = input[0].cleave.getRawValue();
             }
 
@@ -44,10 +44,24 @@ export function bindSupplierFormSubmit({
             }
         });
 
+        const storeUrl = $form.data('store-url') || $form.attr('data-store-url');
+        const updateUrlBase = $form.data('update-url-base') || $form.attr('data-update-url-base') || '/suppliers/';
+
+        // Construir la URL
+        let url;
+        if (isEdit) {
+            url = updateUrlBase + supplierId;
+        } else {
+            url = storeUrl || '/suppliers';
+        }
+
         $.ajax({
-            url: isEdit ? `/suppliers/${supplierId}` : $form.data('action'),
+            url: url,
             method: isEdit ? 'PUT' : 'POST',
             data: cleanData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function (response) {
                 // Cierra el modal
                 $(modalSelector).modal('hide');
@@ -63,9 +77,31 @@ export function bindSupplierFormSubmit({
                     'Éxito',
                     response.status === 'create' ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
+
+                // Callback opcional
+                if (typeof onSuccess === 'function') {
+                    onSuccess(response);
+                }
+
                 resetSupplierForm();
             },
             error: function (xhr) {
+                console.error('Error en la petición:', xhr);
+                console.error('Estado:', xhr.status);
+                console.error('Respuesta:', xhr.responseText);
+
+                if (xhr.status === 500) {
+                    // Para error 500, intenta parsear la respuesta
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        console.error('Mensaje del servidor:', errorResponse.message);
+                        console.error('Archivo:', errorResponse.file);
+                        console.error('Línea:', errorResponse.line);
+                    } catch (e) {
+                        console.error('No se pudo parsear la respuesta de error');
+                    }
+                }
+
                 handleValidationError(xhr);
             }
         });

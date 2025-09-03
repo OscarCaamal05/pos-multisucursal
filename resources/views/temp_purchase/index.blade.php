@@ -11,19 +11,22 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxPurchases.js')
 
+<!------------------------------------------------------------------------------------------------------------
+    Modal para detalles de pago 
+-------------------------------------------------------------------------------------------------------------->
 <div class="modal zoomIn" id="modal-payment-detail" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title text-end" id="modal-product-details-Label">Compra</h5>
             </div>
-            <form id="productDetails">
+            <form id="paymentDetails">
                 @csrf
                 <div class="modal-body">
                     @include('temp_purchase.payment-fields-form')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-close-payment">Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="btn-add-product-details">Guardar</button>
                 </div>
             </form>
@@ -31,6 +34,9 @@
     </div>
 </div>
 
+<!------------------------------------------------------------------------------------------------------------
+    Modal para detalles de los productos a comprar 
+-------------------------------------------------------------------------------------------------------------->
 <div class="modal zoomIn" id="modal-product-details" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -46,7 +52,7 @@
                     @include('temp_purchase.form-fields-product-details')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cerrar</button>
                     <button type="submit" class="btn btn-primary" id="btn-add-product-details">Guardar</button>
                 </div>
             </form>
@@ -54,6 +60,9 @@
     </div>
 </div>
 
+<!------------------------------------------------------------------------------------------------------------
+    Modal para mostrar las compras en espera
+-------------------------------------------------------------------------------------------------------------->
 <div class="modal zoomIn" id="modal-purchase-waiting" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -86,6 +95,9 @@
     </div>
 </div>
 
+<!------------------------------------------------------------------------------------------------------------
+    Modal para listar los productos en el almacén
+-------------------------------------------------------------------------------------------------------------->
 <div class="modal zoomIn" id="modal-products" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -121,8 +133,97 @@
     </div>
 </div>
 
+<!------------------------------------------------------------------------------------------------------------
+    Modal para listar a los proveedores registrados en el sistema
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="modal-suppliers" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">Lista de Proveedores</h4>
+                <button class="btn btn-primary" id="btn-add-supplier">
+                    <span class="me-1">
+                        <i class="ri-user-add-line"></i>
+                    </span>Agregar Proveedor
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="card-body border-bottom-dashed border-bottom">
+                        <div class="row g-3 mx-1 mb-2">
+                            <div class="col-xl-4">
+                                <div class="search-box">
+                                    <input type="text" class="form-control" placeholder="Buscar proveedor">
+                                    <i class="ri-search-line search-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <!--end row-->
+                    </div>
+                </div>
+                <div class="table-responsive table-card">
+                    <table class="table table-nowrap align-middle mb-0" id="tableSuppliers">
+                        <thead class="table-light text-muted">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Representante</th>
+                                <th scope="col">Empresa</th>
+                                <th scope="col">RFC</th>
+                                <th scope="col">Telefono</th>
+                                <th scope="col">Correo</th>
+                                <th scope="col">Direccion</th>
+                                <th scope="col">Credito disponible</th>
+                                <th scope="col">Credito</th>
+                                <th scope="col">Días</th>
+                                <th scope="col">Vencimiento</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btn-close-supplier">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!------------------------------------------------------------------------------------------------------------
+    Modal para agregar un nuevo proveedor
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="supplierModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
+            </div>
+            <form id="supplierForm"
+                data-store-url="{{ route('suppliers.store') }}"
+                data-update-url-base="/suppliers/">
+                @csrf
+                <input type="hidden" name="supplierId" id="supplierId" value="0">
+                <div class="modal-body">
+                    @include('suppliers.form-fields')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-supplier">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!------------------------------------------------------------------------------------------------------------
+    Vista principal para realizar una compra
+-------------------------------------------------------------------------------------------------------------->
 <div class="row">
     <div class="col-xl-9">
+        <!-- Card de los input de la parte superior de los datos generales de compra-->
         <div class="card">
             <div class="card-body">
                 <form action="javascript:void(0);">
@@ -146,7 +247,7 @@
 
 
                         <div class="col-auto">
-                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y">
+                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y" id="purchase-date" value="{{ date('d M, Y') }}">
                         </div>
                         <div class="pb-2 text text-end-muted border-bottom border-light text-center"></div>
                     </div><!--end row-->
@@ -189,6 +290,7 @@
 
             </div>
         </div>
+        <!-- Card de los botones de accion-->
         <div class="d-flex">
             <div class=" flex-shrink-1  pe-2">
                 <div class="card mb-2">
@@ -229,6 +331,8 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Tabla de los productos agregados a la compra -->
             <div class="card w-100">
                 <div class="card-body">
                     <div class="table-responsive table-card">
@@ -257,11 +361,10 @@
                 </div>
             </div>
         </div>
-
-
-        <!--end card-->
     </div>
     <!--end col-->
+
+    <!-- Seccion derecha de detalles del proveedor y totales de la compra -->
     <div class="col-xl-3">
         <div class="card">
             <div class="card-header">
@@ -271,23 +374,32 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-sm-12 mb-3">
-
-                        <input type="text"
-                            class="form-control auto-select"
-                            name="auto_complete_supplier"
-                            id="auto_complete_supplier"
-                            dir="ltr"
-                            spellcheck="false"
-                            autocomplete="off"
-                            autocapitalize="off">
-
+                    <div class="col-md-12 mb-3">
+                        <div class="input-group align-items-center w-100">
+                            <div class="form-icon">
+                                <input type="text"
+                                    class="form-control form-control-icon auto-select"
+                                    name="auto_complete_supplier"
+                                    id="auto_complete_supplier"
+                                    dir="ltr"
+                                    spellcheck="false"
+                                    autocomplete="off"
+                                    autocapitalize="off"
+                                    value="">
+                                <i class="ri-user-2-line"></i>
+                            </div>
+                            <button type="button" class="btn btn-ghost-dark waves-effect waves-light" id="btn-search-suppliers">
+                                <i class="ri-search-2-line"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="col-sm-12 mb-3">
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <img src="{{ URL::asset('build/images/users/user-dummy-img.jpg') }}" alt="" class="avatar-sm rounded">
                                 <input type="hidden" name="supplier_id" id="supplier_id" value="0">
+                                <input class="credit-terms" type="hidden" name="credit-terms" id="credit-terms" value="0">
+                                <input class="credit-due-date" type="hidden" name="credit-due-date" id="credit-due-date" value="{{ date('Y-m-d') }}">
                                 <input class="credit-limit-supplier" type="hidden" value="0">
                             </div>
                             <div class="flex-grow-1 ms-3">
@@ -344,7 +456,7 @@
                         <p class="text-muted mb-0">Descuento:</p>
                     </div>
                     <div class="col-ms-4">
-                        <input type="text" class="form-control discount-general text-end auto-select"
+                        <input type="number" class="form-control discount-general text-end auto-select"
                             id="general-discount-number"
                             name="general-discount-number"
                             step="0.01"
@@ -395,6 +507,8 @@
                 </div>
             </div>
         </div>
+
+        <!--Botones para procesar la compra-->
         <div class="d-flex">
             <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold" id="btn-process-purchase">
                 <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Pagar
@@ -424,7 +538,7 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/autoComplete.min.js') }}"></script>
-
+<script src="{{ URL::asset('build/libs/cleave.js/cleave.min.js') }}"></script>
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 

@@ -37,8 +37,16 @@ class SuppliersController extends Controller
      */
     public function store(SaveSuppliersRequest $request)
     {
-        Supplier::create($request->validated());
+        $supplier = Supplier::create($request->validated());
 
+        return response()->json(
+            [
+                'status' => 'create',
+                'supplier' => [
+                    'id' => $supplier->id,
+                ]
+            ]
+        );
         return response()->json(['create' => true]);
     }
 

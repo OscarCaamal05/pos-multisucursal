@@ -55,7 +55,7 @@
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Días de crédito: </label>
-                <input type="text" class="form-control text-end days-credit auto-select" id="days-credit" name="days-credit" value="0" disabled readonly>
+                <input type="text" class="form-control text-end credit-terms auto-select" id="credit-days-limit" name="credit-days-limit" value="0" disabled readonly>
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Limite de crédito: </label>
@@ -73,11 +73,11 @@
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Días de crédito: </label>
-                <input type="text" class="form-control text-end days-credit-supplier auto-select" id="days-credit-supplier" name="days-credit-supplier" value="0">
+                <input type="text" class="form-control text-end credit-terms auto-select" id="credit-days" name="credit-days" value="0">
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Fecha de Vencimiento: </label>
-                <input type="date" class="form-control due-date" data-provider="flatpickr" data-date-format="d M, Y" id="due-date" name="due-date" value="{{ date('Y-m-d') }}">
+                <input type="date" class="form-control credit-due-date" data-provider="flatpickr" data-date-format="d M, Y" id="due-date" name="due-date" value="{{ date('Y-m-d') }}">
             </div>
         </div>
     </div>

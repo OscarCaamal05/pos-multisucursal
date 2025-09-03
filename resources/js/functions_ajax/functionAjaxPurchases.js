@@ -1,6 +1,7 @@
 import { showAlert, clearValidationErrors, handleValidationError, showConfirmationAlert } from './utils/alerts';
 import { calculateUnitPrice, calculateMarginFromSalePrice } from './functionAjaxProducts';
 import { makeNumericInput } from './utils/numericInputs';
+import { initCreditTermsAndDate, closeSupplierModal, bindSupplierFormSubmit, formatCleave } from './helpers/supplierHelper';
 // =========================================
 // VARIABLES GLOBALES
 // =========================================
@@ -9,15 +10,17 @@ let tableDetails = null;
 let selectedRowDetail = null;
 let productsTable = null;
 let purchasesTable = null;
+let suppliersTable = null;
 
 $(document).ready(function () {
-    const input_date = document.querySelector('input[data-provider="flatpickr"]');
+    const input_date = $('#purchase-date');
 
     // =============================================================================
     // Obtener la fecha actual y mostrarlo en el input date
     // =============================================================================
     flatpickr(input_date, {
         dateFormat: "d M, Y",
+        altFormat: "d M, Y",
         defaultDate: new Date()
     });
 
@@ -31,6 +34,20 @@ $(document).ready(function () {
     addProductToTempList();
     bindDeleteEvents();
     validatePaymentMethod();
+
+    // =============================================================================
+    // Funciones para el form para agregar proveedor
+    // =============================================================================
+    bindSupplierFormSubmit({
+        table: suppliersTable,
+        onSuccess: (response) => { 
+            getSupplierData(response.supplier.id);
+            $('#modal-suppliers').modal('hide');
+        }
+    })
+    closeSupplierModal();
+    formatCleave();
+    initCreditTermsAndDate("#credit_terms", "#credit_due_date", 30);
     // =============================================================================
     // Validando input numéricos
     // =============================================================================
@@ -201,6 +218,14 @@ $(document).ready(function () {
     })
 
     // ============================================================================
+    // EVENTO: Muestra el modal donde se listan los proveedores en la base de datos
+    // ============================================================================
+    $('#btn-search-suppliers').on('click', function () {
+        $('#modal-suppliers').modal('show');
+        loadListSuppliers();
+    })
+
+    // ============================================================================
     // EVENTO: Obtiene los datos de la tabla de productos listados y el id se
     // envia el id al input #product_id y esconde el modal. 
     // ============================================================================
@@ -211,11 +236,29 @@ $(document).ready(function () {
     })
 
     // ============================================================================
+    // EVENTO: Obtiene los datos de la tabla de proveedores listados y el id se
+    // envia a la funcion para obtener los datos del proveedor y esconde el modal.
+    // ============================================================================
+    $('#tableSuppliers tbody').on('dblclick', 'tr', function () {
+        const data = suppliersTable.row(this).data();
+        getSupplierData(data.id);
+        $('#modal-suppliers').modal('hide');
+    })
+
+    // ============================================================================
     // EVENTO: Cierra el modal de listado de los productos registrados en la base
     // de datos.
     // ============================================================================
     $('#btn-close-product').on('click', function () {
         $('#modal-products').modal('hide');
+    });
+
+    // ============================================================================
+    // EVENTO: Cierra el modal de listado de los proveedores registrados en la base
+    // de datos.
+    // ============================================================================
+    $('#btn-close-supplier').on('click', function () {
+        $('#modal-suppliers').modal('hide');
     });
 
     // ============================================================================
@@ -286,18 +329,48 @@ $(document).ready(function () {
     // ============================================================================
     $('#btn-process-purchase').on('click', function (e) {
         e.preventDefault();
-        $('#modal-payment-detail').modal('show');
-        //Mostrando los datos en el modal de pago
-        let total_final = parseFloat($('.total').text().replace(/[$,]/g, ''));
-        let limit_credit = $('.credit-limit-supplier').val();
-        let credit_available_supplier = parseFloat($('.credit_supplier').text().replace(/[$,]/g, ''));
-        $('#payment-cash').val(total_final.toFixed(2));
-        $('#current-credit').val(total_final.toFixed(2));
-        $('#credit-limit').val(limit_credit);
-        $('.credit_available').val(credit_available_supplier.toFixed(2));
-        $('#days-credit-supplier').prop('disabled', true);
-        $('#due-date').prop('disabled', true);
-        $('#current-credit').prop('disabled', true);
+        const supplierId = $('#supplier_id').val();
+        //Validacion si hay un proveedor seleccionado
+        if (!supplierId || supplierId == 0) {
+            showAlert(
+                'warning',
+                'Alerta',
+                'Seleccione un proveedor para enviar a espera.',
+            );
+            return;
+        }
+        //Validacion si hay productos en la lista
+        if (tableDetails.rows().count() === 0) {
+            showAlert(
+                'warning',
+                'Alerta',
+                'Agregue productos a la compra para continuar.',
+            );
+        } else {
+            $('#modal-payment-detail').modal('show');
+            //Mostrando los datos en el modal de pago
+            let total_final = parseFloat($('.total').text().replace(/[$,]/g, ''));
+            let limit_credit = $('.credit-limit-supplier').val();
+            let credit_days = $('.credit-terms').val();
+            let credit_available_supplier = parseFloat($('.credit_supplier').text().replace(/[$,]/g, ''));
+            $('#payment-cash').val(total_final.toFixed(2));
+            $('#current-credit').val(total_final.toFixed(2));
+            $('#credit-limit').val(limit_credit);
+            $('.credit_available').val(credit_available_supplier.toFixed(2));
+            $('#credit-days').prop('disabled', true);
+            $('#due-date').prop('disabled', true);
+            $('#current-credit').prop('disabled', true);
+            initCreditTermsAndDate('#credit-days', '#due-date', credit_days);
+        }
+
+    });
+
+    // ============================================================================
+    // EVENTO: Mostrar el modal para agregar un nuevo proveedor
+    // ============================================================================
+    $('#btn-add-supplier').on('click', function (e) {
+        e.preventDefault();
+        $('#supplierModal').modal('show');
     });
 });
 /**
@@ -572,6 +645,8 @@ function getSupplierData(supplierId) {
             $('.rfc_supplier').text(response.rfc || 'No hay dato');
             $('.credit_supplier').text(response.credit_available || 'No hay dato');
             $('.credit-limit-supplier').val(response.credit_limit || 0);
+            $('.credit-terms').val(response.credit_days || 0);
+            $('.credit-due-date').val(response.credit_due_date || 0);
             $('#supplier_id').val(supplierId || 0);
             // Guardar datos en localStorage para permanencia al recargar la pagina
             const supplier = {
@@ -582,7 +657,9 @@ function getSupplierData(supplierId) {
                 phone: phoneFormat,
                 rfc: response.rfc,
                 credit_available: response.credit_available,
-                credit_limit: response.credit_limit
+                credit_limit: response.credit_limit,
+                credit_days: response.credit_days,
+                credit_due_date: response.credit_due_date,
             };
             localStorage.setItem("proveedorSeleccionado", JSON.stringify(supplier));
 
@@ -606,6 +683,8 @@ function initSupplier() {
         $('.rfc_supplier').text(data.rfc || 'No hay dato');
         $('.credit_supplier').text(data.credit_available || 'No hay dato');
         $('.credit-limit-supplier').val(data.credit_limit || 0);
+        $('.credit-terms').val(data.credit_days || 0);
+        $('.credit-due-date').val(data.credit_due_date || 0);
         $('#supplier_id').val(data.supplierId || 0);
     }
 }
@@ -835,7 +914,6 @@ function sendPurchaseToWait() {
             supplier_id: supplierId,
         },
         success: function (response) {
-            localStorage.removeItem("proveedorSeleccionado");
             showAlert(
                 response.status,
                 'Alerta',
@@ -1062,6 +1140,7 @@ function cancelTempPurchase() {
                 return;
             } else {
                 cleanInputPurchase();
+                applyDiscount(0);
                 location.reload();
             }
 
@@ -1103,7 +1182,11 @@ function cleanInputPurchase() {
     $('.phone_supplier').html('')
     $('.rfc_supplier').html('')
     $('.credit_supplier').html('')
-    $('.discount-general').val(0.00);
+    $('#general-discount-number').val(0.00);
+    $('.credit-terms').val(0);
+    $('.credit-limit').val(0);
+    $('.credit_available').val(0);
+    $('.credit-due-date').val(0);
 
     // Limpia el campo de autocompletado
     $('#auto_complete_supplier').val('');
@@ -1113,6 +1196,9 @@ function cleanInputPurchase() {
     $('#document-type').val(1).trigger('change');
     $('#voucher-type').val(1).trigger('change');
     $('#folio').val('');
+
+    // Limpiar los campos del detalle del proveedor 
+    localStorage.removeItem("proveedorSeleccionado");
 
     // Restablecer la fecha de compra al día actual
     const dateInput = $('input[data-provider="flatpickr"]')[0];
@@ -1157,6 +1243,99 @@ function calculateDiscountNumber(discount, costPrice) {
     return ((discount / costPrice) * 100).toFixed(2);
 }
 
+// =================================================================================
+// FUNCIÓN: Carga los datos de los proveedores en la tabla dentro del modal para busqueda
+// profunda
+// =================================================================================
+function loadListSuppliers() {
+    if ($.fn.DataTable.isDataTable('#tableSuppliers')) {
+        $('#tableSuppliers').DataTable().destroy();
+        $('#tableSuppliers tbody').empty();
+    }
+
+    suppliersTable = $('#tableSuppliers').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '/suppliers/data',
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'representative', name: 'representative' },
+            { data: 'company_name', name: 'company_name' },
+            {
+                data: 'rfc',
+                name: 'rfc',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'phone',
+                name: 'phone',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    // Si está vacío o null
+                    if (!data) return '';
+
+                    // Quitar todo lo que no sea número
+                    const cleaned = data.replace(/\D/g, '');
+
+                    // Aplicar el formato
+                    if (cleaned.length === 10) {
+                        return `(${cleaned.substr(0, 3)}) ${cleaned.substr(3, 3)}-${cleaned.substr(6, 4)}`;
+                    }
+
+                    // Si no tiene 10 dígitos, devuélvelo tal cual
+                    return data;
+                }
+            },
+            {
+                data: 'email',
+                name: 'email',
+                orderable: false,
+            },
+            {
+                data: 'address',
+                name: 'address',
+                orderable: false,
+                searchable: false,
+                visible: false
+            },
+            {
+                data: null,
+                name: 'credit_available',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    return data.credit_available - data.credit;
+                }
+            },
+            {
+                data: 'credit',
+                name: 'credit',
+                visible: false
+            },
+            {
+                data: 'credit_due_date',
+                name: 'credit_due_date',
+                visible: false
+            },
+            {
+                data: 'credit_terms',
+                name: 'credit_terms',
+                visible: false
+            },
+
+        ],
+        scrollY: 500,
+        deferRender: true,
+        scroller: true,
+        language: idiomaEspanol,
+        searching: false,
+        info: false,
+        pageLength: -1,
+        dom: 'frt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
+    });
+}
 // =================================================================================
 // FUNCIÓN: Carga los datos de los productos en la tabla dentro del modal para busqueda
 // profunda
@@ -1234,10 +1413,10 @@ function validatePaymentMethod() {
             $('#credit').prop('disabled', true);
             $('#credit_available').prop('disabled', true);
             $('#current-credit').prop('disabled', true);
-            $('#days-credit-supplier').prop('disabled', true);
+            $('#credit-days').prop('disabled', true);
         } else if (selectedMethod === 'payment-credit') {
             $('#current-credit').prop('disabled', false);
-            $('#days-credit-supplier').prop('disabled', false);
+            $('#credit-days').prop('disabled', false);
             $('#due-date').prop('disabled', false);
             $('#payment-cash').val(0).prop('disabled', true);
             $('#payment-card').val(0).prop('disabled', true);

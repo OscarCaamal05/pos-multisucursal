@@ -7,15 +7,16 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxSuppliers.js')
 <!-- Modal para crear/editar -->
-<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('suppliers.store') }}"
-    data-update-url-base="/suppliers/">
+<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
             </div>
-            <form id="supplierForm">
+            <form id="supplierForm"
+                data-store-url="{{ route('suppliers.store') }}"
+                data-update-url-base="/suppliers/">
                 @csrf
                 <input type="hidden" name="supplierId" id="supplierId" value="0">
                 <div class="modal-body">

@@ -115,6 +115,8 @@ class TempPurchaseDetailController extends Controller
             'rfc' => $supplier->rfc,
             'credit_available' => $credit_available,
             'credit_limit' => $supplier->credit_available,
+            'credit_days' => $supplier->credit_terms,
+            'credit_due_date' => $supplier->credit_due_date,
         ]);
     }
 
