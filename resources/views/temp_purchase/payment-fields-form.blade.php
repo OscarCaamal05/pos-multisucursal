@@ -1,7 +1,7 @@
 <div class="row">
     <div class="pb-2 mb-3 text text-end-muted border-bottom border-light text-center">
         <span class="">Total a pagar</span>
-        <h3 class="total">$ 192.22</h3>
+        <h3 class="total">$</h3>
     </div>
     <div class="pb-2 mb-3 text text-end-muted border-bottom border-light text-center">
         <div class="form-check form-radio-secondary mb-3">
@@ -15,29 +15,41 @@
                 <div class="d-flex justify-content-center mb-1">
                     <img src="{{URL::asset('build/images/svg-pos/021-dinero.svg')}}" alt="" class="avatar-xs" />
                 </div>
-                <input type="text" class="form-control text-center mb-1 auto-select" style="max-width: 90px;" name="payment-cash" id="payment-cash" value="0.00">
+                <input type="text" class="form-control text-center mb-1 auto-select payment_method" style="max-width: 90px;" name="payment-cash" id="payment-cash" value="0.00">
                 <span class="text-muted" style="font-size: 12px;">Efectivo</span>
             </div>
             <div class="col-auto d-flex flex-column align-items-center">
                 <div class="d-flex justify-content-center mb-1">
                     <img src="{{URL::asset('build/images/svg-pos/006-edc.svg')}}" alt="" class="avatar-xs" />
                 </div>
-                <input type="text" class="form-control text-center mb-1 auto-select" style="max-width: 90px;" name="payment-card" id="payment-card" value="0.00">
+                <input type="text" class="form-control text-center mb-1 auto-select payment_method" style="max-width: 90px;" name="payment-card" id="payment-card" value="0.00">
                 <span class="text-muted" style="font-size: 12px;">Tarjeta</span>
             </div>
             <div class="col-auto d-flex flex-column align-items-center">
                 <div class="d-flex justify-content-center mb-1">
                     <img src="{{URL::asset('build/images/svg-pos/014-intercambio.svg')}}" alt="" class="avatar-xs" />
                 </div>
-                <input type="text" class="form-control text-center mb-1 auto-select" style="max-width: 90px;" name="payment-transfer" id="payment-transfer" value="0.00">
+                <input type="text" class="form-control text-center mb-1 auto-select payment_method" style="max-width: 90px;" name="payment-transfer" id="payment-transfer" value="0.00">
                 <span class="text-muted" style="font-size: 12px;">Transferencia</span>
             </div>
             <div class="col-auto d-flex flex-column align-items-center">
                 <div class="d-flex justify-content-center mb-1">
                     <img src="{{URL::asset('build/images/svg-pos/007-cartera.svg')}}" alt="" class="avatar-xs" />
                 </div>
-                <input type="text" class="form-control text-center mb-1 auto-select" style="max-width: 90px;" name="payment-voucher" id="payment-voucher" value="0.00">
+                <input type="text" class="form-control text-center mb-1 auto-select payment_method" style="max-width: 90px;" name="payment-voucher" id="payment-voucher" value="0.00">
                 <span class="text-muted" style="font-size: 12px;">Vales</span>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-sm-6">
+                <label for="colFormLabel" class="col-form-label">Referencia: </label>
+                <input type="text" class="form-control form-control-sm auto-select" id="reference" name="reference" value="">
+            </div>
+            <div class="col-sm-6 d-flex justify-content-center align-items-center">
+                <div class="d-block text-center">
+                    <span class="">Cambio</span>
+                    <h3 class="payment-change text-danger">$ 0.00</h3>
+                </div>
             </div>
         </div>
     </div>

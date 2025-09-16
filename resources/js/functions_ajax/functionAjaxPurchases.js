@@ -2,6 +2,7 @@ import { showAlert, clearValidationErrors, handleValidationError, showConfirmati
 import { calculateUnitPrice, calculateMarginFromSalePrice } from './functionAjaxProducts';
 import { makeNumericInput } from './utils/numericInputs';
 import { initCreditTermsAndDate, closeSupplierModal, bindSupplierFormSubmit, formatCleave } from './helpers/supplierHelper';
+import { method } from 'lodash';
 // =========================================
 // VARIABLES GLOBALES
 // =========================================
@@ -40,7 +41,7 @@ $(document).ready(function () {
     // =============================================================================
     bindSupplierFormSubmit({
         table: suppliersTable,
-        onSuccess: (response) => { 
+        onSuccess: (response) => {
             getSupplierData(response.supplier.id);
             $('#modal-suppliers').modal('hide');
         }
@@ -61,7 +62,10 @@ $(document).ready(function () {
     makeNumericInput('#new_price_sale_2', { type: 'decimal', min: 1, decimals: 2 });
     makeNumericInput('#new_price_sale_3', { type: 'decimal', min: 1, decimals: 2 });
     makeNumericInput('#discount-percentage', { type: 'integer', min: 0, max: 100 });
-    makeNumericInput('#new-factor', { type: 'integer', min: 1 });
+    makeNumericInput('#payment-card', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#payment-cash', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#payment-transfer', { type: 'decimal', min: 1, decimals: 2 });
+    makeNumericInput('#payment-voucher', { type: 'decimla', min: 1, decimals: 2 });
     // =============================================================================
     // EVENTO: inicializa el autocompletado para proveedores
     // =============================================================================
@@ -371,6 +375,29 @@ $(document).ready(function () {
     $('#btn-add-supplier').on('click', function (e) {
         e.preventDefault();
         $('#supplierModal').modal('show');
+    });
+
+    $('.payment_method').on('input', function () {
+        let total_amount = sumPaymentMethods();
+        let total_final_reset = parseFloat($('.total').text().replace(/[$,]/g, '')).toFixed(2);
+        let change = (total_amount - total_final_reset).toFixed(2);
+        $('.payment-change').html(change);
+    });
+
+    $('#modal-payment-detail').on('hidden.bs.modal', function () {
+        $('#payment-card').val(0.00);
+        $('#payment-transfer').val(0.00);
+        $('#payment-voucher').val(0.00);
+    });
+
+    $('#btn-finalize-purchase').on('click', function () {
+        // Obtén el método de pago seleccionado
+        const selectedMethod = $('input[name="payment_method"]:checked').attr('id') || PAYMENT_CONFIG.methods.BOX;
+        processPurchasesByMethod(selectedMethod);
+    });
+
+    $('#btn-close-modal-payment').on('click', function () {
+        $('#modal-payment-detail').modal('hide');
     });
 });
 /**
@@ -1326,13 +1353,12 @@ function loadListSuppliers() {
             },
 
         ],
-        scrollY: 500,
+        scrollY: 450,
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
         searching: false,
         info: false,
-        pageLength: -1,
         dom: 'frt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
     });
 }
@@ -1397,35 +1423,192 @@ function loadListProducts() {
     });
 }
 // =================================================================================
-// FUNCIÓN: Valida el metodo de pago seleccionado y muestra los campos correspondientes
+//  CONSTANTE: Configuracion global para validar el metodo de pago seleccionado
+// =================================================================================
+const PAYMENT_CONFIG = {
+    methods: {
+        BOX: 'payment-box',
+        CREDIT: 'payment-credit',
+    },
+    fields: {
+        box: ['#payment-cash', '#payment-card', '#payment-transfer', '#payment-voucher'],
+        credit: ['#current-credit', '#credit-days', '#due-date'],
+        creditDisabled: ['#credit', '#credit_available']
+    }
+};
+
+// =================================================================================
+//  FUNCIÓN: Para validar el método de pago seleccionado y mostrar/ocultar campos
 // =================================================================================
 function validatePaymentMethod() {
     // Evento para mostrar/ocultar campos según el método de pago seleccionado
     $('input[name="payment_method"]').on('change', function () {
         const selectedMethod = $(this).attr('id');
-        console.log(selectedMethod);
-        if (selectedMethod === 'payment-box') {
-            let total_final_reset = parseFloat($('.total').text().replace(/[$,]/g, ''));
-            $('#payment-cash').val(total_final_reset.toFixed(2)).prop('disabled', false);
-            $('#payment-card').val(0).prop('disabled', false);
-            $('#payment-transfer').val(0).prop('disabled', false);
-            $('#payment-voucher').val(0).prop('disabled', false);
-            $('#credit').prop('disabled', true);
-            $('#credit_available').prop('disabled', true);
-            $('#current-credit').prop('disabled', true);
-            $('#credit-days').prop('disabled', true);
-        } else if (selectedMethod === 'payment-credit') {
-            $('#current-credit').prop('disabled', false);
-            $('#credit-days').prop('disabled', false);
-            $('#due-date').prop('disabled', false);
-            $('#payment-cash').val(0).prop('disabled', true);
-            $('#payment-card').val(0).prop('disabled', true);
-            $('#payment-transfer').val(0).prop('disabled', true);
-            $('#payment-voucher').val(0).prop('disabled', true);
-        }
+
+        // Resetear todos los campos
+        resetPaymentFields();
+
+        // Configura los campos según el método seleccionado
+        configurePaymentFields(selectedMethod);
+
+        // Procesar la compra
+        //processPurchasesByMethod(selectedMethod);
     });
 }
 
+// =================================================================================
+//  FUNCTIÓN: Resetea los campos de formulario para finalizar la compra
+// =================================================================================
+function resetPaymentFields() {
+
+    // Resetea los campos de caja
+    PAYMENT_CONFIG.fields.box.forEach(field => {
+        $(field).val('0.00').prop('disabled', true);
+    })
+
+    // Resetea los campos de crédito
+    PAYMENT_CONFIG.fields.credit.forEach(field => {
+        $(field).prop('disabled', true);
+    })
+
+    // Resetea los campos de crédito deshabilitados
+    PAYMENT_CONFIG.fields.creditDisabled.forEach(field => {
+        $(field).prop('disabled', true);
+    })
+}
+// =================================================================================
+//  FUNCIÓN: Para configurar los campos según el método de pago seleccionado
+// =================================================================================
+function configurePaymentFields(method) {
+    if (method === PAYMENT_CONFIG.methods.BOX) {
+        // Configurar para pago de contado
+        const totalAmount = parseFloat($('.total').text().replace(/[$,]/g, '')) || 0;
+
+        $('#payment-cash').val(totalAmount.toFixed(2)).prop('disabled', false);
+        $('#payment-card, #payment-transfer, #payment-voucher').val(0).prop('disabled', false);
+
+    } else if (method === PAYMENT_CONFIG.methods.CREDIT) {
+        // Configurar para pago a crédito
+        PAYMENT_CONFIG.fields.credit.forEach(field => {
+            $(field).prop('disabled', false);
+        });
+    }
+}
+
+// =================================================================================
+//  FUNCIÓN: Obtiene los detalles de la compra y procesa la compra según el método seleccionado
+// =================================================================================
+function processPurchasesByMethod(payment_method = PAYMENT_CONFIG.methods.BOX) {
+    const purchase_data = getPurchaseDetails();
+    processPurchases(payment_method, purchase_data);
+}
+
+// =================================================================================
+//  FUNCIÓN: Obtiene los detalles de la compra generales y específicos según el método de pago
+// =================================================================================
+function getPurchaseDetails() {
+    // Obtener valores con valores por defecto
+    const getFieldValue = (selector, defaultValue = '') => {
+        return $(selector).val() || defaultValue;
+    };
+
+    // Valores goblales de la compra
+    const data = {
+        id_supplier: getFieldValue('#supplier_id'),
+        id_voucher: getFieldValue('#voucher-type'),
+        id_document: getFieldValue('#document-type'),
+        invoice_number: getFieldValue('#invoice_number'),
+        date: getFieldValue('#purchase-date'),
+        amount_paid: sumPaymentMethods(),
+    };
+
+    // Agregar datos específicos según el método de pago
+    const selectedMethod = $('input[name="payment_method"]:checked').attr('id');
+
+    if (selectedMethod === PAYMENT_CONFIG.methods.BOX) {
+        data.payment_details = {
+            cash: parseFloat($('#payment-cash').val()) || 0,
+            card: parseFloat($('#payment-card').val()) || 0,
+            transfer: parseFloat($('#payment-transfer').val()) || 0,
+            voucher: parseFloat($('#payment-voucher').val()) || 0
+        };
+    } else if (selectedMethod === PAYMENT_CONFIG.methods.CREDIT) {
+        data.credit_details = {
+            current_credit: getFieldValue('#current-credit'),
+            credit_days: getFieldValue('#credit-days'),
+            due_date: getFieldValue('#due-date')
+        };
+    }
+
+    return data;
+}
+
+// =================================================================================
+//  FUNCIÓN: Procesar la compra enviando los datos al servidor
+// =================================================================================
+function processPurchases(method, details) {
+    console.log(method, details);
+    $.ajax({
+        url: '/temp_purchases_detail/processPurchase',
+        type: 'POST',
+        dataType: 'json', // Especificar tipo de respuesta esperada
+        data: {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            method: method,
+            data: details,
+            temp_id: $('#temp_purchase_id').val(),
+        },
+        success: function (response) {
+            // Manejar respuesta exitosa
+            if (response.status === 'success') {
+                showAlert('success', 'Éxito', response.message || 'Compra procesada correctamente');
+
+                /*
+                if (response.purchase_id) {
+                    // Opcional: Imprimir ticket/factura
+                    if (confirm('¿Desea imprimir el comprobante?')) {
+                        printPurchaseReceipt(response.purchase_id);
+                    }
+                }
+
+                // Recargar después de un breve delay para mostrar el mensaje
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);*/
+            } else {
+                showAlert('warning', 'Advertencia', response.message);
+            }
+        },
+        error: function (xhr) {
+            // Manejo mejorado de errores
+            let errorMessage = 'Error al procesar la compra';
+
+            try {
+                const response = JSON.parse(xhr.responseText);
+                errorMessage = response.message || errorMessage;
+
+                // Si hay errores de validación específicos
+                if (response.errors) {
+                    errorMessage = Object.values(response.errors).flat().join(', ');
+                }
+            } catch (e) {
+                // Si no se puede parsear la respuesta
+                errorMessage = xhr.statusText || errorMessage;
+            }
+
+            showAlert('error', 'Error', errorMessage);
+        },
+    });
+}
+function sumPaymentMethods() {
+    let total_amount = 0;
+    $('.payment_method').each(function () {
+        const value = parseFloat($(this).val()) || 0;
+        total_amount += value;
+    })
+
+    return total_amount.toFixed(2);
+}
 // =========================================
 // CONSTANTES: Configuración idioma DataTable
 // =========================================

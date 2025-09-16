@@ -26,8 +26,8 @@
                     @include('temp_purchase.payment-fields-form')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-close-payment">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-add-product-details">Guardar</button>
+                    <button type="button" class="btn btn-danger" id="btn-close-modal-payment">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-finalize-purchase">Procesar</button>
                 </div>
             </form>
         </div>
@@ -281,8 +281,8 @@
 
                         <div class="col-sm-2">
                             <div class="input-group align-items-center auto-select">
-                                <label class="form-label me-3" for="folio">Folio</label>
-                                <input type="text" class="form-control" id="folio">
+                                <label class="form-label me-3" for="invoice_number">Folio</label>
+                                <input type="text" class="form-control" id="invoice_number">
                             </div>
                         </div><!--end col-->
                     </div><!--end row -->
