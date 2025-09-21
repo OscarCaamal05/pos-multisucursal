@@ -312,7 +312,17 @@ $(document).ready(function () {
     // EVENTO: Para cancelar la compra, validando que haya productos en el listado
     // ============================================================================
     $('#btn-cancel-purchase').on('click', function () {
-        cancelTempPurchase();
+        showConfirmationAlert(
+            '¿Estás seguro?',
+            '¡No podrás revertir esta acción!',
+            'Sí, Cancelar',
+            'No, Cerrar',
+            (confirmed) => {
+                if (confirmed) {
+                    cancelTempPurchase();
+                }
+            }
+        )
     });
 
     // ============================================================================
@@ -339,7 +349,7 @@ $(document).ready(function () {
             showAlert(
                 'warning',
                 'Alerta',
-                'Seleccione un proveedor para enviar a espera.',
+                'Seleccione un proveedor para continuar.',
             );
             return;
         }
@@ -388,6 +398,10 @@ $(document).ready(function () {
         $('#payment-card').val(0.00);
         $('#payment-transfer').val(0.00);
         $('#payment-voucher').val(0.00);
+    });
+
+    $('#modal-product-details').on('shown.bs.modal', function () {
+        $('#quantity').val(1).trigger('focus').trigger('select');
     });
 
     $('#btn-finalize-purchase').on('click', function () {
@@ -833,7 +847,7 @@ function getDataProductDetail(detailId, isEdit = true) {
  */
 function addProductToTempList() {
     $('#productDetails').on('submit', function (e) {
-
+        $('.factor').prop('disabled', false);
         const tempId = $('#temp_id').val();
         const isEdit = tempId != 0;
         e.preventDefault();
@@ -849,6 +863,7 @@ function addProductToTempList() {
                 tableDetails.ajax.reload(null, false); // Recarga la tabla sin reiniciar la paginación
                 $('#modal-product-details').modal('hide');
                 $('#temp_id').val(0);
+                $('.factor').prop('disabled', false);
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -899,7 +914,7 @@ function applyDiscount(discount_applied) {
 
         },
         error: function (xhr) {
-            showAlert('error', 'Error', 'Error al actualizar el descuento.');
+            //showAlert('error', 'Error', 'Error al actualizar el descuento.');
         }
     });
 }
@@ -1162,14 +1177,9 @@ function cancelTempPurchase() {
         method: 'GET',
         dataType: 'json',
         success: function (response) {
-            if (response.status === 'warning') {
-                showAlert(response.status, 'Advertencia', response.message);
-                return;
-            } else {
-                cleanInputPurchase();
-                applyDiscount(0);
-                location.reload();
-            }
+            cleanInputPurchase();
+            applyDiscount(0);
+            location.reload();
 
         }
     });
@@ -1222,7 +1232,7 @@ function cleanInputPurchase() {
     // Para restablecer los selects y inputs de la compra
     $('#document-type').val(1).trigger('change');
     $('#voucher-type').val(1).trigger('change');
-    $('#folio').val('');
+    $('#invoice_number').val('');
 
     // Limpiar los campos del detalle del proveedor 
     localStorage.removeItem("proveedorSeleccionado");
@@ -1238,7 +1248,6 @@ function cleanInputPurchase() {
         // Solo cambiar si es diferente a hoy
         if (!currentDate || currentDate.toDateString() !== today.toDateString()) {
             flatpickrInstance.setDate(today, true);
-            console.log('Fecha restablecida a hoy');
         }
     }
 }
@@ -1527,10 +1536,10 @@ function getPurchaseDetails() {
 
     if (selectedMethod === PAYMENT_CONFIG.methods.BOX) {
         data.payment_details = {
-            cash: parseFloat($('#payment-cash').val()) || 0,
-            card: parseFloat($('#payment-card').val()) || 0,
-            transfer: parseFloat($('#payment-transfer').val()) || 0,
-            voucher: parseFloat($('#payment-voucher').val()) || 0
+            efectivo: parseFloat($('#payment-cash').val()) || 0,
+            tarjeta: parseFloat($('#payment-card').val()) || 0,
+            transferencia: parseFloat($('#payment-transfer').val()) || 0,
+            vale: parseFloat($('#payment-voucher').val()) || 0
         };
     } else if (selectedMethod === PAYMENT_CONFIG.methods.CREDIT) {
         data.credit_details = {
@@ -1547,11 +1556,10 @@ function getPurchaseDetails() {
 //  FUNCIÓN: Procesar la compra enviando los datos al servidor
 // =================================================================================
 function processPurchases(method, details) {
-    console.log(method, details);
     $.ajax({
         url: '/temp_purchases_detail/processPurchase',
         type: 'POST',
-        dataType: 'json', // Especificar tipo de respuesta esperada
+        dataType: 'json',
         data: {
             _token: $('meta[name="csrf-token"]').attr('content'),
             method: method,
@@ -1559,8 +1567,8 @@ function processPurchases(method, details) {
             temp_id: $('#temp_purchase_id').val(),
         },
         success: function (response) {
-            // Manejar respuesta exitosa
-            if (response.status === 'success') {
+            console.log(response);
+            if (response.success) {
                 showAlert('success', 'Éxito', response.message || 'Compra procesada correctamente');
 
                 /*
@@ -1569,12 +1577,14 @@ function processPurchases(method, details) {
                     if (confirm('¿Desea imprimir el comprobante?')) {
                         printPurchaseReceipt(response.purchase_id);
                     }
-                }
+                }*/
 
                 // Recargar después de un breve delay para mostrar el mensaje
                 setTimeout(() => {
+                    cleanInputPurchase();
+                    applyDiscount(0);
                     window.location.reload();
-                }, 1500);*/
+                }, 1500);
             } else {
                 showAlert('warning', 'Advertencia', response.message);
             }
@@ -1595,7 +1605,7 @@ function processPurchases(method, details) {
                 // Si no se puede parsear la respuesta
                 errorMessage = xhr.statusText || errorMessage;
             }
-
+            console.log(errorMessage);
             showAlert('error', 'Error', errorMessage);
         },
     });

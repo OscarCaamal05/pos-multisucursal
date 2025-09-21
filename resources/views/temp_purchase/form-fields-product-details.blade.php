@@ -85,7 +85,7 @@
                 <div class="col-3">
                     <div class="">
                         <label for="colFormLabel" class="col-form-label">Cantidad: </label>
-                        <input type="text" class="form-control text-end auto-select" id="quantity" name="quantity">
+                        <input type="text" class="form-control text-end auto-select" id="quantity" name="quantity" value="1">
                     </div>
                     <div class="">
                         <label for="colFormLabel" class="col-form-label">Costo: </label>

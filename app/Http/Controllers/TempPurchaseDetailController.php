@@ -7,7 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\TempPurchase;
+use App\Models\purchases;
+use App\Models\purchases_detail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Exception;
 use Yajra\DataTables\Facades\DataTables;
 
 class TempPurchaseDetailController extends Controller
@@ -328,6 +332,239 @@ class TempPurchaseDetailController extends Controller
         ], $totals));
     }
 
+    /**
+     *  PROCESAR LA COMPRA 
+     */
+    public function processPurchases(Request $request)
+    {
+        // Obteniendo el ID del usuario autenticado 
+        $userId = auth()->id();
+        $sessionToken = session()->getId();
+
+        // Desglozando el request en diferentes variables
+        $method = $request->input('method'); // payment-cash o payment-credit
+        $data = $request->input('data');
+
+        // Formateando las fechas al formato Y-m-d
+        $date = \Carbon\Carbon::createFromFormat('d M, Y', $data['date'])->format('Y-m-d');
+
+        try {
+
+            DB::beginTransaction();
+
+            // Verificar que exista una compra temporal abierta para el usuario y sesión actual
+            $tempPurchase = TempPurchase::where('id_temp_purchase', $request->temp_id)
+                ->where('user_id', $userId)
+                ->where('status', 'abierta')
+                ->first();
+
+            if (!$tempPurchase) {
+                throw new Exception('No se encontró una compra temporal válida para procesar.');
+            }
+
+            // Obtener todos los detalles de la compra temporal
+            $tempDetails = TempPurchaseDetail::where('temp_purchase_id', $request->temp_id)->get();
+
+            if ($tempDetails->isEmpty()) {
+                throw new Exception('No hay productos registrados en esta compra.');
+            }
+
+            // OPCIONAL: Validar el stock y precio actual
+
+            // Calcular los totales de la compra
+            $discount = $tempPurchase->discount ?? 0;
+            $totals = $this->calculateTotals($tempDetails, $discount);
+
+            // Registrar la compra definitiva
+            $purchase = purchases::create([
+                'user_id' => $userId,
+                'supplier_id' => $data['id_supplier'],
+                'voucher_id' => $data['id_voucher'],
+                'document_id' => $data['id_document'],
+                'purchase_date' => $date,
+                'invoice_number' => $data['invoice_number'],
+                'amount_paid' => $data['amount_paid'],
+                'subtotal' => $totals['total_siva'],
+                'discount' => $totals['discount'],
+                'tax' => $totals['tax'],
+                'total_amount' => $totals['total'],
+                'status' => 'procesado',
+                'is_fully_paid' => $request->method === 'payment-credit' ? false : true,
+                'notes' => $request->notes ?? null,
+            ]);
+
+            // Registrar las tipos de pagos 
+            if ($method === 'payment-box') {
+                // Pago al contado
+                foreach ($data['payment_details'] as $type => $amount) {
+                    if ((float)$amount > 0) {
+                        DB::table('payment_methods')->insert([
+                            'transaction_id' => $purchase->id,
+                            'transaction_type' => 'purchase',
+                            'payment_method' => $type,
+                            'amount' => $amount,
+                            'reference' => $data['reference'] ?? null,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            } elseif ($method === 'payment-credit') {
+                // Pago a credito
+                DB::table('purchase_payments')->insert([
+                    'transaction_id' => $purchase->id,
+                    'transaction_type' => 'efectivo',
+                    'payment_method' => 'efectivo',
+                    'amount' => $data['amount_paid'],
+                    'reference' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Actualizar el credito del proveedor
+                $supplier = Supplier::find($data['id_supplier']);
+                if ($supplier) {
+                    $supplier->credit += $totals['total'];
+                    $supplier->save();
+                }
+            }
+
+            // Crear los detalles de la compra definitiva
+            foreach ($tempDetails as $tempDetail) {
+                $quantity = (float) $tempDetail->quantity * (float) $tempDetail->factor;
+
+                // Crear el detalle de la compra
+                purchases_detail::create([
+                    'purchase_id' => $purchase->id,
+                    'product_id' => (int) $tempDetail->product_id,
+                    'product_name' => $tempDetail->product_name,
+                    'product_code' => $tempDetail->barcode,
+                    'quantity' => (float) $tempDetail->quantity,
+                    'unit_cost' => (float) $tempDetail->purchase_price,
+                    'discount' => (float) $tempDetail->discount,
+                    'subtotal' => ((float)$tempDetail->quantity * (float)$tempDetail->purchase_price) - (float)$tempDetail->discount,
+                    'total' => (float) $tempDetail->total,
+                ]);
+
+                // Actualizar datos del producto si hay nuevos precios
+                Product::where('id', $tempDetail->product_id)
+                    ->update([
+                        // Valida si hay una nuevo valor mayor a 0, si no, mantiene el valor actual de 
+                        // la columna por ESO LA FUNCION DB::raw
+                        'sale_price_1' => $tempDetail->new_sale_price_1 > 0 ? $tempDetail->new_sale_price_1 : DB::raw('sale_price_1'),
+                        'sale_price_2' => $tempDetail->new_sale_price_2 > 0 ? $tempDetail->new_sale_price_2 : DB::raw('sale_price_2'),
+                        'sale_price_3' => $tempDetail->new_sale_price_3 > 0 ? $tempDetail->new_sale_price_3 : DB::raw('sale_price_3'),
+                        'purchase_price' => $tempDetail->purchase_price > 0 ? $tempDetail->purchase_price : DB::raw('purchase_price'),
+                        'unit_price' => $tempDetail->unit_price > 0 ? $tempDetail->unit_price : DB::raw('unit_price'),
+                        'conversion_factor' => $tempDetail->factor > 0 ? $tempDetail->factor : DB::raw('conversion_factor'),
+                    ]);
+
+                // Actualizar el inventario del producto
+                $this->updateProductStock($tempDetail->product_id, $quantity);
+
+                // Registrar los movimientos del inventario
+                $this->registerInventoryMovement(
+                    $tempDetail->product_id,
+                    $tempDetail->quantity,
+                    $tempDetail->purchase_price,
+                    $tempDetail->unit_price,
+                    $tempDetail->total,
+                    $purchase->id
+                );
+            }
+
+            // Limpiar tablas temporales
+            TempPurchaseDetail::where('temp_purchase_id', $tempPurchase->id_temp_purchase)->delete();
+            $tempPurchase->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'purchase_id' => $purchase->id,
+            ]);
+        } catch (Exception $e) {
+            // Revertir transacción en caso de error
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la compra: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * METODO PARA ACTUALIZAR EL STOCK DEL PRODUCTO
+     */
+    private function updateProductStock($productId, $quantity)
+    {
+        $product = Product::find($productId);
+        if ($product) {
+            $product->stock += $quantity;
+            $product->save();
+        }
+    }
+
+    /**
+     * METODO PARA REGISTRAR EL MOEVIMIENTO DE INVENTARIO
+     */
+    private function registerInventoryMovement($productId, $quantity, $unitPurchasePrice, $unitSalePrice, $totalCost, $referenceId = null)
+    {
+        DB::table('kardex')->insert([
+            'product_id' => $productId,
+            'movement_type' => 'entrada',
+            'movement_reason' => 'compra',
+            'reference_type' => null,
+            'reference_id' => $referenceId,
+            'quantity' => $quantity,
+            'unit_purchase_price' => $unitPurchasePrice,
+            'unit_sale_price' => $unitSalePrice,
+            'total_cost' => $totalCost,
+            'balance_quantity' => $this->getProductCurrentStock($productId, $quantity),
+            'balance_unit_cost' => $unitPurchasePrice,
+            'balance_total_cost' => $this->calculateBalanceTotalCost($productId, $quantity, $totalCost),
+            'movement_date' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * METODO PARA OBTENER EL STOCK ACTUAL DEL PRODUCTO
+     */
+    private function getProductCurrentStock($productId, $addedQuantity)
+    {
+        $product = Product::find($productId);
+        return $product ? ($product->stock + $addedQuantity) : $addedQuantity;
+    }
+
+    /**
+     * METODO PARA CALCULAR EL COSTO TOTAL DEL BALANCE DEL PRODUCTO
+     */
+    private function calculateBalanceTotalCost($productId, $newQuantity, $newTotalCost)
+    {
+
+        // Obtener el ultmo registro del kardex para el producto
+        $lastKardexEntry = DB::table('kardex')
+            ->where('product_id', $productId)
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$lastKardexEntry) {
+            return $newTotalCost; // Si no hay entradas previas, el costo total del balance es el costo total agregado
+        }
+
+        // Calcular el promedio ponderado
+        $previousBalance = $lastKardexEntry->balance_total_cost ?? 0;
+        $previousCost = $lastKardexEntry->balance_quantity ?? 0;
+
+        $totalQuantity = $previousCost + $newQuantity;
+        $totalCost = $previousBalance + $newTotalCost;
+
+        return $totalQuantity > 0 ? $totalCost : 0;
+    }
+
     public function cancelPurchase($temp_id)
     {
         try {
@@ -349,7 +586,6 @@ class TempPurchaseDetailController extends Controller
                 'status' => 'success',
                 'message' => 'Compra cancelada.'
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',

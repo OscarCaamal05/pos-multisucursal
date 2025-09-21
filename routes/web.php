@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/getDataProduct/{product}', [TempPurchaseDetailController::class, 'getDataProduct']);
     Route::get('/temp_purchases_detail/cancelPurchase/{temp_id}', [TempPurchaseDetailController::class, 'cancelPurchase']);
     Route::post('/temp_purchases_detail/getPurchaseOnWaitingList', [TempPurchaseDetailController::class, 'getPurchaseOnWaitingList']);
+    Route::post('/temp_purchases_detail/processPurchase', [TempPurchaseDetailController::class, 'processPurchases']);
 
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);

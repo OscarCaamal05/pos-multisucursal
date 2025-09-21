@@ -53,7 +53,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cerrar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-add-product-details">Guardar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-add-product-details">Aceptar</button>
                 </div>
             </form>
         </div>
