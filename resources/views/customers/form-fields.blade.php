@@ -57,7 +57,7 @@
 
     </div>
 
-    <div class="col-8">
+    <div class="col-12">
 
         <div class="mb-3">
             <label for="email">Correo</label>
@@ -72,25 +72,6 @@
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
-        </div>
-
-    </div>
-    <div class="col-4">
-
-        <div class="mb-3">
-            <label for="credit_available">Credito</label>
-            <div class="form-icon">
-                <input type="text"
-                    class="form-control form-control-icon @error('credit_available') is-invalid @enderror"
-                    name="credit_available"
-                    id="credit_available"
-                    value="{{ old('credit_available') }}">
-                <i class="ri-coins-line"></i>
-                @error('credit_available')
-                <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-
         </div>
 
     </div>
@@ -109,6 +90,59 @@
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+
+        </div>
+
+    </div>
+    <div class="col-5">
+
+        <div class="mb-3">
+            <label for="credit_available">Credito</label>
+            <div class="form-icon">
+                <input type="text"
+                    class="form-control form-control-icon @error('credit_available') is-invalid @enderror"
+                    name="credit_available"
+                    id="credit_available"
+                    value="{{ old('credit_available') }}">
+                <i class="ri-coins-line"></i>
+                @error('credit_available')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+        </div>
+
+    </div>
+    <div class="col-2">
+
+        <div class="mb-3">
+            <label for="credit_terms">Días</label>
+            <input type="text"
+                class="form-control @error('credit_terms') is-invalid @enderror"
+                name="credit_terms"
+                id="credit_terms"
+                value="{{ old('credit_terms', '30') }}">
+            @error('credit_terms')
+            <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+
+        </div>
+
+    </div>
+    <div class="col-5">
+
+        <div class="mb-3">
+            <label for="credit_due_date">Fecha de Vencimiento</label>
+            <input type="date"
+                class="form-control"
+                data-provider="flatpickr"
+                data-date-format="d M, Y"
+                id="credit_due_date"
+                name="credit_due_date"
+                value="{{ old('credit_due_date', date('Y-m-d', strtotime('+30 days'))) }}">
+            @error('credit_due_date')
+            <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
 
         </div>
 

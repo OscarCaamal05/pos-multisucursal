@@ -59,6 +59,8 @@
                                 <th scope="col">Direccion</th>
                                 <th scope="col">Credito disponible</th>
                                 <th scope="col">Credito</th>
+                                <th scope="col">Días</th>
+                                <th scope="col">Vencimiento</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col">Acciones</th>
                             </tr>
