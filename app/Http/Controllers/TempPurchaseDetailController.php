@@ -21,20 +21,100 @@ class TempPurchaseDetailController extends Controller
      */
     public function index() {}
 
-    public function getDataProduct($product_id)
+    public function getDataProduct($productId)
     {
-        $product = Product::getWithDetails()->where('p.id', $product_id)->first();
-        //$product = Product::findOrFail($product_id);
-        return response()->json(['status' => 'get.', 'detail' => $product]);
+        try {
+            $product = Product::with('purchaseUnit')->find($productId);
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Producto no encontrado'
+                ], 404);
+            }
+
+            // Obtener temp_purchase_id directamente
+            $tempPurchase = TempPurchase::where('user_id', auth()->id())
+                ->where('status', 'abierta')
+                ->first();
+
+            if (!$tempPurchase) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No hay compra temporal activa'
+                ], 400);
+            }
+
+            $tempPurchaseId = $tempPurchase->id_temp_purchase;
+
+            // Verificar si ya existe en la tabla temporal
+            $existing = TempPurchaseDetail::where('temp_purchase_id', $tempPurchaseId)
+                ->where('product_id', $productId)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'product_exists' => true,
+                    'message' => 'El producto ya está agregado a la compra'
+                ]);
+            }
+
+            // Producto no existe - devolver datos para nuevo registro
+            $productData = [
+                'product_id' => $product->id,
+                'product_name' => $product->product_name,
+                'barcode' => $product->barcode,
+                'stock' => $product->stock,
+                'unit_name' => $product->purchaseUnit->name ?? '',
+                'conversion_factor' => $product->conversion_factor,
+                'purchase_price' => $product->purchase_price,
+                'sale_price_1' => $product->sale_price_1,
+                'sale_price_2' => $product->sale_price_2,
+                'sale_price_3' => $product->sale_price_3,
+                'unit_price' => $product->unit_price,
+                'quantity' => 0,
+                'discount' => 0,
+                'factor' => $product->conversion_factor,
+                'has_temp_data' => false,
+                // Agregar campos faltantes para consistencia
+                'original_purchase_price' => $product->purchase_price,
+                'original_sale_price_1' => $product->sale_price_1,
+                'original_sale_price_2' => $product->sale_price_2,
+                'original_sale_price_3' => $product->sale_price_3
+            ];
+
+            return response()->json([
+                'success' => true,
+                'product_exists' => false,
+                'detail' => $productData
+            ]);
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            \Log::error('Error en getDataProduct', [
+                'product_id' => $productId,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Error interno del servidor: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function addProduct(Request $request)
     {
+
         try {
+            \Log::info('Inicio de actualización de detalle de compra:', [
+                'request_data' => $request->all()
+            ]);
             $request->validate([
                 'temp_purchase_id' => 'required',
                 'product_id' => 'required',
-                //'quantity' => 'required',
+                'quantity' => 'required',
             ]);
             $product = Product::getWithDetails()->where('p.id', $request->product_id)->first();
             //$product = Product::findOrFail($request->product_id);
@@ -44,6 +124,11 @@ class TempPurchaseDetailController extends Controller
                 ->first();
 
             if ($existing) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'El producto ya ha sido agregado a la compra temporal.'
+                ], 400);
+                /*
                 $existing->quantity += 1;
                 $existing->total = ($existing->quantity * $request->cost) - $existing->discount_number;
                 $existing->save();
@@ -54,7 +139,7 @@ class TempPurchaseDetailController extends Controller
 
                 return response()->json(array_merge([
                     'status' => 'create.'
-                ], $totals));
+                ], $totals));*/
             }
 
             $detail = TempPurchaseDetail::create([
@@ -258,47 +343,110 @@ class TempPurchaseDetailController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
     public function update(Request $request, $id)
     {
         try {
-            $request->validate([
-                'temp_purchase_id' => 'required',
+            \Log::info('Inicio de actualización de detalle de compra:', [
+                'id_temp' => $id,
+                'request_data' => $request->all()
             ]);
 
-            // Busca el detalle temporal por temp_purchase_id y product_id
-            $detail = TempPurchaseDetail::findOrFail($id);
+            // Validar que el registro exista usando id_temp
+            $detail = TempPurchaseDetail::where('id_temp', $id)->first();
 
             if (!$detail) {
-                return response()->json(['error' => 'Detalle no encontrado'], 404);
+                \Log::error('Detalle no encontrado:', ['id_temp' => $id]);
+                return response()->json([
+                    'error' => 'Registro no encontrado'
+                ], 404);
             }
 
-            // Actualiza los campos
-            $detail->update([
-                'purchase_price' => (float) ($request->cost ?? 0),
-                'new_sale_price_1' => (float) ($request->new_price_sale_1 ?? 0),
-                'new_sale_price_2' => (float) ($request->new_price_sale_2 ?? 0),
-                'new_sale_price_3' => (float) ($request->new_price_sale_3 ?? 0),
-                'unit_price' => (float) ($request->new_price_unit ?? 0),
-                'factor' => (float) ($request->new_factor ?? 0),
-                'quantity' => $request->quantity,
-                'discount' => $request->discount_number ?? 0,
-                'total' => (float) ($request->quantity * $request->cost - $request->discount_number),
-                'unit_id' => (int) ($request->unit_id ?? $detail->unit_id),
-                'unit_name' => $request->unit_name ?? $detail->unit_name,
+            // Validación de datos
+            $validatedData = $request->validate([
+                'temp_purchase_id' => 'required',  // Quitamos la validación de exists temporalmente
+                'product_id' => 'required|exists:products,id',
+                'quantity' => 'required|numeric|min:0',
+                'cost' => 'required|numeric|min:0',
+                'new_factor' => 'required|numeric|min:1',
+                'discount_number' => 'required|numeric|min:0',
+                'new_price_sale_1' => 'required|numeric|min:0',
+                'new_price_sale_2' => 'required|numeric|min:0',
+                'new_price_sale_3' => 'nullable|numeric|min:0'
             ]);
 
-            // Recalcula los totales
-            $details = TempPurchaseDetail::where('temp_purchase_id', $request->temp_purchase_id)->get();
-            $totals = $this->calculateTotals($details);
+            \Log::info('Datos validados, procediendo a actualizar:', $validatedData);
 
-            return response()->json(array_merge([
-                'status' => 'updated',
-                'detail' => $detail,
-            ], $totals));
-        } catch (\Exception $e) {
+            // Calcular valores
+            $unitPrice = $request->cost / $request->new_factor;
+            $subtotal = $request->quantity * $request->cost;
+            $total = $subtotal - $request->discount_number;
+
+            // Actualizar registro
+            $detail->quantity = $request->quantity;
+            $detail->purchase_price = $request->cost;
+            $detail->factor = $request->new_factor;
+            $detail->unit_price = $unitPrice;
+            $detail->discount = $request->discount_number;
+            $detail->total = $total;
+            $detail->new_sale_price_1 = $request->new_price_sale_1;
+            $detail->new_sale_price_2 = $request->new_price_sale_2;
+            $detail->new_sale_price_3 = $request->new_price_sale_3;
+            $detail->save();
+
+            \Log::info('Detalle actualizado exitosamente:', [
+                'id_temp' => $detail->id_temp,
+                'updated_values' => [
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $subtotal,
+                    'total' => $total
+                ]
+            ]);
+
+            try {
+                // Calcular totales
+                $details = TempPurchaseDetail::where('temp_purchase_id', $detail->temp_purchase_id)->get();
+                $totals = $this->calculateTotals($details);
+
+                \Log::info('Actualización exitosa:', [
+                    'id_temp' => $detail->id_temp,
+                    'totals' => $totals
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Registro actualizado correctamente',
+                    'detail' => $detail->toArray(),
+                    'totals' => $totals
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error al calcular totales:', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los datos se guardaron pero hubo un error al calcular los totales',
+                    'detail' => $detail->toArray()
+                ], 200); // Enviamos 200 ya que los datos principales se guardaron
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Error de validación:', [
+                'errors' => $e->errors()
+            ]);
             return response()->json([
-                'error' => $e->getMessage(),
+                'error' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error al actualizar detalle:', [
+                'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Error al actualizar el registro',
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -648,11 +796,60 @@ class TempPurchaseDetailController extends Controller
 
     public function getTempDetail($id)
     {
+        // Buscar el detalle por id_temp
         $detail = TempPurchaseDetail::find($id);
-        if ($detail) {
-            return response()->json(['detail' => $detail]);
+        if (!$detail) {
+            \Log::error('Detalle temporal no encontrado:', ['id_temp' => $id]);
+            return response()->json(['error' => 'No encontrado'], 404);
         }
-        return response()->json(['error' => 'No encontrado'], 404);
+
+        // Obtener el producto asociado
+        $product = Product::with('purchaseUnit')->find($detail->product_id);
+        if (!$product) {
+            \Log::error('Producto no encontrado:', ['product_id' => $detail->product_id]);
+            return response()->json(['error' => 'Producto no encontrado'], 404);
+        }
+
+        // Combinar datos
+        $combinedData = [
+            'product_id' => $product->id,
+            'product_name' => $product->product_name,
+            'barcode' => $product->barcode,
+            'stock' => $product->stock,
+            'unit_name' => $product->purchaseUnit ? $product->purchaseUnit->name : null,
+            'conversion_factor' => $product->conversion_factor,
+
+            // Precios originales
+            'original_purchase_price' => $product->purchase_price,
+            'original_sale_price_1' => $product->sale_price_1,
+            'original_sale_price_2' => $product->sale_price_2,
+            'original_sale_price_3' => $product->sale_price_3,
+
+            // Datos temporales - Aquí está la corrección
+            'id_temp' => $detail->id_temp, // Usar id_temp en lugar de temp_purchase_id
+            'temp_purchase_id' => $detail->temp_purchase_id, // Mantener temp_purchase_id separado
+            'purchase_price' => $detail->purchase_price,
+            'factor' => $detail->factor,
+            'quantity' => $detail->quantity,
+            'discount' => $detail->discount,
+            'new_sale_price_1' => $detail->new_sale_price_1,
+            'new_sale_price_2' => $detail->new_sale_price_2,
+            'new_sale_price_3' => $detail->new_sale_price_3,
+            'unit_price' => $detail->unit_price,
+
+            'has_temp_data' => true
+        ];
+
+        \Log::info('Datos del detalle recuperados:', [
+            'id_temp' => $detail->id_temp,
+            'temp_purchase_id' => $detail->temp_purchase_id,
+            'combined_data' => $combinedData
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'detail' => $combinedData
+        ]);
     }
 
     private function calculateTotals($details, $discount = 0)
@@ -696,5 +893,13 @@ class TempPurchaseDetailController extends Controller
                 'message' => 'Error al actualizar el descuento.'
             ], 500);
         }
+    }
+
+    // Función helper para obtener el temp_purchase_id actual
+    private function getCurrentTempPurchaseId()
+    {
+        return TempPurchase::where('user_id', auth()->id())
+            ->where('status', 'abierta')
+            ->value('id_temp_purchase');
     }
 }
