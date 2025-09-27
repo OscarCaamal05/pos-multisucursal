@@ -501,7 +501,7 @@ function selectUnits() {
  * @param {number} purchasePrice
  * @param {number} conversionFactor
  */
-function calculateUnitPrice(purchasePrice, conversionFactor) {
+export function calculateUnitPrice(purchasePrice, conversionFactor) {
     const price = parseFloat(purchasePrice);
     const factor = parseFloat(conversionFactor);
     // Valida que los precios sean números e igual a cero
@@ -524,7 +524,7 @@ function calculateUnitPrice(purchasePrice, conversionFactor) {
  * @param {number} unitPrice
  * @param {number} profitMargin
  */
-function calculateSalePriceFromMargin(unitPrice, margin) {
+export function calculateSalePriceFromMargin(unitPrice, margin) {
     const price = parseFloat(unitPrice);
     const profitMargin = parseFloat(margin);
     // Valida que los precios sean números y mayores a cero
@@ -545,7 +545,7 @@ function calculateSalePriceFromMargin(unitPrice, margin) {
  * @param {number} unitPrice
  * @param {number} salePrice
  */
-function calculateMarginFromSalePrice(unitPrice, salePrice) {
+export function calculateMarginFromSalePrice(unitPrice, salePrice) {
     const price = parseFloat(unitPrice);
     const sale = parseFloat(salePrice);
     // Valida que los precios sean números y mayores a cero

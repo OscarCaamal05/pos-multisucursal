@@ -51,6 +51,8 @@ class SaveCustomersRequest extends FormRequest
                     ->ignore(optional($this->customer)->id)
             ],
             'credit_available' => 'nullable|numeric',
+            'credit_terms' => 'nullable|integer',
+            'credit_due_date' => 'nullable',
         ];
     }
 }

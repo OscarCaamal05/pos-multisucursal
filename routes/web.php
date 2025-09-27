@@ -5,12 +5,16 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchasesController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\SuppliersController;
+use App\Http\Controllers\TempPurchaseDetailController;
+use App\Http\Controllers\TempPurchaseController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\UserController;
 use App\Models\Department;
+use App\Models\tempPurchaseDetail;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,6 +24,8 @@ Route::get('/roles/data', [RolesController::class, 'getRoles'])->name('roles.dat
 Route::get('/categories/data', [CategoryController::class, 'getCategories'])->name('categories.data');
 Route::get('/departments/data', [DepartmentsController::class, 'getDepartments'])->name('departments.data');
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
+Route::get('/temp_purchases_detail/data', [TempPurchaseDetailController::class, 'getProductDetails'])->name('temp_purchases_detail.data');
+Route::get('/temp_purchases_detail/getPendingPurchases', [TempPurchaseDetailController::class, 'getPendingPurchases']);
 Route::get('/products/data', [ProductController::class, 'getProducts'])->name('products.data');
 Route::get('/customers/data', [CustomerController::class, 'getCustomers'])->name('customers.data');
 Route::get('/suppliers/data', [SuppliersController::class, 'getSuppliers'])->name('suppliers.data');
@@ -43,6 +49,23 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)->names('customers');
     Route::resource('suppliers', SuppliersController::class)->names('suppliers');
     Route::resource('products', ProductController::class)->names('products');
+    Route::resource('temp_purchase', TempPurchaseController::class)->names('temp_purchase');
+    //Route::get('temp_purchase', [TempPurchaseController::class, 'getOrCreateTempPurchase']);
+    Route::resource('temp_purchases_detail', TempPurchaseDetailController::class)->names('temp_purchases_detail');
+    Route::get('/temp_purchases_detail/{supplier}/show', [TempPurchaseDetailController::class, 'show']);
+
+    Route::post('/temp_purchases_detail/add', [TempPurchaseDetailController::class, 'addProduct']);
+    Route::get('/temp_purchases_detail/totals/{temp_purchase_id}', [TempPurchaseDetailController::class, 'getTotals']);
+    Route::get('/temp_purchases_detail/getDataProductTemp/{id}', [TempPurchaseDetailController::class, 'getTempDetail']);
+    Route::post('/temp_purchases_detail/set-to-waiting/', [TempPurchaseDetailController::class, 'setToWaiting']);
+    Route::post('/temp_purchases_detail/updateDiscount/', [TempPurchaseDetailController::class, 'updateDiscount']);
+    Route::get('/temp_purchases_detail/getDataProduct/{product}', [TempPurchaseDetailController::class, 'getDataProduct']);
+    Route::get('/temp_purchases_detail/cancelPurchase/{temp_id}', [TempPurchaseDetailController::class, 'cancelPurchase']);
+    Route::post('/temp_purchases_detail/getPurchaseOnWaitingList', [TempPurchaseDetailController::class, 'getPurchaseOnWaitingList']);
+    Route::post('/temp_purchases_detail/processPurchase', [TempPurchaseDetailController::class, 'processPurchases']);
+
+    Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
+    Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
     Route::get('/users/{id}', [UserController::class, 'show']);
@@ -56,4 +79,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

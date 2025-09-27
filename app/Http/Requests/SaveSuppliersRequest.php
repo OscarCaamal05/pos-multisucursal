@@ -57,6 +57,8 @@ class SaveSuppliersRequest extends FormRequest
                     ->ignore(optional($this->supplier)->id)
             ],
             'credit_available' => 'nullable|numeric',
+            'credit_terms' => 'nullable|integer',
+            'credit_due_date' => 'nullable',
         ];
     }
 }

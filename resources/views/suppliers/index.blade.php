@@ -7,22 +7,23 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxSuppliers.js')
 <!-- Modal para crear/editar -->
-<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true" data-store-url="{{ route('suppliers.store') }}"
-    data-update-url-base="/suppliers/">
+<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
-                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal"></button>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
             </div>
-            <form id="supplierForm">
+            <form id="supplierForm"
+                data-store-url="{{ route('suppliers.store') }}"
+                data-update-url-base="/suppliers/">
                 @csrf
                 <input type="hidden" name="supplierId" id="supplierId" value="0">
                 <div class="modal-body">
                     @include('suppliers.form-fields')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-supplier">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
@@ -60,6 +61,8 @@
                                 <th scope="col">Direccion</th>
                                 <th scope="col">Credito disponible</th>
                                 <th scope="col">Credito</th>
+                                <th scope="col">Días</th>
+                                <th scope="col">Vencimiento</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col">Acciones</th>
                             </tr>

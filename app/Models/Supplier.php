@@ -15,6 +15,8 @@ class Supplier extends Model
         'email',
         'credit',
         'credit_available',
+        'credit_due_date',
+        'credit_terms',
         'status'
     ];
 }
