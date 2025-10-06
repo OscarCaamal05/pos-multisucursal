@@ -115,6 +115,12 @@ export function initCreditTermsAndDate(daysSelector, dateSelector, defaultDays =
     const $daysInput = $(daysSelector);
     const $dateInput = $(dateSelector);
 
+    // Verificar si ya existe una instancia de Flatpickr y destruirla
+    const dateElement = $dateInput[0];
+    if (dateElement && dateElement._flatpickr) {
+        dateElement._flatpickr.destroy();
+    }
+
     const today = new Date();
 
     // Valor inicial de días
@@ -140,13 +146,18 @@ export function initCreditTermsAndDate(daysSelector, dateSelector, defaultDays =
         }
     });
 
+    // Remover event listeners anteriores para evitar duplicados
+    $daysInput.off("input.creditTerms");
+    
     // Escuchar cambios en input días -> actualizar fecha
-    $daysInput.on("input", function () {
+    $daysInput.on("input.creditTerms", function () {
         const days = parseInt($(this).val());
         if (!isNaN(days) && days > 0) {
             const newDate = new Date(today);
             newDate.setDate(today.getDate() + days);
-            fp.setDate(newDate, true);
+            if (fp && fp.setDate) {
+                fp.setDate(newDate, true);
+            }
         }
     });
 }
