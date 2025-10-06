@@ -2,197 +2,17 @@ import { showAlert, clearValidationErrors, handleValidationError, showConfirmati
 import { calculateUnitPrice, calculateMarginFromSalePrice } from './functionAjaxProducts';
 import { makeNumericInput } from './utils/numericInputs';
 import { initCreditTermsAndDate, closeSupplierModal, bindSupplierFormSubmit, formatCleave } from './helpers/supplierHelper';
-import { method } from 'lodash';
 
-// =========================================
-// CONFIGURACIÓN CENTRALIZADA
-// =========================================
-const CONFIG = {
-    // URLs de endpoints
-    endpoints: {
-        tempPurchaseDetails: '/temp_purchases_detail',
-        suppliers: 'temp_purchases_detail/autoCompleteSuppliers',
-        products: 'temp_purchases_detail/autoCompleteProducts',
-        totals: '/temp_purchases_detail/totals',
-        updateDiscount: '/temp_purchases_detail/updateDiscount',
-        setToWaiting: '/temp_purchases_detail/set-to-waiting'
-    },
-    
-    // Configuraciones numéricas
-    numbers: {
-        decimals: 2,
-        minQuantity: 1,
-        maxDiscountPercent: 100,
-        defaultTax: 16, // IVA por defecto
-        scrollHeight: 500
-    },
-    
-    // Clases CSS
-    cssClasses: {
-        selected: 'selected table-light',
-        noResult: 'no_result'
-    },
-    
-    // Mensajes
-    messages: {
-        noSupplier: 'Seleccione un proveedor para continuar.',
-        noProducts: 'Agregue productos a la compra para continuar.',
-        productExists: 'El producto ya fue agregado a la lista.',
-        selectRow: 'Seleccione una fila para continuar',
-        quantityRequired: 'La cantidad del producto debe ser mayor a 0'
-    },
-    
-    // LocalStorage keys
-    storage: {
-        supplierKey: 'proveedorSeleccionado'
-    },
-    
-    // Configuración de modales
-    modals: {
-        products: '#modal-products',
-        suppliers: '#modal-suppliers',
-        productDetails: '#modal-product-details',
-        payment: '#modal-payment-detail',
-        purchaseWaiting: '#modal-purchase-waiting'
-    }
-};
-
-// =========================================
-// FUNCIONES HELPER PARA MODALES
-// =========================================
-
-/**
- * Maneja la apertura de modales con carga de datos
- * @param {string} modalId - ID del modal
- * @param {Function} loadFunction - Función para cargar datos
- */
-function openModalWithData(modalId, loadFunction = null) {
-    $(modalId).modal('show');
-    if (loadFunction && typeof loadFunction === 'function') {
-        loadFunction();
-    }
-}
-
-/**
- * Cierra un modal específico
- * @param {string} modalId - ID del modal a cerrar
- */
-function closeModal(modalId) {
-    $(modalId).modal('hide');
-}
-
-// =========================================
-// FUNCIONES HELPER PARA AJAX
-// =========================================
-
-/**
- * Wrapper para llamadas AJAX estandarizadas
- * @param {Object} options - Configuración de la llamada AJAX
- * @param {string} options.url - URL del endpoint
- * @param {string} options.method - Método HTTP
- * @param {Object} options.data - Datos a enviar
- * @param {Function} options.onSuccess - Callback de éxito
- * @param {Function} options.onError - Callback de error
- */
-function makeAjaxRequest({ url, method = 'GET', data = {}, onSuccess, onError }) {
-    // Agregar token CSRF automáticamente para métodos que lo requieren
-    if (['POST', 'PUT', 'DELETE'].includes(method.toUpperCase())) {
-        data._token = $('meta[name="csrf-token"]').attr('content');
-    }
-
-    $.ajax({
-        url,
-        method,
-        data,
-        dataType: 'json',
-        success: function(response) {
-            if (onSuccess && typeof onSuccess === 'function') {
-                onSuccess(response);
-            }
-        },
-        error: function(xhr) {
-            if (onError && typeof onError === 'function') {
-                onError(xhr);
-            } else {
-                // Manejo de error por defecto
-                handleAjaxError(xhr);
-            }
-        }
-    });
-}
-
-/**
- * Manejo centralizado de errores AJAX
- * @param {Object} xhr - Objeto XMLHttpRequest
- */
-function handleAjaxError(xhr) {
-    if (xhr.status === 422) {
-        // Error de validación
-        handleValidationError(xhr);
-    } else {
-        // Otros errores
-        showAlert('error', 'Error', 'Ocurrió un error inesperado. Intente nuevamente.');
-    }
-}
-
-// =========================================
-// MÓDULO DE CÁLCULOS
-// =========================================
-
-const CalculationHelper = {
-    /**
-     * Calcula el descuento en valor monetario basado en porcentaje
-     * @param {number} percentage - Porcentaje de descuento
-     * @param {number} baseAmount - Monto base
-     * @returns {string} Valor del descuento formateado
-     */
-    calculateDiscountAmount(percentage, baseAmount) {
-        if (!percentage || !baseAmount) return '0.00';
-        return (baseAmount * (percentage / 100)).toFixed(CONFIG.numbers.decimals);
-    },
-
-    /**
-     * Calcula el porcentaje de descuento basado en el monto
-     * @param {number} discountAmount - Monto del descuento
-     * @param {number} baseAmount - Monto base
-     * @returns {string} Porcentaje formateado
-     */
-    calculateDiscountPercentage(discountAmount, baseAmount) {
-        if (!discountAmount || !baseAmount) return '0.00';
-        return ((discountAmount / baseAmount) * 100).toFixed(CONFIG.numbers.decimals);
-    },
-
-    /**
-     * Formatea un valor monetario
-     * @param {number} amount - Monto a formatear
-     * @returns {string} Monto formateado
-     */
-    formatCurrency(amount) {
-        return parseFloat(amount || 0).toFixed(CONFIG.numbers.decimals);
-    },
-
-    /**
-     * Valida que la cantidad sea mayor a cero
-     * @param {number} quantity - Cantidad a validar
-     * @returns {boolean} True si es válida
-     */
-    isValidQuantity(quantity) {
-        return quantity && quantity > 0;
-    }
-};
-
-/**
- * Maneja la selección de una fila en tablas de modales
- * @param {string} tableId - ID de la tabla
- * @param {Function} onDoubleClick - Función a ejecutar en doble click
- */
-function bindTableRowSelection(tableId, onDoubleClick) {
-    $(`${tableId} tbody`).on('dblclick', 'tr', function () {
-        const table = $(tableId).DataTable();
-        const data = table.row(this).data();
-        onDoubleClick(data);
-    });
-}
+// Importar helpers de compras
+import {
+    PURCHASES_CONFIG as CONFIG,
+    openModalWithData,
+    closeModal,
+    CalculationHelper,
+    renderActionsColumn,
+    validateSupplierSelected,
+    formatPhoneNumber
+} from './helpers/PurchasesHelper';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -226,7 +46,6 @@ $(document).ready(function () {
     addProductToTempList();
     bindDeleteEvents();
     validatePaymentMethod();
-
     // =============================================================================
     // Funciones para el form para agregar proveedor
     // =============================================================================
@@ -315,7 +134,7 @@ $(document).ready(function () {
     $('#discount-percentage').on('input', function () {
         const discount = $(this).val();
         const costPrice = parseFloat($('#cost').val());
-        const result = calculateDiscountPercentage(discount, costPrice);
+        const result = CalculationHelper.calculateDiscountAmount(discount, costPrice);
         $('#discount-number').val(result);
     });
 
@@ -328,7 +147,7 @@ $(document).ready(function () {
     $('#discount-number').on('input', function () {
         const discount = $(this).val();
         const costPrice = parseFloat($('#cost').val());
-        const result = calculateDiscountNumber(discount, costPrice);
+        const result = CalculationHelper.calculateDiscountPercentage(discount, costPrice);
         $('#discount-percentage').val(result);
     });
 
@@ -353,7 +172,7 @@ $(document).ready(function () {
             targetMargin.text(margin);
         });
         const discount = $('#discount-percentage').val();
-        const result = calculateDiscountPercentage(discount, costPrice);
+        const result = CalculationHelper.calculateDiscountAmount(discount, costPrice);
         $('#discount-number').val(result);
     });
 
@@ -541,13 +360,13 @@ $(document).ready(function () {
             let credit_days = $('.credit-terms').val();
             let credit_available_supplier = parseFloat($('.credit_supplier').text().replace(/[$,]/g, ''));
             $('#payment-cash').val(total_final.toFixed(2));
-            $('#current-credit').val(total_final.toFixed(2));
+            $('#credit-payment').val(total_final.toFixed(2));
             $('#credit-limit').val(limit_credit);
             $('.credit_available').val(credit_available_supplier.toFixed(2));
             $('#credit-days').prop('disabled', true);
             $('#due-date').prop('disabled', true);
-            $('#current-credit').prop('disabled', true);
-            initCreditTermsAndDate('#credit-days', '#due-date', credit_days);
+            $('#credit-payment').prop('disabled', true);
+            // La inicialización de Flatpickr se maneja en el evento 'show.bs.modal'
         }
 
     });
@@ -568,9 +387,35 @@ $(document).ready(function () {
     });
 
     $('#modal-payment-detail').on('hidden.bs.modal', function () {
+        // Resetear campos de pago
         $('#payment-card').val(0.00);
         $('#payment-transfer').val(0.00);
         $('#payment-voucher').val(0.00);
+
+        // Resetear al método de pago por defecto (Pago con caja)
+        $('#payment-box').prop('checked', true);
+        $('#payment-credit').prop('checked', false);
+
+        // Resetear campos de crédito
+        $('#credit-payment').val(0.00);
+        $('#credit-days').val(0);
+
+        // Limpiar la fecha de crédito de manera segura
+        const dateInput = $('#due-date')[0];
+        if (dateInput && dateInput._flatpickr) {
+            dateInput._flatpickr.destroy();
+        }
+        $('#due-date').val('');
+
+        // Restablecer los campos de pago (habilitar caja, deshabilitar crédito)
+        resetPaymentFields();
+        configurePaymentFields(PAYMENT_CONFIG.methods.BOX);
+    });
+
+    $('#modal-payment-detail').on('show.bs.modal', function () {
+        // Reinicializar Flatpickr cuando se muestre el modal
+        const creditDays = $('.credit-terms').val() || 30;
+        initCreditTermsAndDate('#credit-days', '#due-date', creditDays);
     });
 
     $('#modal-product-details').on('shown.bs.modal', function () {
@@ -591,67 +436,117 @@ $(document).ready(function () {
  * ------------------------------------------ FIN READY -------------------------------------------------
  */
 
-// =========================================
-// CONFIGURACIÓN DE COLUMNAS DE DATATABLE
-// =========================================
-const getTableColumns = () => [
-    { data: 'id_temp', name: 'id_temp', visible: false },
-    { data: 'temp_purchase_id', name: 'temp_purchase_id', visible: false },
-    { data: 'product_id', name: 'product_id', visible: false },
-    {
-        data: null,
-        name: 'description',
-        render: (data, type, row) => renderProductDescription(row)
-    },
-    {
-        data: null,
-        name: 'quantity',
-        className: 'text-center fs-6',
-        render: (data, type, row) => renderCenteredValue(row.quantity)
-    },
-    {
-        data: null,
-        name: 'factor',
-        className: 'text-center',
-        render: (data, type, row) => renderCenteredValue(row.factor)
-    },
-    {
-        data: null,
-        name: 'purchase_price',
-        render: (data, type, row) => renderPriceWithUnit(row.purchase_price, row.unit_name)
-    },
-    {
-        data: null,
-        name: 'discount',
-        className: 'text-center fs-6',
-        render: (data, type, row) => renderCurrency(row.discount)
-    },
-    {
-        data: null,
-        name: 'total',
-        className: 'text-center fs-6',
-        render: (data, type, row) => renderCurrency(row.total)
-    },
-    { data: 'unit_id', name: 'unit_id', visible: false },
-    {
-        data: 'id_temp',
-        name: 'actions',
-        orderable: false,
-        searchable: false,
-        render: renderActionsColumn
-    }
-];
-
 /**
  * Inicializa el datatable de la tabla temporal de compra.
  */
 function initTableDetails() {
-    const tableConfig = {
+    tableDetails = $('#tableTempPurchase').DataTable({
         processing: true,
         serverSide: true,
-        ajax: `${CONFIG.endpoints.tempPurchaseDetails}/data`,
-        columns: getTableColumns(),
-        scrollY: CONFIG.numbers.scrollHeight,
+        ajax: '/temp_purchases_detail/data',
+        columns: [
+            {
+                data: 'id_temp',
+                name: 'id_temp',
+                visible: false
+            },
+            {
+                data: 'temp_purchase_id',
+                name: 'temp_purchase_id',
+                visible: false
+            },
+            {
+                data: 'product_id',
+                name: 'product_id',
+                visible: false
+            },
+            {
+                data: null,
+                name: 'description',
+                render: function (data, type, row) {
+                    return `
+                    <div class="d-flex">
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="fs-14 text-body m-1">
+                                ${row.product_name}
+                            </h5>
+                            <p class="text-muted mb-0">Codigo: <span class="fw-medium">${row.barcode}</span></p>
+                        </div>
+                    </div>
+                    `;
+                }
+            },
+            {
+                data: null,
+                name: 'quantity',
+                className: 'text-center fs-6',
+                render: function (data, type, row) {
+                    return `
+                        <h5 class="text-body fs-14"> 
+                            ${row.quantity}
+                        </h5>`
+                }
+            },
+            {
+                data: null,
+                name: 'factor',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    return `
+                        <h5 class="text-body fs-14"> 
+                            ${row.factor}
+                        </h5>`
+                }
+            },
+            {
+                data: null,
+                name: 'purchase_price',
+                render: function (data, type, row) {
+                    return `
+                    <div class="d-flex justify-content-center">
+                        <h5 class="text-body fs-14 me-1"> $${row.purchase_price} </h5>
+                        <span class="text-muted fs-12 fw-semibold"> X ${row.unit_name}<span>
+                    </div>
+                    `;
+                }
+            },
+            {
+                data: null,
+                name: 'discount',
+                className: 'text-center fs-6',
+                render: function (data, type, row) {
+                    return `
+                        <h5 class="text-body fs-14"> 
+                            $${row.discount}
+                        </h5>
+                    `;
+                }
+            },
+            {
+                data: null,
+                name: 'total',
+                className: 'text-center fs-6',
+                render: function (data, type, row) {
+                    return `
+                    <h5 class="text-body fs-14" >
+                        $${row.total}
+                    </h5>`;
+                }
+            },
+            {
+                data: 'unit_id',
+                name: 'unit_id',
+                visible: false
+            },
+            {
+                data: 'id_temp',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                render: renderActionsColumn
+            }
+        ],
+        scrollY: 500,
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
@@ -660,67 +555,9 @@ function initTableDetails() {
         paging: false,
         info: false,
         lengthChange: false,
-        pageLength: -1
-    };
+        pageLength: -1,
 
-    tableDetails = $('#tableTempPurchase').DataTable(tableConfig);
-}
-
-// =========================================
-// FUNCIONES DE RENDERIZADO DE CELDAS
-// =========================================
-
-/**
- * Renderiza la descripción del producto con nombre y código de barras
- */
-function renderProductDescription(row) {
-    return `
-        <div class="d-flex">
-            <div class="flex-grow-1 ms-3">
-                <h5 class="fs-14 text-body m-1">${row.product_name}</h5>
-                <p class="text-muted mb-0">Codigo: <span class="fw-medium">${row.barcode}</span></p>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Renderiza un valor centrado
- */
-function renderCenteredValue(value) {
-    return `<h5 class="text-body fs-14">${value}</h5>`;
-}
-
-/**
- * Renderiza precio con unidad
- */
-function renderPriceWithUnit(price, unit) {
-    return `
-        <div class="d-flex justify-content-center">
-            <h5 class="text-body fs-14 me-1">$${price}</h5>
-            <span class="text-muted fs-12 fw-semibold">X ${unit}</span>
-        </div>
-    `;
-}
-
-/**
- * Renderiza valor monetario
- */
-function renderCurrency(amount) {
-    return `<h5 class="text-body fs-14">$${amount}</h5>`;
-}
-
-/**
- * Renderiza los botones de acciones (editar, eliminar).
- */
-function renderActionsColumn(data) {
-    return `
-        <div class="hstack gap-3 fs-15">
-            <a href="javascript:void(0);" class="link-danger btn-delete-detail" data-id="${data}">
-                <i class="ri-delete-bin-5-line"></i>
-            </a>
-        </div>
-    `;
+    });
 }
 
 // =========================================
@@ -755,37 +592,29 @@ function bindDeleteEvents() {
 
     });
 }
-// =========================================
-// FUNCIÓN GENÉRICA: Autocompletado reutilizable
-// =========================================
 
 /**
- * Crea un autocompletado genérico para diferentes tipos de datos
- * @param {Object} options - Configuración del autocompletado
- * @param {string} options.selector - Selector del input
- * @param {string} options.dataSource - URL o función para obtener datos
- * @param {string} options.targetInput - Input donde colocar el ID seleccionado
- * @param {string} options.entityType - Tipo de entidad (supplier, product)
+ * Inicializa el autocompletado de proveedores
  */
-function createAutoComplete({ selector, dataSource, targetInput, entityType }) {
-    return new autoComplete({
-        selector,
+function autoCompleteSuppliers() {
+    const Suppliers = new autoComplete({
+        selector: "#auto_complete_supplier",
         data: {
             src: async (query) => {
                 try {
-                    const response = await dataSource(query);
+                    const response = await autoCompleteSupplier(query);
                     return response.data;
                 } catch (error) {
-                    console.error(`Error en autocompletado de ${entityType}:`, error);
+                    console.error('Error en autocompletado de proveedores:', error);
                     return [];
                 }
             },
             keys: ['value'],
             cache: false
         },
-        
+
         resultsList: {
-            element: (list, data) => {
+            element: function (list, data) {
                 if (!data.results.length) {
                     const message = document.createElement("div");
                     message.setAttribute("class", CONFIG.cssClasses.noResult);
@@ -795,11 +624,11 @@ function createAutoComplete({ selector, dataSource, targetInput, entityType }) {
             },
             noResults: true
         },
-        
+
         resultItem: {
             highlight: true
         },
-        
+
         events: {
             input: {
                 selection: function (event) {
@@ -808,24 +637,12 @@ function createAutoComplete({ selector, dataSource, targetInput, entityType }) {
                         ? selection.value
                         : (selection.value?.value || '');
 
-                    this.input.value = selectedText;
-                    this.input.select();
-                    $(targetInput).val(selection.value.id).trigger('change');
+                    Suppliers.input.value = selectedText;
+                    Suppliers.input.select();
+                    $("#supplier_id").val(selection.value.id).trigger('change');
                 }
             }
         }
-    });
-}
-
-/**
- * Inicializa el autocompletado de proveedores
- */
-function autoCompleteSuppliers() {
-    createAutoComplete({
-        selector: "#auto_complete_supplier",
-        dataSource: autoCompleteSupplier,
-        targetInput: "#supplier_id",
-        entityType: "supplier"
     });
 }
 
@@ -840,7 +657,7 @@ function autoCompleteSuppliers() {
  */
 function autoCompleteSupplier(query) {
     return $.ajax({
-        url: `${CONFIG.endpoints.suppliers}/${query}`,
+        url: `temp_purchases_detail/autoCompleteSuppliers/${query}`,
         type: 'GET',
         dataType: 'json'
     });
@@ -859,15 +676,12 @@ function getSupplierData(supplierId) {
     $.ajax({
         url: `/temp_purchases_detail/${supplierId}/show`,
         method: 'GET',
-        dataType: 'json',
         success: function (response) {
-            // Verifica si la respuesta contiene el numero de teléfono
-            const rowPhone = response.phone || '';
-            //Si es asi, formatea el número de teléfono para mostarlo en el formato (XXX)-XXX-XXXX
-            const phoneFormat = rowPhone.length === 10
-                ? `(${rowPhone.substring(0, 3)})` + '-' + rowPhone.substring(3, 6) + '-' + rowPhone.substring(6)
-                : rowPhone;
-            // LLena los campos con los datos del proveedor validando si existe en registro
+
+            // Usar la función helper para formatear el teléfono
+            const phoneFormat = formatPhoneNumber(response.phone);
+
+            // Llenar los campos con los datos del proveedor
             $('.name_supplier').text(response.representative || 'No hay dato');
             $('.company_name').text(response.company_name || 'No hay dato');
             $('.email_supplier').text(response.email || 'No hay dato');
@@ -901,7 +715,7 @@ function getSupplierData(supplierId) {
 // FUNCIÓN: Recuparar los datos almacenados en el localStrorage y mostrarlo en la interfaz
 // =========================================
 function initSupplier() {
-    const proveedorGuardado = localStorage.getItem("proveedorSeleccionado");
+    const proveedorGuardado = localStorage.getItem(CONFIG.storage.supplierKey);
     if (proveedorGuardado) {
         const data = JSON.parse(proveedorGuardado);
 
@@ -923,11 +737,52 @@ function initSupplier() {
  * Inicializa el autocompletado de productos
  */
 function autoCompleteProducts() {
-    createAutoComplete({
+    const Products = new autoComplete({
         selector: "#auto_complete_product",
-        dataSource: autoCompleteProduct,
-        targetInput: "#product_id",
-        entityType: "product"
+        data: {
+            src: async (query) => {
+                try {
+                    const response = await autoCompleteProduct(query);
+                    return response.data;
+                } catch (error) {
+                    console.error('Error en autocompletado de productos:', error);
+                    return [];
+                }
+            },
+            keys: ['value'],
+            cache: false
+        },
+
+        resultsList: {
+            element: function (list, data) {
+                if (!data.results.length) {
+                    const message = document.createElement("div");
+                    message.setAttribute("class", CONFIG.cssClasses.noResult);
+                    message.innerHTML = `<span>No se encontraron resultados para "${data.query}"</span>`;
+                    list.prepend(message);
+                }
+            },
+            noResults: true
+        },
+
+        resultItem: {
+            highlight: true
+        },
+
+        events: {
+            input: {
+                selection: function (event) {
+                    const selection = event.detail.selection;
+                    const selectedText = typeof selection.value === 'string'
+                        ? selection.value
+                        : (selection.value?.value || '');
+
+                    Products.input.value = selectedText;
+                    Products.input.select();
+                    $("#product_id").val(selection.value.id).trigger('change');
+                }
+            }
+        }
     });
 }
 
@@ -942,7 +797,7 @@ function autoCompleteProducts() {
  */
 function autoCompleteProduct(query) {
     return $.ajax({
-        url: `${CONFIG.endpoints.products}/${query}`,
+        url: `temp_purchases_detail/autoCompleteProducts/${query}`,
         type: 'GET',
         dataType: 'json'
     });
@@ -958,18 +813,21 @@ function autoCompleteProduct(query) {
  * @param {boolean} isEdit - falso si no existe el registro en la tabla temporal de compra
  */
 function getDataProduct(productId, isEdit = false) {
-    makeAjaxRequest({
-        url: `${CONFIG.endpoints.tempPurchaseDetails}/getDataProduct/${productId}`,
+    $.ajax({
+        url: `/temp_purchases_detail/getDataProduct/${productId}`,
         method: 'GET',
-        onSuccess: function (response) {
+        dataType: 'json',
+        success: function (response) {
             if (response.product_exists) {
                 showAlert('warning', 'Espera', CONFIG.messages.productExists);
                 closeModal(CONFIG.modals.productDetails);
                 return;
+            } else {
+                showProductDetailModal(response.detail, isEdit);
             }
-            showProductDetailModal(response.detail, isEdit);
         }
-    });
+
+    })
 }
 
 // =========================================
@@ -994,7 +852,7 @@ function getDataProductDetail(detailId, isEdit = true) {
             }
             showProductDetailModal(data, isEdit);
         },
-        error: function(xhr) {
+        error: function (xhr) {
             console.error('Error al obtener datos:', xhr);
             showAlert('error', 'Error', 'No se pudieron obtener los datos del producto');
         }
@@ -1008,11 +866,11 @@ function addProductToTempList() {
     $('#productDetails').on('submit', function (e) {
         e.preventDefault();
         $('.factor').prop('disabled', false);
-        
+
         // Obtener el ID del detalle temporal para edición
         const detailId = $('#temp_id').val();
         const isEdit = detailId != 0;
-        
+
         // Validar la cantidad
         const quantity = parseFloat($('#quantity').val());
         if (!quantity || quantity <= 0) {
@@ -1033,7 +891,18 @@ function addProductToTempList() {
             method: isEdit ? 'PUT' : 'POST',
             data: $form,
             success: function (response) {
-                showTotals(response);
+                // Actualizar el temp_purchase_id si viene en la respuesta
+                if (response.temp_purchase_id) {
+                    $('#temp_purchase_id').val(response.temp_purchase_id);
+                }
+
+                // Para actualización (PUT), los totales están en response.totals
+                // Para agregar (POST), los totales están directamente en response
+                if (isEdit && response.totals) {
+                    showTotals(response.totals);
+                } else {
+                    showTotals(response);
+                }
                 tableDetails.ajax.reload(null, false); // Recarga la tabla sin reiniciar la paginación
                 $('#modal-product-details').modal('hide');
                 $('#temp_id').val(0);
@@ -1055,10 +924,13 @@ function addProductToTempList() {
  * @param {number} temp_purchase_id - id de la compra
  */
 function loadTotals(temp_purchase_id) {
-    makeAjaxRequest({
-        url: `${CONFIG.endpoints.totals}/${temp_purchase_id}`,
+    $.ajax({
+        url: `/temp_purchases_detail/totals/${temp_purchase_id}`,
         method: 'GET',
-        onSuccess: showTotals
+        dataType: 'json',
+        success: function (response) {
+            showTotals(response);
+        }
     });
 }
 
@@ -1068,15 +940,25 @@ function loadTotals(temp_purchase_id) {
 // =========================================
 function applyDiscount(discount_applied) {
     const tempId = $('#temp_purchase_id').val();
-    
-    makeAjaxRequest({
-        url: CONFIG.endpoints.updateDiscount,
+    const discount = discount_applied;
+
+    $.ajax({
+        url: '/temp_purchases_detail/updateDiscount/',
         method: 'POST',
         data: {
+            _token: $('meta[name="csrf-token"]').attr('content'), // Necesario para POST en Laravel
             temp_id: tempId,
-            discount: discount_applied
+            discount: discount,
         },
-        onSuccess: showTotals
+        success: function (response) {
+
+            // Actualizar los totales en la vista
+            showTotals(response);
+
+        },
+        error: function (xhr) {
+            //showAlert('error', 'Error', 'Error al actualizar el descuento.');
+        }
     });
 }
 
@@ -1088,8 +970,7 @@ function showTotals(totals) {
     $('.total-tax').text(`$${totals.total_siva}`);
     $('.tax').text(`$${totals.tax}`);
     $('.total').text(`$${totals.total}`);
-    $('.discount-general').val((totals.discount || 0.00.toFixed(2)));
-    $('.total-discount').text(`$${totals.sub_total_discount}`);
+    $('.discount-general').val((totals.discount || 0.00).toFixed(2));
 
 }
 // =========================================
@@ -1099,12 +980,9 @@ function showTotals(totals) {
 function sendPurchaseToWait() {
     const tempId = $('#temp_purchase_id').val();
     const supplierId = $('#supplier_id').val();
-    if (!supplierId || supplierId == 0) {
-        showAlert(
-            'warning',
-            'Alerta',
-            'Seleccione un proveedor para enviar a espera.',
-        );
+    // Usar función helper para validar proveedor
+    if (!validateSupplierSelected(supplierId)) {
+        showAlert('warning', 'Alerta', CONFIG.messages.noSupplier);
         return;
     }
 
@@ -1126,7 +1004,6 @@ function sendPurchaseToWait() {
             tableDetails.ajax.reload();
             $('#temp_purchase_id').val(response.data.new_temp_purchase_id);
             loadTotals(response.data.new_temp_purchase_id);
-
         },
         error: function (xhr) {
             let response = {};
@@ -1349,8 +1226,8 @@ function showProductDetailModal(data, isEdit) {
     // Calcular y mostrar márgenes
     [1, 2, 3].forEach(index => {
         // Seleccionar el precio de venta correcto basado en si es edición o nuevo
-        const salePrice = data.has_temp_data ? 
-            parseFloat(data[`new_sale_price_${index}`] || 0) : 
+        const salePrice = data.has_temp_data ?
+            parseFloat(data[`new_sale_price_${index}`] || 0) :
             parseFloat(data[`sale_price_${index}`] || 0);
 
         const unitCost = parseFloat(purchasePrice) / parseFloat(factor);
@@ -1659,7 +1536,7 @@ const PAYMENT_CONFIG = {
     },
     fields: {
         box: ['#payment-cash', '#payment-card', '#payment-transfer', '#payment-voucher'],
-        credit: ['#current-credit', '#credit-days', '#due-date'],
+        credit: ['#credit-payment', '#credit-days', '#due-date'],
         creditDisabled: ['#credit', '#credit_available']
     }
 };
@@ -1761,7 +1638,7 @@ function getPurchaseDetails() {
         };
     } else if (selectedMethod === PAYMENT_CONFIG.methods.CREDIT) {
         data.credit_details = {
-            current_credit: getFieldValue('#current-credit'),
+            current_credit: getFieldValue('#credit-payment'),
             credit_days: getFieldValue('#credit-days'),
             due_date: getFieldValue('#due-date')
         };
@@ -1788,6 +1665,11 @@ function processPurchases(method, details) {
             if (response.success) {
                 showAlert('success', 'Éxito', response.message || 'Compra procesada correctamente');
 
+                // Actualizar el temp_purchase_id para la siguiente compra
+                if (response.new_temp_purchase_id) {
+                    $('#temp_purchase_id').val(response.new_temp_purchase_id);
+                }
+
                 /*
                 if (response.purchase_id) {
                     // Opcional: Imprimir ticket/factura
@@ -1796,11 +1678,13 @@ function processPurchases(method, details) {
                     }
                 }*/
 
-                // Recargar después de un breve delay para mostrar el mensaje
+                // Limpiar la interfaz sin recargar la página
                 setTimeout(() => {
                     cleanInputPurchase();
                     applyDiscount(0);
-                    window.location.reload();
+                    // Recargar la pagina
+                    location.reload();
+                    
                 }, 1500);
             } else {
                 showAlert('warning', 'Advertencia', response.message);
@@ -1822,7 +1706,7 @@ function processPurchases(method, details) {
                 // Si no se puede parsear la respuesta
                 errorMessage = xhr.statusText || errorMessage;
             }
-            showAlert('error', 'Error', errorMessage);
+            showAlert('error', 'Error', 'Ingresa un folio válido');
         },
     });
 }

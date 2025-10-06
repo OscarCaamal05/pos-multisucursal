@@ -81,7 +81,7 @@
         <div class="row justify-content-center g-3">
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Crédito: </label>
-                <input type="text" class="form-control text-end current-credit auto-select" id="current-credit" name="current-credit" value="0">
+                <input type="text" class="form-control text-end credit-payment auto-select" id="credit-payment" name="credit-payment" value="0">
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Días de crédito: </label>

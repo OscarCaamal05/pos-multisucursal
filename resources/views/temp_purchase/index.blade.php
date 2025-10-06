@@ -491,14 +491,6 @@
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="flex-shrink-0">
-                        <p class="text-muted mb-0">SubTotal c/Descuento:</p>
-                    </div>
-                    <div class="">
-                        <h4 class="total-discount mb-0"></h4>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="flex-shrink-0">
                         <p class="text-muted mb-0">Total:</p>
                     </div>
                     <div class="">
