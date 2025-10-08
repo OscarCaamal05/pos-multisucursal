@@ -567,7 +567,7 @@ export function calculateMarginFromSalePrice(unitPrice, salePrice) {
  * @param {boolean} chkIvaSelec
  * @param {boolean} chkNetoSelec
  */
-function validateInputChecked(chkIvaSelec, chkNetoSelec) {
+export function validateInputChecked(chkIvaSelec, chkNetoSelec) {
     const price = parseFloat($('#purchase_price').val()) || 0;
     const unitPrice = parseFloat($('#unit_price').val()) || 0;
     const conversionFactor = parseFloat($('#conversion_factor').val()) || 1;
