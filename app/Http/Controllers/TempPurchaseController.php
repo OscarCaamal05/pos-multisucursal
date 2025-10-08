@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\DocumentType;
 use App\Models\TempPurchase;
 use App\Models\VoucherTypes;
+use App\Models\Category;
+use App\Models\Department;
+use App\Models\Product;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 
 class TempPurchaseController extends Controller
@@ -36,7 +40,12 @@ class TempPurchaseController extends Controller
         // Retorna los datos de la tabla tipo de comprobante
         $voucherTypes = VoucherTypes::where('is_active', true)
         ->get();
-        return view('temp_purchase.index', compact('temp', 'documentTypes', 'voucherTypes'));
+
+        $departments = Department::all();
+        $categories = Category::where('status', '!=', 0)->get();
+        $units = Unit::where('status', '!=', 0)->get();
+
+        return view('temp_purchase.index', compact('temp', 'documentTypes', 'voucherTypes', 'departments', 'categories', 'units'));
     }
 
     /**

@@ -47,7 +47,6 @@ class SuppliersController extends Controller
                 ]
             ]
         );
-        return response()->json(['create' => true]);
     }
 
     /**

@@ -1,14 +1,17 @@
+import { showAlert, handleValidationError, showConfirmationAlert } from '../utils/alerts';
+import { showProductsModal } from './productHelper';
+import { validateInputChecked, calculateUnitPrice, calculateMarginFromSalePrice } from '../functionAjaxProducts';
 // =========================================
 // CONFIGURACIÓN CENTRALIZADA PARA COMPRAS
 // =========================================
 export const PURCHASES_CONFIG = {
-    
+
     // Clases CSS
     cssClasses: {
         selected: 'selected table-light',
         noResult: 'no_result'
     },
-    
+
     // Mensajes
     messages: {
         noSupplier: 'Seleccione un proveedor para continuar.',
@@ -17,12 +20,12 @@ export const PURCHASES_CONFIG = {
         selectRow: 'Seleccione una fila para continuar',
         quantityRequired: 'La cantidad del producto debe ser mayor a 0'
     },
-    
+
     // LocalStorage keys
     storage: {
         supplierKey: 'proveedorSeleccionado'
     },
-    
+
     // Configuración de modales
     modals: {
         products: '#modal-products',
@@ -31,7 +34,7 @@ export const PURCHASES_CONFIG = {
         payment: '#modal-payment-detail',
         purchaseWaiting: '#modal-purchase-waiting'
     },
-    
+
     // Configuración numérica
     numbers: {
         decimals: 2,
@@ -100,12 +103,12 @@ export function makeAjaxRequest({ url, method = 'GET', data = {}, onSuccess, onE
         method,
         data,
         dataType: 'json',
-        success: function(response) {
+        success: function (response) {
             if (onSuccess && typeof onSuccess === 'function') {
                 onSuccess(response);
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             if (onError && typeof onError === 'function') {
                 onError(xhr);
             } else {
@@ -214,6 +217,17 @@ export function renderActionsColumn(data) {
     `;
 }
 
+export function renderActionsColumnProduct(data) {
+    return `
+        <div class="hstack gap-3 fs-15">
+            <a href="javascript:void(0);" class="link-warning btn-edit-product" data-id="${data}">
+                <i class="ri-edit-2-line"></i>
+            </a>
+        </div>
+    `;
+}
+
+
 // =========================================
 // NOTA: FUNCIONES DE AUTOCOMPLETADO
 // =========================================
@@ -250,4 +264,77 @@ export function validateProductsInTable(table) {
 export function formatPhoneNumber(phone) {
     if (!phone || phone.length !== 10) return phone;
     return `(${phone.substring(0, 3)})-${phone.substring(3, 6)}-${phone.substring(6)}`;
+}
+
+// FUNCION PARA EDITAR PRODUCTOS
+export function bindEditProduct(tableInstance) {
+    $('#tableProducts tbody').on('click', '.btn-edit-product', function () {
+        const $button = $(this);
+        
+        // Método 1: Usando la instancia del DataTable (RECOMENDADO)
+        const rowData = tableInstance.row($button.closest('tr')).data();
+        
+        // Verificar que tenemos datos
+        if (!rowData) {
+            showAlert('error', 'Error', 'No se pudieron obtener los datos de la fila');
+            return;
+        }
+
+        showConfirmationAlert(
+            '¿Estás seguro?',
+            'Editar este registro.',
+            'Sí, editar',
+            'Cancelar',
+            (confirmed) => {
+                if (confirmed) {
+                    showProductsModal({ id: rowData.id })
+                        .then((response) => {
+                            if (response.status === 'success') {
+                                $('#product_name').val(response.data.product_name);
+                                $('#barcode').val(response.data.barcode);
+                                $('.products_departments').val(response.data.department_id).trigger('change');
+                                $('.products_categories').val(response.data.category_id).trigger('change');
+                                $('.purchase_unit').val(response.data.purchase_unit_id).trigger('change');
+                                $('.sale_unit').val(response.data.sale_unit_id).trigger('change');
+                                $('#conversion_factor').val(response.data.conversion_factor);
+                                $('#purchase_price').val(response.data.purchase_price);
+                                $('#price_iva').val(response.data.purchase_price);
+                                $('#stock').val(response.data.stock);
+                                $('#stock_min').val(response.data.stock_min);
+                                $('#stock_max').val(response.data.stock_max);
+                                $('#sale_price_1').val(response.data.sale_price_1);
+                                $('#price_1_min_qty').val(response.data.price_1_min_qty);
+                                $('#sale_price_2').val(response.data.sale_price_2);
+                                $('#price_2_min_qty').val(response.data.price_2_min_qty);
+                                $('#sale_price_3').val(response.data.sale_price_3);
+                                $('#price_3_min_qty').val(response.data.price_3_min_qty);
+                                $('#product_description').val(response.data.product_description);
+                                $('#is_fractional').prop('checked', response.data.is_fractional === 1);
+                                $('#iva').prop('checked', response.data.iva === 1);
+                                $('#neto').prop('checked', response.data.neto === 1);
+                                $('#is_service').prop('checked', response.data.is_service === 1);
+
+                                validateInputChecked(response.data.iva === 1, response.data.neto === 1);
+
+                                calculateUnitPrice(response.data.purchase_price, response.data.conversion_factor);
+                                const unitPrice = parseFloat(response.data.unit_price);
+                                $('#unit_price').val(unitPrice.toFixed(2));
+
+                                [1, 2, 3].forEach(index => {
+                                    const salePrice = parseFloat(response.data[`sale_price_${index}`]);
+                                    const margin = calculateMarginFromSalePrice(unitPrice, salePrice);
+                                    $(`#margen_${index}`).val(margin);
+                                });
+
+                            } else {
+                                showAlert('error', 'Error', response.message);
+                            }
+                        })
+                        .catch((error) => {
+                            showAlert('error', 'Error', error);
+                        });
+                }
+            }
+        );
+    });
 }

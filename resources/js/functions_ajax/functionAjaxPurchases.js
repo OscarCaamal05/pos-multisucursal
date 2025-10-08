@@ -2,6 +2,9 @@ import { showAlert, clearValidationErrors, handleValidationError, showConfirmati
 import { calculateUnitPrice, calculateMarginFromSalePrice } from './functionAjaxProducts';
 import { makeNumericInput } from './utils/numericInputs';
 import { initCreditTermsAndDate, closeSupplierModal, bindSupplierFormSubmit, formatCleave } from './helpers/supplierHelper';
+import { closeProductModal, bindProductFormSubmit } from './helpers/productHelper';
+import { closeDepartmentModal, bindDepartmentFormSubmit, selectDepartmet } from './helpers/departmentHelper';
+import { closeCategoryModal, bindCategoryFormSubmit, selectCategoryAndDept } from './helpers/categoryHelper';
 
 // Importar helpers de compras
 import {
@@ -11,7 +14,9 @@ import {
     CalculationHelper,
     renderActionsColumn,
     validateSupplierSelected,
-    formatPhoneNumber
+    formatPhoneNumber,
+    bindEditProduct,
+    renderActionsColumnProduct,
 } from './helpers/PurchasesHelper';
 
 // =========================================
@@ -56,6 +61,46 @@ $(document).ready(function () {
             $('#modal-suppliers').modal('hide');
         }
     })
+
+    bindProductFormSubmit({
+        table: productsTable,
+        onSuccess: (response) => {
+            if (response.status === 'create') {
+                $('#product_id').val(response.product.id).trigger('change');
+                $('#modal-products').modal('hide');
+            }
+        }
+    });
+
+    closeProductModal();
+    
+    // ========================================================================================================
+    // * FUNCIONES PARA EL FORM PARA AGREGAR DEPARTAMENTOS *
+    // ========================================================================================================
+    bindDepartmentFormSubmit({
+        onSuccess: (response) => {
+            //Auto completa el select del modal de categorias cuando el registro se crea desde la vista de categoria
+            if (response.status === 'create' && response.department) {
+                selectDepartmet(response.department, '.departments');
+            }
+        }
+    });
+
+    closeDepartmentModal();
+
+    // ========================================================================================================
+    // * FUNCIONES PARA EL FORM PARA AGREGAR CATEGORÍAS *
+    // ========================================================================================================
+    bindCategoryFormSubmit({
+        onSuccess: (response) => {
+            // Se crea una nueva categoria y agrega al <select> y se autoselecciona
+            if (response.status === 'create' && response.category) {
+                selectCategoryAndDept(response.category, '.products_categories', '.products_departments')
+            }
+        }
+    });
+
+    closeCategoryModal();
     closeSupplierModal();
     formatCleave();
     initCreditTermsAndDate("#credit_terms", "#credit_due_date", 30);
@@ -430,6 +475,10 @@ $(document).ready(function () {
 
     $('#btn-close-modal-payment').on('click', function () {
         $('#modal-payment-detail').modal('hide');
+    });
+
+    $('#btn-add-article').on('click', function () {
+        $('#productsModal').modal('show');
     });
 });
 /**
@@ -1461,9 +1510,20 @@ function loadListSuppliers() {
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
-        searching: false,
+        searching: true,
         info: false,
-        dom: 'frt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
+    });
+
+    // Agregar funcionalidad al input personalizado de búsqueda
+    $('#searchSupplierInput').off('keyup.supplierSearch').on('keyup.supplierSearch', function () {
+        const searchValue = $(this).val();
+        suppliersTable.search(searchValue).draw();
+    });
+
+    // Limpiar el input cuando se abra el modal
+    $('#modal-suppliers').on('shown.bs.modal', function () {
+        $('#searchSupplierInput').val('').trigger('keyup');
     });
 }
 // =================================================================================
@@ -1519,11 +1579,35 @@ function loadListProducts() {
                 searchable: false,
                 className: 'text-center',
             },
+            {
+                data: 'id',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                render: renderActionsColumnProduct,
+            },
         ],
         scrollY: 500,
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
+        searching: true,
+        info: false,
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
+    });
+
+    // Vincular eventos de edición ahora que la tabla está inicializada
+    bindEditProduct(productsTable);
+
+    // Agregar funcionalidad al input personalizado de búsqueda
+    $('#searchArticleInput').off('keyup.articleSearch').on('keyup.articleSearch', function () {
+        const searchValue = $(this).val();
+        productsTable.search(searchValue).draw();
+    });
+
+    // Limpiar el input cuando se abra el modal
+    $('#modal-products').on('shown.bs.modal', function () {
+        $('#searchArticleInput').val('').trigger('keyup');
     });
 }
 // =================================================================================
@@ -1684,7 +1768,7 @@ function processPurchases(method, details) {
                     applyDiscount(0);
                     // Recargar la pagina
                     location.reload();
-                    
+
                 }, 1500);
             } else {
                 showAlert('warning', 'Advertencia', response.message);
