@@ -13,6 +13,7 @@ class purchases_detail extends Model
         'product_code',
         'quantity',
         'unit_cost',
+        'discount',
         'subtotal',
         'tax',
         'total',

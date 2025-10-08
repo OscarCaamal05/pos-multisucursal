@@ -28,7 +28,24 @@ class ProductController extends Controller
     {
         $query = Product::getProductsData();
 
-        return DataTables::of($query)->make(true);
+        return DataTables::of($query)
+            ->addColumn('actions', function ($row) {
+                // Aquí puedes agregar botones de acción si los necesitas
+                return '';
+            })
+            ->editColumn('category_name', function ($row) {
+                return $row->category_name;
+            })
+            ->editColumn('department_name', function ($row) {
+                return $row->department_name;
+            })
+            ->filterColumn('category_name', function ($query, $keyword) {
+                $query->whereRaw("LOWER(c.category_name) LIKE LOWER(?)", ["%{$keyword}%"]);
+            })
+            ->filterColumn('department_name', function ($query, $keyword) {
+                $query->whereRaw("LOWER(d.department_name) LIKE LOWER(?)", ["%{$keyword}%"]);
+            })
+            ->make(true);
     }
 
     /**
@@ -46,9 +63,14 @@ class ProductController extends Controller
     {
         $product = Product::create($request->validated());
 
-        return response()->json([
-            'status' => 'create'
-        ]);
+        return response()->json(
+            [
+                'status' => 'create',
+                'product' => [
+                    'id' => $product->id,
+                ]
+            ]
+        );
     }
 
     /**

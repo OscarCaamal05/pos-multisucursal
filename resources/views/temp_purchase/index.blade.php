@@ -101,10 +101,28 @@
 <div class="modal zoomIn" id="modal-products" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-product-details-Label">Productos en almacén</h5>
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">Productos En Almacén</h4>
+                <button class="btn btn-primary" id="btn-add-article">
+                    <span class="me-1">
+                        <i class="ri-user-add-line"></i>
+                    </span>Agregar Articulo
+                </button>
             </div>
             <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="card-body border-bottom-dashed border-bottom">
+                        <div class="row g-3 mx-1 mb-2">
+                            <div class="col-xl-4">
+                                <div class="search-box">
+                                    <input type="text" class="form-control" id="searchArticleInput" placeholder="Buscar Articulo">
+                                    <i class="ri-search-line search-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <!--end row-->
+                    </div>
+                </div>
                 <div class="table-responsive table-card">
                     <table class="table table-nowrap align-middle mb-0" id="tableProducts">
                         <thead class="table-light text-muted">
@@ -117,6 +135,7 @@
                                 <th scope="col" class="text-center">Precio venta</th>
                                 <th scope="col" class="text-center">Exist.</th>
                                 <th scope="col" class="text-center">Unit venta</th>
+                                <th scope="col" class="text-center"></th>
                             </tr>
                         </thead>
 
@@ -133,6 +152,117 @@
     </div>
 </div>
 
+<!------------------------------------------------------------------------------------------------------------
+    Modal para agregar articulos al almacén
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="productsModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productsModalLabel">Agregar Producto</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-product"></button>
+            </div>
+            <form id="productForm"
+                data-store-url="{{ route('products.store') }}"
+                data-update-url-base="/products/">
+                <div class="modal-body">
+                    @csrf
+                    <input type="hidden" name="productId" id="productId" value="0">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="nav nav-pills flex-column nav-pills-tab custom-verti-nav-pills text-center" role="tablist" aria-orientation="vertical">
+                                <a class="nav-link active show" id="custom-v-pills-general-tab" data-bs-toggle="pill" href="#custom-v-pills-general" role="tab" aria-controls="custom-v-pills-general"
+                                    aria-selected="true">
+                                    <i class="ri-home-4-line d-block fs-20 mb-1"></i>
+                                    General</a>
+                                <a class="nav-link" id="custom-v-pills-additional-tab" data-bs-toggle="pill" href="#custom-v-pills-additional" role="tab" aria-controls="custom-v-pills-additional"
+                                    aria-selected="false">
+                                    <i class="ri-file-add-line  d-block fs-20 mb-1"></i>
+                                    Adicional</a>
+                                <a class="nav-link" id="custom-v-pills-price-suppliers-tab" data-bs-toggle="pill" href="#custom-v-pills-price-suppliers" role="tab" aria-controls="custom-v-pills-price-suppliers"
+                                    aria-selected="false">
+                                    <i class="ri-user-2-line d-block fs-20 mb-1"></i>
+                                    Precio Por Proveedor</a>
+                                <a class="nav-link" id="custom-v-pills-image-tab" data-bs-toggle="pill" href="#custom-v-pills-image" role="tab" aria-controls="custom-v-pills-image"
+                                    aria-selected="false">
+                                    <i class="ri-image-add-fill d-block fs-20 mb-1"></i>
+                                    Imagen</a>
+                            </div>
+                        </div> <!-- end col-->
+                        <div class="col-lg-10">
+                            <div class="tab-content text-muted mt-3 mt-lg-0">
+                                <div class="tab-pane fade active show" id="custom-v-pills-general" role="tabpanel" aria-labelledby="custom-v-pills-general-tab">
+                                    @include('products.form-fields-general')
+                                </div><!--end tab-pane-->
+                                <div class="tab-pane fade" id="custom-v-pills-additional" role="tabpanel" aria-labelledby="custom-v-pills-additional-tab">
+                                    @include('products.form-fields-additional')
+                                </div><!--end tab-pane-->
+                                <div class="tab-pane fade" id="custom-v-pills-price-suppliers" role="tabpanel" aria-labelledby="custom-v-pills-price-suppliers-tab">
+                                </div><!--end tab-pane-->
+                                <div class="tab-pane fade" id="custom-v-pills-image" role="tabpanel" aria-labelledby="custom-v-pills-image-tab">
+                                    @include('products.form-fields-image')
+                                </div><!--end tab-pane-->
+                            </div>
+                        </div> <!-- end col-->
+                    </div> <!-- end row-->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-product">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear/editar -->
+<div class="modal zoomIn" id="categoryModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">Agregar Categoria</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-category"></button>
+            </div>
+            <form id="categoryForm"
+                data-store-url="{{ route('categories.store') }}"
+                data-update-url-base="/categories/">
+                @csrf
+                <input type="hidden" name="categoryId" id="categoryId" value="0">
+                <div class="modal-body">
+                    @include('categories.form-fields')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-category">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal zoomIn" id="departmentModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="departmentModalLabel">Agregar Departamento</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-department"></button>
+            </div>
+            <form id="departmentForm"
+                data-store-url="{{ route('departments.store') }}"
+                data-update-url-base="/departments/">
+                @csrf
+                <input type="hidden" name="departmentId" id="departmentId" value="0">
+                <div class="modal-body">
+                    @include('departments.form-fields')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-department">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!------------------------------------------------------------------------------------------------------------
     Modal para listar a los proveedores registrados en el sistema
 -------------------------------------------------------------------------------------------------------------->
@@ -153,7 +283,7 @@
                         <div class="row g-3 mx-1 mb-2">
                             <div class="col-xl-4">
                                 <div class="search-box">
-                                    <input type="text" class="form-control" placeholder="Buscar proveedor">
+                                    <input type="text" class="form-control" id="searchSupplierInput" placeholder="Buscar proveedor">
                                     <i class="ri-search-line search-icon"></i>
                                 </div>
                             </div>
@@ -487,14 +617,6 @@
                     </div>
                     <div class="">
                         <h4 class="total-tax mb-0"></h4>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="flex-shrink-0">
-                        <p class="text-muted mb-0">SubTotal c/Descuento:</p>
-                    </div>
-                    <div class="">
-                        <h4 class="total-discount mb-0"></h4>
                     </div>
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3">

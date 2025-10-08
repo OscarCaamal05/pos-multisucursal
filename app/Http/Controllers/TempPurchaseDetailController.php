@@ -111,22 +111,34 @@ class TempPurchaseDetailController extends Controller
             \Log::info('Inicio de actualización de detalle de compra:', [
                 'request_data' => $request->all()
             ]);
+
             $request->validate([
                 'temp_purchase_id' => 'required',
                 'product_id' => 'required',
                 'quantity' => 'required',
             ]);
+
+            // Si temp_purchase_id es "0" o no existe un TempPurchase válido, crear uno nuevo
+            $tempPurchaseId = $request->temp_purchase_id;
+            if ($tempPurchaseId == "0" || $tempPurchaseId == 0 || !TempPurchase::find($tempPurchaseId)) {
+                $tempPurchaseController = new \App\Http\Controllers\TempPurchaseController();
+                $tempResponse = $tempPurchaseController->getOrCreateTempPurchase();
+                $tempData = $tempResponse->getData();
+                $tempPurchaseId = $tempData->temp->id_temp_purchase;
+            }
+
             $product = Product::getWithDetails()->where('p.id', $request->product_id)->first();
             //$product = Product::findOrFail($request->product_id);
 
-            $existing = TempPurchaseDetail::where('temp_purchase_id', $request->temp_purchase_id)
+            $existing = TempPurchaseDetail::where('temp_purchase_id', $tempPurchaseId)
                 ->where('product_id', $product->id)
                 ->first();
 
             if ($existing) {
                 return response()->json([
                     'status' => 'warning',
-                    'message' => 'El producto ya ha sido agregado a la compra temporal.'
+                    'message' => 'El producto ya ha sido agregado a la compra temporal.',
+                    'temp_purchase_id' => $tempPurchaseId
                 ], 400);
                 /*
                 $existing->quantity += 1;
@@ -143,7 +155,7 @@ class TempPurchaseDetailController extends Controller
             }
 
             $detail = TempPurchaseDetail::create([
-                'temp_purchase_id' => (int) $request->temp_purchase_id,
+                'temp_purchase_id' => (int) $tempPurchaseId,
                 'product_id' => (int) $product->id,
                 'product_name' => $product->product_name,
                 'barcode' => $product->barcode,
@@ -161,11 +173,12 @@ class TempPurchaseDetailController extends Controller
             ]);
 
             // Obtén todos los detalles de la compra temporal actual
-            $details = TempPurchaseDetail::where('temp_purchase_id', $request->temp_purchase_id)->get();
+            $details = TempPurchaseDetail::where('temp_purchase_id', $tempPurchaseId)->get();
             $totals = $this->calculateTotals($details);
 
             return response()->json(array_merge([
-                'status' => 'create.'
+                'status' => 'create.',
+                'temp_purchase_id' => $tempPurchaseId
             ], $totals));
         } catch (\Exception $e) {
             return response()->json([
@@ -347,24 +360,18 @@ class TempPurchaseDetailController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            \Log::info('Inicio de actualización de detalle de compra:', [
-                'id_temp' => $id,
-                'request_data' => $request->all()
-            ]);
-
             // Validar que el registro exista usando id_temp
             $detail = TempPurchaseDetail::where('id_temp', $id)->first();
 
             if (!$detail) {
-                \Log::error('Detalle no encontrado:', ['id_temp' => $id]);
                 return response()->json([
                     'error' => 'Registro no encontrado'
                 ], 404);
             }
 
             // Validación de datos
-            $validatedData = $request->validate([
-                'temp_purchase_id' => 'required',  // Quitamos la validación de exists temporalmente
+            $request->validate([
+                'temp_purchase_id' => 'required',
                 'product_id' => 'required|exists:products,id',
                 'quantity' => 'required|numeric|min:0',
                 'cost' => 'required|numeric|min:0',
@@ -374,8 +381,6 @@ class TempPurchaseDetailController extends Controller
                 'new_price_sale_2' => 'required|numeric|min:0',
                 'new_price_sale_3' => 'nullable|numeric|min:0'
             ]);
-
-            \Log::info('Datos validados, procediendo a actualizar:', $validatedData);
 
             // Calcular valores
             $unitPrice = $request->cost / $request->new_factor;
@@ -394,56 +399,25 @@ class TempPurchaseDetailController extends Controller
             $detail->new_sale_price_3 = $request->new_price_sale_3;
             $detail->save();
 
-            \Log::info('Detalle actualizado exitosamente:', [
-                'id_temp' => $detail->id_temp,
-                'updated_values' => [
-                    'unit_price' => $unitPrice,
-                    'subtotal' => $subtotal,
-                    'total' => $total
-                ]
+            // Calcular totales con descuento global
+            $details = TempPurchaseDetail::where('temp_purchase_id', $detail->temp_purchase_id)->get();
+            $tempPurchase = TempPurchase::find($detail->temp_purchase_id);
+            $globalDiscount = $tempPurchase ? $tempPurchase->discount : 0;
+            $totals = $this->calculateTotals($details, $globalDiscount);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registro actualizado correctamente',
+                'detail' => $detail->toArray(),
+                'totals' => $totals
             ]);
-
-            try {
-                // Calcular totales
-                $details = TempPurchaseDetail::where('temp_purchase_id', $detail->temp_purchase_id)->get();
-                $totals = $this->calculateTotals($details);
-
-                \Log::info('Actualización exitosa:', [
-                    'id_temp' => $detail->id_temp,
-                    'totals' => $totals
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Registro actualizado correctamente',
-                    'detail' => $detail->toArray(),
-                    'totals' => $totals
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Error al calcular totales:', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Los datos se guardaron pero hubo un error al calcular los totales',
-                    'detail' => $detail->toArray()
-                ], 200); // Enviamos 200 ya que los datos principales se guardaron
-            }
+            
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Error de validación:', [
-                'errors' => $e->errors()
-            ]);
             return response()->json([
                 'error' => 'Error de validación',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Error al actualizar detalle:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return response()->json([
                 'error' => 'Error al actualizar el registro',
                 'message' => $e->getMessage()
@@ -523,6 +497,14 @@ class TempPurchaseDetailController extends Controller
             $discount = $tempPurchase->discount ?? 0;
             $totals = $this->calculateTotals($tempDetails, $discount);
 
+            // Calcular el monto pagado según el método
+            $amountPaid = 0;
+            if ($method === 'payment-box') {
+                $amountPaid = $data['amount_paid']; // Suma de todos los métodos de pago
+            } elseif ($method === 'payment-credit') {
+                $amountPaid = $data['credit_details']['current_credit'] ?? 0; // Anticipo del crédito
+            }
+
             // Registrar la compra definitiva
             $purchase = purchases::create([
                 'user_id' => $userId,
@@ -531,7 +513,7 @@ class TempPurchaseDetailController extends Controller
                 'document_id' => $data['id_document'],
                 'purchase_date' => $date,
                 'invoice_number' => $data['invoice_number'],
-                'amount_paid' => $data['amount_paid'],
+                'amount_paid' => $amountPaid,
                 'subtotal' => $totals['total_siva'],
                 'discount' => $totals['discount'],
                 'tax' => $totals['tax'],
@@ -541,9 +523,9 @@ class TempPurchaseDetailController extends Controller
                 'notes' => $request->notes ?? null,
             ]);
 
-            // Registrar las tipos de pagos 
+            // Registrar los tipos de pagos 
             if ($method === 'payment-box') {
-                // Pago al contado
+                // Pago al contado - múltiples métodos
                 foreach ($data['payment_details'] as $type => $amount) {
                     if ((float)$amount > 0) {
                         DB::table('payment_methods')->insert([
@@ -558,21 +540,29 @@ class TempPurchaseDetailController extends Controller
                     }
                 }
             } elseif ($method === 'payment-credit') {
-                // Pago a credito
-                DB::table('purchase_payments')->insert([
+                // Obtener el monto del crédito desde credit_details
+                $creditAmount = $data['credit_details']['current_credit'] ?? 0;
+                $creditDays = $data['credit_details']['credit_days'] ?? 0;
+                $dueDate = $data['credit_details']['due_date'] ?? null;
+                
+                // Pago a crédito - usar misma tabla para consistencia
+                DB::table('payment_methods')->insert([
                     'transaction_id' => $purchase->id,
-                    'transaction_type' => 'efectivo',
-                    'payment_method' => 'efectivo',
-                    'amount' => $data['amount_paid'],
-                    'reference' => now(),
+                    'transaction_type' => 'purchase',
+                    'payment_method' => 'credito',
+                    'amount' => $creditAmount,
+                    'reference' => "Crédito {$creditDays} días - Vence: {$dueDate}",
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                // Actualizar el credito del proveedor
+                // Actualizar el crédito del proveedor
                 $supplier = Supplier::find($data['id_supplier']);
                 if ($supplier) {
+                    // El monto total de la compra se suma al crédito del proveedor
                     $supplier->credit += $totals['total'];
+                    $supplier->credit_due_date = $dueDate;
+                    $supplier->credit_terms = $creditDays;  
                     $supplier->save();
                 }
             }
@@ -590,7 +580,7 @@ class TempPurchaseDetailController extends Controller
                     'quantity' => (float) $tempDetail->quantity,
                     'unit_cost' => (float) $tempDetail->purchase_price,
                     'discount' => (float) $tempDetail->discount,
-                    'subtotal' => ((float)$tempDetail->quantity * (float)$tempDetail->purchase_price) - (float)$tempDetail->discount,
+                    'subtotal' => (float) $tempDetail->quantity * (float) $tempDetail->purchase_price,
                     'total' => (float) $tempDetail->total,
                 ]);
 
@@ -625,11 +615,17 @@ class TempPurchaseDetailController extends Controller
             TempPurchaseDetail::where('temp_purchase_id', $tempPurchase->id_temp_purchase)->delete();
             $tempPurchase->delete();
 
+            // Crear un nuevo TempPurchase para la siguiente compra usando la función existente
+            $tempPurchaseController = new \App\Http\Controllers\TempPurchaseController();
+            $tempResponse = $tempPurchaseController->getOrCreateTempPurchase();
+            $newTempPurchaseData = $tempResponse->getData();
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'purchase_id' => $purchase->id,
+                'new_temp_purchase_id' => $newTempPurchaseData->temp->id_temp_purchase,
             ]);
         } catch (Exception $e) {
             // Revertir transacción en caso de error
