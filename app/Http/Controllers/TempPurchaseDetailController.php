@@ -500,9 +500,9 @@ class TempPurchaseDetailController extends Controller
             // Calcular el monto pagado según el método
             $amountPaid = 0;
             if ($method === 'payment-box') {
-                $amountPaid = $data['amount_paid']; // Suma de todos los métodos de pago
+                $amountPaid = (float)$data['amount_paid']; // Suma de todos los métodos de pago
             } elseif ($method === 'payment-credit') {
-                $amountPaid = $data['credit_details']['current_credit'] ?? 0; // Anticipo del crédito
+                $amountPaid = (float)($data['credit_details']['current_credit'] ?? 0); // Anticipo del crédito
             }
 
             // Registrar la compra definitiva
@@ -860,7 +860,7 @@ class TempPurchaseDetailController extends Controller
         // Calcular el impuesto sobre el subtotal con descuento
         $tax = round($sub_total_discount * ($iva / 100), 2);
         $total_siva = round($sub_total_discount - $tax, 2);
-        $total = number_format($total_siva + $tax, 2);
+        $total = round($total_siva + $tax, 2);
 
         return [
             'sub_total' => $sub_total,
