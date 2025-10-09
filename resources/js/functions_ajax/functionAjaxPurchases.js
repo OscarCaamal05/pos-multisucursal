@@ -404,10 +404,10 @@ $(document).ready(function () {
             let limit_credit = $('.credit-limit-supplier').val();
             let credit_days = $('.credit-terms').val();
             let credit_available_supplier = parseFloat($('.credit_supplier').text().replace(/[$,]/g, ''));
-            $('#payment-cash').val(total_final.toFixed(2));
-            $('#credit-payment').val(total_final.toFixed(2));
-            $('#credit-limit').val(limit_credit);
-            $('.credit_available').val(credit_available_supplier.toFixed(2));
+            $('#payment-cash').val(!isNaN(total_final) && total_final > 0 ? total_final.toFixed(2) : '0.00');
+            $('#credit-payment').val(!isNaN(total_final) && total_final > 0 ? total_final.toFixed(2) : '0.00');
+            $('#credit-limit').val(limit_credit || '0.00');
+            $('.credit_available').val(!isNaN(credit_available_supplier) && credit_available_supplier > 0 ? credit_available_supplier.toFixed(2) : '0.00');
             $('#credit-days').prop('disabled', true);
             $('#due-date').prop('disabled', true);
             $('#credit-payment').prop('disabled', true);
@@ -1015,10 +1015,10 @@ function applyDiscount(discount_applied) {
 // FUNCIÓN: Para mostrar los totales de la compra en la vista
 // =========================================
 function showTotals(totals) {
-    $('.sub-total').text(`$${totals.sub_total}`);
-    $('.total-tax').text(`$${totals.total_siva}`);
-    $('.tax').text(`$${totals.tax}`);
-    $('.total').text(`$${totals.total}`);
+    $('.sub-total').text(`$${parseFloat(totals.sub_total).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    $('.total-tax').text(`$${parseFloat(totals.total_siva).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    $('.tax').text(`$${parseFloat(totals.tax).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    $('.total').text(`$${parseFloat(totals.total).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
     $('.discount-general').val((totals.discount || 0.00).toFixed(2));
 
 }
@@ -1340,7 +1340,7 @@ function cancelTempPurchase() {
 // =========================================
 function clearProductDetailModal() {
     // Limpia inputs y selects
-    $('#productDetails').find('input, select, textarea').each(function () {
+    $('#productDetails').find('input, select, textarea').not('input[type="hidden"]').each(function () {
         if ($(this).is(':checkbox') || $(this).is(':radio')) {
             $(this).prop('checked', false);
         } else {
