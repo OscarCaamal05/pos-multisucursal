@@ -10,6 +10,7 @@ use App\Http\Controllers\RolesController;
 use App\Http\Controllers\SuppliersController;
 use App\Http\Controllers\TempPurchaseDetailController;
 use App\Http\Controllers\TempPurchaseController;
+use App\Http\Controllers\TempSaleController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\UserController;
@@ -50,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('suppliers', SuppliersController::class)->names('suppliers');
     Route::resource('products', ProductController::class)->names('products');
     Route::resource('temp_purchase', TempPurchaseController::class)->names('temp_purchase');
+
     //Route::get('temp_purchase', [TempPurchaseController::class, 'getOrCreateTempPurchase']);
     Route::resource('temp_purchases_detail', TempPurchaseDetailController::class)->names('temp_purchases_detail');
     Route::get('/temp_purchases_detail/{supplier}/show', [TempPurchaseDetailController::class, 'show']);
@@ -66,6 +68,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
+
+    Route::resource('temp_sale', TempSaleController::class)->names('temp_sale');
+    
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
     Route::get('/users/{id}', [UserController::class, 'show']);
