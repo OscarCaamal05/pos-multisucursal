@@ -48,7 +48,7 @@
                     <div class="collapse menu-dropdown" id="sidebarVentas">
                         <ul class="nav nav-sm flex-column">
                             <li class="nav-item">
-                                <a href="layouts-vertical" class="nav-link">Realizar Venta</a>
+                                <a href="{{ route('temp_sale.index') }}" class="nav-link">Realizar Venta</a>
                             </li>
                             <li class="nav-item">
                                 <a href="layouts-detached" class="nav-link">Reportes Ventas</a>
