@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
 
     Route::resource('temp_sale', TempSaleController::class)->names('temp_sale');
+    Route::get('/temp_sale/totals/{temp_sale_id}', [TempSaleController::class, 'getTotals']);
     
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
