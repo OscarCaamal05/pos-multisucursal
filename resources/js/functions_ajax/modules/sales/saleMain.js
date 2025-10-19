@@ -7,7 +7,7 @@ import { initCustomerModule } from './customerModule';
 // =========================================
 const SALES_CONFIG = {
     api: {
-        base: '/temp_sales_detail',
+        base: '/temp_sale_detail',
         customers: '/customers',
         products: '/products',
         process: '/sales/process'
@@ -19,6 +19,7 @@ const SALES_CONFIG = {
         autoCompleteCustomer: '#auto_complete_customer',
         tableDetails: '#tableDetails',
         modalCustomers: '#modal-customers',
+        modalAddCustomers: '#customerModal',
         modalProducts: '#modal-products'
     },
     storage: {
@@ -40,7 +41,6 @@ export let tableDetails = null;
 export let selectedRowDetail = null;
 export let productsTable = null;
 export let salesTable = null;
-export let customersTable = null;
 
 $(document).ready(function () {
     // Configuración inicial
@@ -60,12 +60,11 @@ $(document).ready(function () {
 // ===================================================================
 
 function initializeDatePicker() {
-    const currentDate = $('#sale-date').val();
-    flatpickr(currentDate, {
+    flatpickr('#sale-date', {
         dateFormat: "d M, Y",
         altFormat: "d M, Y",
         defaultDate: new Date(),
-    })
+    });
 }
 
 function initializeNumericInputs() {

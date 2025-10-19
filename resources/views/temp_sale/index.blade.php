@@ -264,17 +264,17 @@
     </div>
 </div>
 <!------------------------------------------------------------------------------------------------------------
-    Modal para listar a los proveedores registrados en el sistema
+    Modal para listar a los clientes registrados en el sistema
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="modal-suppliers" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+<div class="modal zoomIn" id="modal-customers" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Lista de Proveedores</h4>
-                <button class="btn btn-primary" id="btn-add-supplier">
+                <h4 class="card-title mb-0">Lista de Clientes</h4>
+                <button class="btn btn-primary" id="btn-add-customer">
                     <span class="me-1">
                         <i class="ri-user-add-line"></i>
-                    </span>Agregar Proveedor
+                    </span>Agregar Cliente
                 </button>
             </div>
             <div class="modal-body">
@@ -283,7 +283,7 @@
                         <div class="row g-3 mx-1 mb-2">
                             <div class="col-xl-4">
                                 <div class="search-box">
-                                    <input type="text" class="form-control" id="searchSupplierInput" placeholder="Buscar proveedor">
+                                    <input type="text" class="form-control" id="search-customer-input" placeholder="Buscar cliente">
                                     <i class="ri-search-line search-icon"></i>
                                 </div>
                             </div>
@@ -292,20 +292,15 @@
                     </div>
                 </div>
                 <div class="table-responsive table-card">
-                    <table class="table table-nowrap align-middle mb-0" id="tableSuppliers">
+                    <table class="table table-nowrap align-middle mb-0" id="tableCustomers">
                         <thead class="table-light text-muted">
                             <tr>
                                 <th scope="col">ID</th>
-                                <th scope="col">Representante</th>
-                                <th scope="col">Empresa</th>
+                                <th scope="col">Nombre</th>
                                 <th scope="col">RFC</th>
                                 <th scope="col">Telefono</th>
                                 <th scope="col">Correo</th>
-                                <th scope="col">Direccion</th>
                                 <th scope="col">Credito disponible</th>
-                                <th scope="col">Credito</th>
-                                <th scope="col">Días</th>
-                                <th scope="col">Vencimiento</th>
                             </tr>
                         </thead>
 
@@ -316,32 +311,32 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" id="btn-close-supplier">Cerrar</button>
+                <button type="button" class="btn btn-danger" id="btn-close-list-customer">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
 <!------------------------------------------------------------------------------------------------------------
-    Modal para agregar un nuevo proveedor
+    Modal para agregar un nuevo cliente
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="supplierModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+<div class="modal zoomIn" id="customerModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
-                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
+                <h5 class="modal-title" id="customerModalLabel">Agregar Cliente</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-customer"></button>
             </div>
-            <form id="supplierForm"
-                data-store-url="{{ route('suppliers.store') }}"
-                data-update-url-base="/suppliers/">
+            <form id="customerForm"
+                data-store-url="{{ route('customers.store') }}"
+                data-update-url-base="/customers/">
                 @csrf
-                <input type="hidden" name="supplierId" id="supplierId" value="0">
+                <input type="hidden" name="customerId" id="customerId" value="0">
                 <div class="modal-body">
-                    @include('suppliers.form-fields')
+                    @include('customers.form-fields')
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar-supplier">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-customer">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
@@ -527,45 +522,45 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <img src="{{ URL::asset('build/images/users/user-dummy-img.jpg') }}" alt="" class="avatar-sm rounded">
-                                <input type="hidden" name="customer_id" id="customer_id" value="0">
+                                <input type="hidden" name="customer_id" id="customer_id" value="1">
                                 <input class="credit-terms" type="hidden" name="credit-terms" id="credit-terms" value="0">
                                 <input class="credit-due-date" type="hidden" name="credit-due-date" id="credit-due-date" value="{{ date('Y-m-d') }}">
                                 <input class="credit-limit-customer" type="hidden" value="0">
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h6 class="fs-14 mb-1 name_customer">Cliente</h6>
+                                <h6 class="fs-14 mb-1 customer-name">Publico General</h6>
                             </div>
                         </div>
                     </div>
                     <div class="col-sm-7 mb-3">
                         <span>
                             <i class="ri-mail-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="email_customer">
-
+                            <span class="customer-email">
+                                No registrado
                             </span>
                         </span>
                     </div>
                     <div class="col-sm-5 mb-3">
                         <span>
                             <i class="ri-phone-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="phone_customer">
-
+                            <span class="customer-phone">
+                                No registrado
                             </span>
                         </span>
                     </div>
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-bank-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="rfc_customer">
-
+                            <span class="customer-rfc">
+                                No registrado
                             </span>
                         </span>
                     </div>
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-wallet-3-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="credit_customer">
-
+                            <span class="customer-available-credit">
+                                Crédito disponible: $0.00
                             </span>
                         </span>
                     </div>
