@@ -6,10 +6,10 @@
 @endsection
 @section('content')
 @component('components.breadcrumb')
-@slot('li_1') Compras @endslot
-@slot('title') Realizar una compra @endslot
+@slot('li_1') Ventas @endslot
+@slot('title') Realizar una venta @endslot
 @endcomponent
-@vite('resources/js/functions_ajax/functionAjaxPurchases.js')
+@vite('resources/js/functions_ajax/modules/sales/saleMain.js')
 
 <!------------------------------------------------------------------------------------------------------------
     Modal para detalles de pago 
@@ -47,7 +47,7 @@
                 @csrf
                 <input type="hidden" name="temp_id" id="temp_id" value="0">
                 <input type="hidden" name="product_id" id="product_id" value="0">
-                <input type="hidden" name="temp_purchase_id" id="temp_purchase_id" value="{{ $temp->id_temp_purchase ?? 0 }}">
+                <input type="hidden" name="temp_sale_id" id="temp_sale_id" value="{{ $temp->id_temp_sale ?? 0 }}">
                 <div class="modal-body">
                     @include('temp_purchase.form-fields-product-details')
                 </div>
@@ -377,7 +377,7 @@
 
 
                         <div class="col-auto">
-                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y" id="purchase-date" value="{{ date('d M, Y') }}">
+                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y" id="sale-date" value="{{ date('d M, Y') }}">
                         </div>
                         <div class="pb-2 text text-end-muted border-bottom border-light text-center"></div>
                     </div><!--end row-->
@@ -470,7 +470,7 @@
                             <thead class="table-light text-muted">
                                 <tr>
                                     <th scope="col" style="display: none">id</th>
-                                    <th scope="col" style="display: none">temp_purchase_id</th>
+                                    <th scope="col" style="display: none">temp_sale_id</th>
                                     <th scope="col" style="display: none">product_id</th>
                                     <th scope="col" class="text-center">Descripcion</th>
                                     <th scope="col" class="text-center">Cantidad</th>
@@ -499,7 +499,7 @@
         <div class="card">
             <div class="card-header">
                 <div class="d-flex align-items-center">
-                    <h5 class="card-title flex-grow-1 mb-0">Detalles del proveedor</h5>
+                    <h5 class="card-title flex-grow-1 mb-0">Detalles del cliente</h5>
                 </div>
             </div>
             <div class="card-body">
@@ -509,8 +509,8 @@
                             <div class="form-icon">
                                 <input type="text"
                                     class="form-control form-control-icon auto-select"
-                                    name="auto_complete_supplier"
-                                    id="auto_complete_supplier"
+                                    name="auto_complete_customer"
+                                    id="auto_complete_customer"
                                     dir="ltr"
                                     spellcheck="false"
                                     autocomplete="off"
@@ -518,7 +518,7 @@
                                     value="">
                                 <i class="ri-user-2-line"></i>
                             </div>
-                            <button type="button" class="btn btn-ghost-dark waves-effect waves-light" id="btn-search-suppliers">
+                            <button type="button" class="btn btn-ghost-dark waves-effect waves-light" id="btn-search-customers">
                                 <i class="ri-search-2-line"></i>
                             </button>
                         </div>
@@ -527,21 +527,20 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <img src="{{ URL::asset('build/images/users/user-dummy-img.jpg') }}" alt="" class="avatar-sm rounded">
-                                <input type="hidden" name="supplier_id" id="supplier_id" value="0">
+                                <input type="hidden" name="customer_id" id="customer_id" value="0">
                                 <input class="credit-terms" type="hidden" name="credit-terms" id="credit-terms" value="0">
                                 <input class="credit-due-date" type="hidden" name="credit-due-date" id="credit-due-date" value="{{ date('Y-m-d') }}">
-                                <input class="credit-limit-supplier" type="hidden" value="0">
+                                <input class="credit-limit-customer" type="hidden" value="0">
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h6 class="fs-14 mb-1 company_name">No seleccionado</h6>
-                                <p class="text-muted mb-0 name_supplier">Proveedor</p>
+                                <h6 class="fs-14 mb-1 name_customer">Cliente</h6>
                             </div>
                         </div>
                     </div>
                     <div class="col-sm-7 mb-3">
                         <span>
                             <i class="ri-mail-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="email_supplier">
+                            <span class="email_customer">
 
                             </span>
                         </span>
@@ -549,7 +548,7 @@
                     <div class="col-sm-5 mb-3">
                         <span>
                             <i class="ri-phone-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="phone_supplier">
+                            <span class="phone_customer">
 
                             </span>
                         </span>
@@ -557,7 +556,7 @@
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-bank-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="rfc_supplier">
+                            <span class="rfc_customer">
 
                             </span>
                         </span>
@@ -565,7 +564,7 @@
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-wallet-3-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="credit_supplier">
+                            <span class="credit_customer">
 
                             </span>
                         </span>
