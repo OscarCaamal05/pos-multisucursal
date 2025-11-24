@@ -155,7 +155,7 @@
 <!------------------------------------------------------------------------------------------------------------
     Modal para agregar articulos al almacén
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="productsModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+<div class="modal zoomIn" id="add-modal-product" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
@@ -350,6 +350,10 @@
     <div class="col-xl-9">
         <!-- Card de los input de la parte superior de los datos generales de compra-->
         <div class="card">
+            <!-- INPUT OCULTOS PARA REALIZAR FUNCIONES ESPECIFICAS DE VENTAS-->
+            <input type="hidden" name="temp_id" id="temp_id" value="0">
+            <input type="hidden" name="product_id" id="product_id" value="0">
+            <input type="hidden" name="temp_sale_id" id="temp_sale_id" value="{{ $temp->id_temp_sale ?? 0 }}">
             <div class="card-body">
                 <form action="javascript:void(0);">
                     <div class="row mb-1 justify-content-between align-items-center">
@@ -461,7 +465,7 @@
             <div class="card w-100">
                 <div class="card-body">
                     <div class="table-responsive table-card">
-                        <table class="table table-nowrap align-middle mb-0" id="tableTempPurchase">
+                        <table class="table table-nowrap align-middle mb-0" id="tableTempSale">
                             <thead class="table-light text-muted">
                                 <tr>
                                     <th scope="col" style="display: none">id</th>

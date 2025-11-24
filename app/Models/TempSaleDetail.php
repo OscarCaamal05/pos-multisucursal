@@ -28,7 +28,7 @@ class TempSaleDetail extends Model
 
     public function tempSale()
     {
-        return $this->belongsTo(TempSale::class);
+        return $this->belongsTo(TempSale::class, 'temp_sale_id', 'id_temp_sale');
     }
     public function unit()
     {

@@ -1,6 +1,7 @@
 import { showAlert } from "../../utils/alerts";
 import { makeNumericInput } from "../../utils/numericInputs";
 import { initCustomerModule } from './customerModule';
+import { initProductModule } from './productModule';
 
 // =========================================
 // CONFIGURACIÓN CENTRALIZADA
@@ -50,6 +51,8 @@ $(document).ready(function () {
 
     // Inicializar módulo de clientes
     initCustomerModule();
+
+    initProductModule();
 });
 /**
  * ------------------------------------------ FIN READY -------------------------------------------------
@@ -86,7 +89,7 @@ function initializeNumericInputs() {
 
 function loadInitalData() {
     const tempSaleId = $('#temp_sale_id').val();
-    loadTotals(tempSaleId);
+    //loadTotals(tempSaleId);
 }
 
 // ===================================================================
@@ -97,7 +100,7 @@ function loadInitalData() {
  * Carga los totales de la venta temporal
  * @param {number} tempSaleId - ID de la venta temporal
  */
-function loadTotals(tempSaleId) {
+/*function loadTotals(tempSaleId) {
 
     if (!tempSaleId) {
         console.error('ID de venta temporal no válido');
