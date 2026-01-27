@@ -42,10 +42,10 @@ export function bindCustomerFormSubmit({
                 default:
                     cleanData[field.name] = rawValue.trim();
             }
-        });
-
+        }); 
+        
         $.ajax({
-            url: isEdit ? `/customers/${customerId}` : $form.data('action'),
+            url: isEdit ? `/customers/${customerId}` : $form.data('storeUrl'),
             method: isEdit ? 'PUT' : 'POST',
             data: cleanData,
             success: function (response) {
@@ -63,7 +63,7 @@ export function bindCustomerFormSubmit({
                     'Éxito',
                     response.status === 'create' ? 'Registro creado exitosamente.' : 'Registro actualizado exitosamente.'
                 );
-                resetCategoryForm();
+                resetCustomerForm();
 
                 // Callback extra si se pasa
                 if (typeof onSuccess === 'function') {
@@ -127,7 +127,7 @@ export function initCreditTermsAndDate(daysSelector, dateSelector, defaultDays =
  * Confirma el cierre del modal si hay datos ingresados.
  */
 export function closeCustomerModal() {
-    $(document).on('click', '#btn-cancelar, #btn-close-modal', function (e) {
+    $(document).on('click', '#btn-close-modal-customer, #btn-cancelar-customer', function (e) {
         e.preventDefault();
 
         const hasData = $('#full_name').val().trim() !== '' ||

@@ -1,13 +1,14 @@
 import { showAlert } from "../../utils/alerts";
 import { makeNumericInput } from "../../utils/numericInputs";
 import { initCustomerModule } from './customerModule';
+import { initProductModule } from './productModule';
 
 // =========================================
 // CONFIGURACIÓN CENTRALIZADA
 // =========================================
 const SALES_CONFIG = {
     api: {
-        base: '/temp_sales_detail',
+        base: '/temp_sale_detail',
         customers: '/customers',
         products: '/products',
         process: '/sales/process'
@@ -19,6 +20,7 @@ const SALES_CONFIG = {
         autoCompleteCustomer: '#auto_complete_customer',
         tableDetails: '#tableDetails',
         modalCustomers: '#modal-customers',
+        modalAddCustomers: '#customerModal',
         modalProducts: '#modal-products'
     },
     storage: {
@@ -40,7 +42,6 @@ export let tableDetails = null;
 export let selectedRowDetail = null;
 export let productsTable = null;
 export let salesTable = null;
-export let customersTable = null;
 
 $(document).ready(function () {
     // Configuración inicial
@@ -50,6 +51,8 @@ $(document).ready(function () {
 
     // Inicializar módulo de clientes
     initCustomerModule();
+
+    initProductModule();
 });
 /**
  * ------------------------------------------ FIN READY -------------------------------------------------
@@ -60,12 +63,11 @@ $(document).ready(function () {
 // ===================================================================
 
 function initializeDatePicker() {
-    const currentDate = $('#sale-date').val();
-    flatpickr(currentDate, {
+    flatpickr('#sale-date', {
         dateFormat: "d M, Y",
         altFormat: "d M, Y",
         defaultDate: new Date(),
-    })
+    });
 }
 
 function initializeNumericInputs() {
@@ -87,7 +89,7 @@ function initializeNumericInputs() {
 
 function loadInitalData() {
     const tempSaleId = $('#temp_sale_id').val();
-    loadTotals(tempSaleId);
+    //loadTotals(tempSaleId);
 }
 
 // ===================================================================
@@ -98,7 +100,7 @@ function loadInitalData() {
  * Carga los totales de la venta temporal
  * @param {number} tempSaleId - ID de la venta temporal
  */
-function loadTotals(tempSaleId) {
+/*function loadTotals(tempSaleId) {
 
     if (!tempSaleId) {
         console.error('ID de venta temporal no válido');

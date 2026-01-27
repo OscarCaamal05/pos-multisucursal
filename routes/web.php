@@ -11,6 +11,7 @@ use App\Http\Controllers\SuppliersController;
 use App\Http\Controllers\TempPurchaseDetailController;
 use App\Http\Controllers\TempPurchaseController;
 use App\Http\Controllers\TempSaleController;
+use App\Http\Controllers\TempSaleDetailController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\UserController;
@@ -26,6 +27,7 @@ Route::get('/categories/data', [CategoryController::class, 'getCategories'])->na
 Route::get('/departments/data', [DepartmentsController::class, 'getDepartments'])->name('departments.data');
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
 Route::get('/temp_purchases_detail/data', [TempPurchaseDetailController::class, 'getProductDetails'])->name('temp_purchases_detail.data');
+Route::get('/temp_sale_detail/data', [TempSaleDetailController::class, 'getProductDetails'])->name('temp_sale_detail.data');
 Route::get('/temp_purchases_detail/getPendingPurchases', [TempPurchaseDetailController::class, 'getPendingPurchases']);
 Route::get('/products/data', [ProductController::class, 'getProducts'])->name('products.data');
 Route::get('/customers/data', [CustomerController::class, 'getCustomers'])->name('customers.data');
@@ -70,8 +72,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
 
     Route::resource('temp_sale', TempSaleController::class)->names('temp_sale');
+    Route::get('/temp_sale_detail/{customer}', [TempSaleDetailController::class, 'getDataCustomer']);
     Route::get('/temp_sale/totals/{temp_sale_id}', [TempSaleController::class, 'getTotals']);
-    
+
+    Route::get('/temp_sale_detail/autoCompleteCustomers/{query}', [TempSaleDetailController::class, 'autoCompleteCustomers']);
+    Route::get('/temp_sale_detail/autoCompleteProducts/{query}', [TempSaleDetailController::class, 'autoCompleteProducts']);
+    Route::post('/temp_sale_detail/addProductToSalesDetails', [TempSaleDetailController::class, 'addProductToSalesDetails']);
+
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
     Route::get('/users/{id}', [UserController::class, 'show']);

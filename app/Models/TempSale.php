@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class TempSale extends Model
 {
@@ -35,6 +36,6 @@ class TempSale extends Model
 
     public function details()
     {
-        return $this->hasMany(tempPurchaseDetail::class, 'id');
+        return $this->hasMany(TempSaleDetail::class, 'temp_sale_id', 'id_temp_sale');
     }
 }

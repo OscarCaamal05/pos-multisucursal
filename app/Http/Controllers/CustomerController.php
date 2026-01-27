@@ -37,9 +37,14 @@ class CustomerController extends Controller
      */
     public function store(SaveCustomersRequest $request)
     {
-        Customer::create($request->validated());
+        $customer = Customer::create($request->validated());
 
-        return response()->json(['create' => true]);
+        return response()->json([
+            'status' => 'create',
+            'customer' => [
+                'id' => $customer->id,
+            ]
+        ]);
     }
 
     /**
