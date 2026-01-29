@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -18,6 +15,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+            $table->boolean('status')->default(true);  // ✅ Cambiado de enum
             $table->timestamps();
         });
 
@@ -42,8 +40,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        // ✅ ORDEN CORRECTO: Eliminar en orden INVERSO
+        // Primero las tablas que tienen FK, luego las referenciadas
+        
+        Schema::dropIfExists('sessions');              // 1️⃣ Primero esta (tiene FK)
+        Schema::dropIfExists('password_reset_tokens'); // 2️⃣ Esta no tiene FK
+        Schema::dropIfExists('users');                 // 3️⃣ Al final la principal
     }
 };

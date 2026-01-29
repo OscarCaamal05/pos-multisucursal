@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 45)->unique();
             $table->string('description', 255)->nullable();
-            $table->tinyInteger('status')->default(1);
+            $table->boolean('status')->default(true);
             $table->unsignedBigInteger('department_id');
             $table->timestamps();
 
