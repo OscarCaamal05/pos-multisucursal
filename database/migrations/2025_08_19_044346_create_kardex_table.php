@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('kardex', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('product_id');
+
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
 
             $table->enum('movement_type', ['entrada', 'salida', 'ajuste']);
             $table->string('movement_reason', 100)->nullable();
@@ -29,9 +31,14 @@ return new class extends Migration
             $table->decimal('balance_unit_cost', 10, 2)->nullable();
             $table->decimal('balance_total_cost', 10, 2)->nullable();
             $table->dateTime('movement_date');
-            $table->timestamps();
 
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->string('batch_number', 50)->nullable();
+            $table->date('expiration_date')->nullable();
+            $table->decimal('cost_per_unit', 10, 2)->nullable();
+
+            $table->index(['branch_id', 'product_id', 'movement_date']);
+            $table->index(['branch_id', 'movement_date']);
+            $table->timestamps();
         });
     }
 
