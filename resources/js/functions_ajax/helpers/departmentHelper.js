@@ -1,4 +1,4 @@
-import { showAlert, clearValidationErrors, handleValidationError } from '../utils/alerts';
+import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from '../utils/alerts';
 
 /**
  * Asigna el submit de un formulario de departamento con opciones personalizadas.
@@ -67,8 +67,8 @@ export function closeDepartmentModal() {
     $(document).on('click', '#btn-cancelar-department, #btn-close-modal-department', function (e) {
         e.preventDefault();
 
-        const hasData = $('#department_name').val().trim() !== '' ||
-            $('#department_description').val().trim() !== '';
+        const hasData = $('#name').val().trim() !== '' ||
+            $('#description').val().trim() !== '';
 
         if (hasData) {
             showConfirmationAlert(
@@ -105,8 +105,8 @@ export function showDepartmentModal(data = null) {
 
     if (data) {
         $('#departmentModalLabel').text('Editar departamento');
-        $('#department_name').val(data.department_name);
-        $('#department_description').val(data.department_description);
+        $('#name').val(data.name);
+        $('#description').val(data.description);
         $('#departmentId').val(data.id);
     } else {
         $('#departmentModalLabel').text('Agregar departamento');

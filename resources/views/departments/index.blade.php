@@ -35,16 +35,25 @@
 <div class="row">
     <div class="col-xl-12">
         <div class="card">
-            <div class="card-header align-items-center d-flex">
+            <div class="card-header align-items-center d-flex border-bottom-dashed">
                 <h4 class="card-title mb-0 flex-grow-1">Lista de Departamentos</h4>
                 <div class="flex-shrink-0">
-                    <div class="form-check form-switch form-switch-right form-switch-md">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#departmentModal">Agregar Departamento</button>
+                    <div class="d-flex flex-wrap align-items-start gap-2">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#departmentModal"> <i class="ri-add-line align-bottom me-1"></i>Agregar Departamento</button>
                     </div>
                 </div>
             </div><!-- end card header -->
 
             <div class="card-body">
+                <div class="row g-3 mb-2">
+                    <div class="col-xl-4">
+                        <div class="search-box">
+                            <input type="text" class="form-control" id="searchDepartmentInput" placeholder="Buscar Departamento">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <!--end row-->
                 <div class="table-responsive">
                     <table class="table align-middle table-nowrap mb-0" id="departmentsTable">
                         <thead class="table-light">

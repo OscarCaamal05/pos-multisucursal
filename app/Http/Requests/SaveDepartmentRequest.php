@@ -22,12 +22,12 @@ class SaveDepartmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_name' => [
+            'name' => [
                 'required',
                 'string',
-                'unique:departments,department_name' . ($this->department ? ',' . $this->department->id : ''),
+                'unique:departments,name' . ($this->department ? ',' . $this->department->id : ''),
             ],
-            'department_description' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:255',
         ];
     }
 }

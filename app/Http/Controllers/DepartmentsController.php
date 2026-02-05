@@ -19,7 +19,7 @@ class DepartmentsController extends Controller
 
     public function getDepartments()
     {
-        return DataTables::of(Department::select('id', 'department_name', 'department_description'))->make(true);
+        return DataTables::of(Department::select('id', 'name', 'description'))->make(true);
     }
 
     /**
@@ -34,7 +34,7 @@ class DepartmentsController extends Controller
                 'status' => 'create',
                 'department' => [
                     'id' => $department->id,
-                    'department_name' => $department->department_name,
+                    'name' => $department->name,
                 ]
             ]
         );

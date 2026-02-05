@@ -41,10 +41,10 @@ function initializeDataTable() {
         ajax: '/departments/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'department_name', name: 'department_name' },
+            { data: 'name', name: 'name' },
             {
-                data: 'department_description',
-                name: 'department_description',
+                data: 'description',
+                name: 'description',
                 orderable: false,
                 searchable: false
             },
@@ -60,6 +60,13 @@ function initializeDataTable() {
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
+    });
+
+    // Agregar funcionalidad al input personalizado de búsqueda
+    $('#searchDepartmentInput').off('keyup.departmentSearch').on('keyup.departmentSearch', function () {
+        const searchValue = $(this).val();
+        departmentTable.search(searchValue).draw();
     });
 }
 
