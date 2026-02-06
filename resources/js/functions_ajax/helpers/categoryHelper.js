@@ -67,8 +67,8 @@ export function closeCategoryModal() {
     $(document).on('click', '#btn-cancelar-category, #btn-close-modal-category', function (e) {
         e.preventDefault();
 
-        const hasData = $('#category_name').val().trim() !== '' ||
-            $('#category_description').val().trim() !== '';
+        const hasData = $('#name').val().trim() !== '' ||
+            $('#description').val().trim() !== '';
 
         if (hasData) {
             showConfirmationAlert(
@@ -104,8 +104,8 @@ export function showCategoryModal(data = null) {
 
     if (data) {
         $('#categoryModalLabel').text('Editar Categoria');
-        $('#category_name').val(data.category_name);
-        $('#category_description').val(data.category_description);
+        $('#name').val(data.name);
+        $('#description').val(data.description);
         $('#department_id').val(data.department_id).trigger('change');
         $('#categoryId').val(data.id);
     } else {

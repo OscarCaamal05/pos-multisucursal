@@ -5,7 +5,7 @@
                 <option value="">Seleccione un departamento</option>
                 @foreach ($departments as $department)
                 <option value="{{ $department->id }}">
-                    {{ $department->department_name }}
+                    {{ $department->name }}
                 </option>
                 @endforeach
             </select>
@@ -19,15 +19,15 @@
 
 
 <div class="mb-3">
-    <label for="category_name">Nombre</label>
-    <input type="text" class="form-control @error('category_name') is-invalid @enderror"
-        name="category_name" id="category_name" value="{{ old('category_name') }}">
-    @error('category_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <label for="name">Nombre</label>
+    <input type="text" class="form-control @error('name') is-invalid @enderror"
+        name="name" id="name" value="{{ old('name') }}">
+    @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 
 <div class="mb-3">
-    <label for="category_description">Descripcion</label>
-    <input type="text" class="form-control @error('category_description') is-invalid @enderror"
-        name="category_description" id="category_description" value="{{ old('category_description') }}">
-    @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <label for="description">Descripcion</label>
+    <input type="text" class="form-control @error('description') is-invalid @enderror"
+        name="description" id="description" value="{{ old('description') }}">
+    @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
