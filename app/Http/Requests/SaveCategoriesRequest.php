@@ -22,13 +22,13 @@ class SaveCategoriesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_name' => [
+            'name' => [
                 'required',
                 'string',
-                'unique:categories,category_name' . ($this->category ? ',' . $this->category->id : ''),
+                'unique:categories,name' . ($this->category ? ',' . $this->category->id : ''),
             ],
-            'category_description' => 'nullable|string|max:255',
-            'department_id' => 'required'
+            'description' => 'nullable|string|max:255',
+            'department_id' => 'required|exists:departments,id'
         ];
     }
 }

@@ -136,7 +136,7 @@ export function resetDepartmentForm() {
  */
 export function selectDepartmet(department, departmentSelectSelector) {
     const deptId = department.id;
-    const deptName = department.department_name;
+    const deptName = department.name;
 
     // Si el departamento no existe en el select, lo agrega
     if ($(departmentSelectSelector + ' option[value="' + deptId + '"]').length === 0) {
