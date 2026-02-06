@@ -22,10 +22,10 @@ class SaveProductsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_name' => [
+            'name' => [
                 'required',
                 'string',
-                'unique:products,product_name' . ($this->product ? ',' . $this->product->id : ''),
+                'unique:products,name' . ($this->product ? ',' . $this->product->id : ''),
             ],
             'barcode' => [
                 'required',
@@ -40,19 +40,19 @@ class SaveProductsRequest extends FormRequest
             'price_1_min_qty' => 'required|numeric',
             'price_2_min_qty' => 'numeric|nullable',
             'price_3_min_qty' => 'numeric|nullable',
-            'product_description' => 'nullable|string|max:255',
-            'stock' => 'numeric|nullable',
-            'stock_min' => 'numeric|nullable',
-            'stock_max' => 'numeric|nullable',
-            'image' => 'image|mines:jpeg, png, jpg',
-            'product_category_id' => 'required',
-            'product_department_id' => 'required',
+            'description' => 'nullable|string|max:255',
+            'image' => 'image|mimes:jpeg,png,jpg',
+            'category_id' => 'required',
+            'department_id' => 'required',
             'sale_unit_id' => 'required',
             'purchase_unit_id' => 'required',
             'unit_price' => 'numeric',
-            'iva' => 'nullable',
-            'neto' => 'nullable',
-            'is_fractional' => 'nullable',
+            'allow_fractional_sale' => 'nullable',
+            'allow_decimal_quantity' => 'nullable',
+            'requires_batch_control' => 'nullable',
+            'requieres_serial_number' => 'nullable',
+            'shelf_life_days' => 'nullable|integer',
+            'alert_days_before_expiration' => 'nullable|integer',
             'is_service' => 'nullable',
         ];
     }

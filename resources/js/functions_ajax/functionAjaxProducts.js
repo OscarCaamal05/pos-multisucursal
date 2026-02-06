@@ -159,7 +159,7 @@ function initializeDataTable() {
         ajax: '/products/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'product_name', name: 'product_name' },
+            { data: 'name', name: 'name' },
             {
                 data: 'barcode',
                 name: 'barcode',
@@ -213,6 +213,7 @@ function initializeDataTable() {
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4 text-center d-flex justify-content-center"p><"col-sm-4 text-end"i>><"clear">',
     });
 }
 

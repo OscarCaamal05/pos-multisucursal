@@ -10,14 +10,17 @@ use function PHPSTORM_META\map;
 class Product extends Model
 {
     protected $fillable = [
-        'product_name',
+        'name',
         'barcode',
-        'product_description',
-        'iva',
-        'neto',
-        'is_fractional',
+        'description',
+        'allow_fractional_sale',
+        'allow_decimal_quantity',
         'is_service',
         'conversion_factor',
+        'requires_batch_control',
+        'requieres_serial_number',
+        'shelf_life_days',
+        'alert_days_before_expiration',
         'purchase_price',
         'sale_price_1',
         'price_1_min_qty',
@@ -26,53 +29,61 @@ class Product extends Model
         'sale_price_3',
         'price_3_min_qty',
         'unit_price',
-        'stock',
-        'stock_min',
-        'stock_max',
         'image',
-        'status',
-        'product_category_id',
-        'product_department_id',
+        'is_active',
+        'category_id',
+        'department_id',
         'sale_unit_id',
         'purchase_unit_id',
     ];
 
+    protected $casts = [
+        'allow_fractional_sale' => 'boolean',
+        'allow_decimal_quantity' => 'boolean',
+        'requires_batch_control' => 'boolean',
+        'requieres_serial_number' => 'boolean',
+        'is_service' => 'boolean',
+        'is_active' => 'boolean',
+    ];
+
+
     public static function getProductsData()
     {
         return DB::table('products as p')
-            ->join('categories as c', 'p.product_category_id', '=', 'c.id')
-            ->join('departments as d', 'p.product_department_id', '=', 'd.id')
+            ->join('categories as c', 'p.category_id', '=', 'c.id')
+            ->join('departments as d', 'p.department_id', '=', 'd.id')
             ->join('units as u', 'p.sale_unit_id', '=', 'u.id')
+            ->join('branch_inventories as bi', 'p.id', '=', 'bi.product_id')
             ->select(
                 'p.id',
-                'p.product_name',
+                'p.name',
                 'p.barcode',
                 'c.category_name',
                 'd.department_name',
-                'p.stock',
+                'bi.stock',
                 'p.sale_price_1',
                 'u.name as sale_unit_name',
-                'p.status',
+                'p.is_active',
             );
     }
 
     public static function getWithDetails()
     {
         return DB::table('products as p')
-            ->join('categories as c', 'p.product_category_id', '=', 'c.id')
-            ->join('departments as d', 'p.product_department_id', '=', 'd.id')
+            ->join('categories as c', 'p.category_id', '=', 'c.id')
+            ->join('departments as d', 'p.department_id', '=', 'd.id')
             ->join('units as up', 'p.purchase_unit_id', '=', 'up.id')
             ->join('units as us', 'p.sale_unit_id', '=', 'us.id')
             ->select(
                 'p.id',
-                'p.product_name',
+                'p.name',
                 'p.barcode',
                 'p.iva',
                 'p.neto',
                 'p.is_fractional',
                 'p.is_service',
                 'p.conversion_factor',
-                'p.product_description',
+                'p.description',
                 'p.stock',
                 'p.stock_min',
                 'p.stock_max',

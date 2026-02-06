@@ -126,13 +126,48 @@
                 <h4 class="card-title mb-0 flex-grow-1">Lista de Productos</h4>
                 <div class="flex-shrink-0">
                     <div class="form-check form-switch form-switch-right form-switch-md">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productsModal">Agregar Producto</button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productsModal"><i class="ri-add-line align-bottom me-1"></i> Agregar Articulo</button>
+                        <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Importar</button>
+                        <button type="button" class="btn btn-danger"><i class=" ri-file-pdf-line align-bottom me-1"></i> Exportar</button>
+                        <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Exportar</button>
                     </div>
                 </div>
             </div><!-- end card header -->
 
             <div class="card-body">
-                <div class="table-responsive">
+                <div class="row g-3 mb-1">
+                    <div class="col-12 col-md-12 col-lg-3">
+                        <div class="search-box">
+                            <input type="text" class="form-control" id="search-category-input" placeholder="Buscar Categoria">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                    <!--end col-->
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div>
+                            <select class="form-control" data-plugin="choices" data-choices data-choices-search-false name="choices-department" id="id-department-filter">
+                                <option value="all-department" selected>Todo los departamentos</option>
+                                @foreach ($departments as $department)
+                                <option value="{{ $department->id }}">
+                                    {{ $department->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <!--end col-->
+                    <div class="col-12 col-md-6 col-lg-2">
+                        <div>
+                            <select class="form-select" name="choices-category-input" data-choices data-choices-search-false id="id-status-filter">
+                                <option value="all-status" selected>Todo los estados</option>
+                                <option value="1">Activos</option>
+                                <option value="0">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!--end col-->
+                </div>
+                <div class="table-responsive table-card mt-1">
                     <table class="table align-middle table-nowrap mb-0" id="productsTable">
                         <thead class="table-light">
                             <tr>
