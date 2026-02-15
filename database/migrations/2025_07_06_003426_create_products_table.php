@@ -23,6 +23,7 @@ return new class extends Migration
             $table->boolean('allow_fractional_sale')->default(false);
             $table->boolean('allow_decimal_quantity')->default(false);
             $table->boolean('is_service')->default(false);
+            $table->boolean('is_net_price')->default(true)->comment('Si el precio es neto');
             $table->decimal('conversion_factor', 10, 2)->nullable()->comment('Factor de conversión unidad compra/venta');
 
             // Control de lotes y vencimientos

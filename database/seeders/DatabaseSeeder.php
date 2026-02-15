@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             CategoryDefaultSeeder::class,
             CustomerDefaultSeeder::class,
             DefaultUnitsSeeder::class,
+            DefaultTaxesSeeder::class,
         ]);
         User::factory()->create([
             'name' => 'Test User',
