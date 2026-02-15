@@ -6,6 +6,7 @@ use App\Http\Requests\SaveProductsRequest;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Product;
+use App\Models\Taxes;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -20,8 +21,9 @@ class ProductController extends Controller
         $departments = Department::all();
         $categories = Category::where('status', '!=', 0)->get();
         $units = Unit::where('status', '!=', 0)->get();
+        $taxes = Taxes::where('is_active', '!=', 0)->get();
 
-        return view('products.index', compact('departments', 'categories', 'units'));
+        return view('products.index', compact('departments', 'categories', 'units', 'taxes'));
     }
 
     public function getProducts()

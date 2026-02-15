@@ -10,56 +10,57 @@
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxProducts.js')
 <!-- Modal para crear/editar -->
-<div class="modal zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+<!-- Modal -->
+<div class="modal fade zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="productsModalLabel">Agregar Producto</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-product"></button>
             </div>
+            <div class="modal-content border-0 mt-3">
+
+                <ul class="nav nav-tabs nav-tabs-custom nav-success p-2 pb-0 bg-light" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#generalDetails" role="tab"
+                            aria-selected="true">
+                            General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#additionalDetails" role="tab"
+                            aria-selected="false">
+                            Adicionales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#imageDetails" role="tab"
+                            aria-selected="false">
+                            Imagen
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <form id="productForm"
                 data-store-url="{{ route('products.store') }}"
                 data-update-url-base="/products/">
+                <input type="hidden" name="productId" id="productId" value="0">
                 <div class="modal-body">
-                    @csrf
-                    <input type="hidden" name="productId" id="productId" value="0">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="nav nav-pills flex-column nav-pills-tab custom-verti-nav-pills text-center" role="tablist" aria-orientation="vertical">
-                                <a class="nav-link active show" id="custom-v-pills-general-tab" data-bs-toggle="pill" href="#custom-v-pills-general" role="tab" aria-controls="custom-v-pills-general"
-                                    aria-selected="true">
-                                    <i class="ri-home-4-line d-block fs-20 mb-1"></i>
-                                    General</a>
-                                <a class="nav-link" id="custom-v-pills-additional-tab" data-bs-toggle="pill" href="#custom-v-pills-additional" role="tab" aria-controls="custom-v-pills-additional"
-                                    aria-selected="false">
-                                    <i class="ri-file-add-line  d-block fs-20 mb-1"></i>
-                                    Adicional</a>
-                                <a class="nav-link" id="custom-v-pills-price-suppliers-tab" data-bs-toggle="pill" href="#custom-v-pills-price-suppliers" role="tab" aria-controls="custom-v-pills-price-suppliers"
-                                    aria-selected="false">
-                                    <i class="ri-user-2-line d-block fs-20 mb-1"></i>
-                                    Precio Por Proveedor</a>
-                                <a class="nav-link" id="custom-v-pills-image-tab" data-bs-toggle="pill" href="#custom-v-pills-image" role="tab" aria-controls="custom-v-pills-image"
-                                    aria-selected="false">
-                                    <i class="ri-image-add-fill d-block fs-20 mb-1"></i>
-                                    Imagen</a>
+                    <form id="productForm"
+                        data-store-url="{{ route('products.store') }}"
+                        data-update-url-base="/products/">
+                        <input type="hidden" name="productId" id="productId" value="0">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="generalDetails" role="tabpanel">
+                                @include('products.form-fields-general')
                             </div>
-                        </div> <!-- end col-->
-                        <div class="col-lg-10">
-                            <div class="tab-content text-muted mt-3 mt-lg-0">
-                                <div class="tab-pane fade active show" id="custom-v-pills-general" role="tabpanel" aria-labelledby="custom-v-pills-general-tab">
-                                    @include('products.form-fields-general')
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-additional" role="tabpanel" aria-labelledby="custom-v-pills-additional-tab">
-                                    @include('products.form-fields-additional')
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-price-suppliers" role="tabpanel" aria-labelledby="custom-v-pills-price-suppliers-tab">
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-image" role="tabpanel" aria-labelledby="custom-v-pills-image-tab">
-                                    @include('products.form-fields-image')
-                                </div><!--end tab-pane-->
+                            <div class="tab-pane" id="additionalDetails" role="tabpanel">
+                                @include('products.form-fields-additional')
                             </div>
-                        </div> <!-- end col-->
-                    </div> <!-- end row-->
+                            <div class="tab-pane" id="imageDetails" role="tabpanel">
+                                @include('products.form-fields-image')
+                            </div>
+                        </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
@@ -69,6 +70,7 @@
         </div>
     </div>
 </div>
+<!--end modal-->
 
 <!-- Modal para crear/editar -->
 <div class="modal zoomIn" id="categoryModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
