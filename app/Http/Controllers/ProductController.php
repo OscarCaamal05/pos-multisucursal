@@ -31,26 +31,30 @@ class ProductController extends Controller
         return view('products.index', compact('departments', 'categories', 'units', 'taxes'));
     }
 
-    public function getProducts()
+    public function getProducts(Request $request)
     {
         $query = Product::getProductsData();
 
+        // Filtrar por departamento si se proporciona
+        if ($request->has('department_id') && $request->department_id !== 'all-department' && $request->department_id !== '') {
+            $query->where('p.department_id', $request->department_id);
+        }
+
+        if ($request->has('category_id') && $request->category_id !== 'all-category' && $request->category_id !== '') {
+            $query->where('p.category_id', $request->category_id);
+        }
+
+        if ($request->has('status') && $request->status !== 'all-status' && $request->status !== '') {
+            $query->where('p.is_active', $request->status); // ← Cambiar de 'p.status' a 'p.is_active'
+        }
+
         return DataTables::of($query)
-            ->addColumn('actions', function ($row) {
-                // Aquí puedes agregar botones de acción si los necesitas
-                return '';
-            })
-            ->editColumn('category_name', function ($row) {
-                return $row->category_name;
-            })
-            ->editColumn('department_name', function ($row) {
-                return $row->department_name;
-            })
+            // Definir las columnas searchables correctamente
             ->filterColumn('category_name', function ($query, $keyword) {
-                $query->whereRaw("LOWER(c.category_name) LIKE LOWER(?)", ["%{$keyword}%"]);
+                $query->whereRaw("LOWER(c.name) LIKE LOWER(?)", ["%{$keyword}%"]);
             })
             ->filterColumn('department_name', function ($query, $keyword) {
-                $query->whereRaw("LOWER(d.department_name) LIKE LOWER(?)", ["%{$keyword}%"]);
+                $query->whereRaw("LOWER(d.name) LIKE LOWER(?)", ["%{$keyword}%"]);
             })
             ->make(true);
     }
@@ -235,7 +239,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
 
     /**
      * Show the form for editing the specified resource.

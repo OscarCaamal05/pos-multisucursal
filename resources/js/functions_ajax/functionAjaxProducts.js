@@ -195,7 +195,14 @@ function initializeDataTable() {
     productsTable = $('#productsTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/products/data',
+        ajax: {
+            url: '/products/data',
+            data: function (d) {
+                d.department_id = $('#id-department-filter').val();
+                d.category_id = $('#id-category-filter').val();
+                d.status = $('#id-status-filter').val();
+            }
+        },
         columns: [
             { data: 'id', name: 'id' },
             { data: 'name', name: 'name' },
@@ -203,17 +210,18 @@ function initializeDataTable() {
                 data: 'barcode',
                 name: 'barcode',
                 orderable: false,
-                searchable: false
             },
             {
                 data: 'category_name',
-                name: 'category_name',
+                name: 'c.name',
                 className: 'text-center',
+                searchable: false,
             },
             {
                 data: 'department_name',
-                name: 'department_name',
+                name: 'd.name',
                 className: 'text-center',
+                searchable: false,
             },
             {
                 data: 'sale_price_1',
@@ -234,11 +242,15 @@ function initializeDataTable() {
                 name: 'sale_unit_name',
                 searchable: false,
                 className: 'text-center',
+                searchable: false,
+                orderable: false,
             },
             {
                 data: 'is_active',
                 name: 'is_active',
-                render: renderStatusColumn
+                render: renderStatusColumn,
+                orderable: false,
+                searchable: false,
             },
             {
                 data: 'id',
@@ -253,6 +265,27 @@ function initializeDataTable() {
         scroller: true,
         language: idiomaEspanol,
         dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4 text-center d-flex justify-content-center"p><"col-sm-4 text-end"i>><"clear">',
+    });
+
+    // Búsqueda por input de texto
+    $('#search-product-input').off('keyup.productSearch').on('keyup.productSearch', function () {
+        const searchValue = $(this).val();
+        productsTable.search(searchValue).draw();
+    });
+
+    // Filtro por departamento
+    $('#id-department-filter').on('change', function () {
+        productsTable.ajax.reload();
+    });
+
+    // Filtro por categoría
+    $('#id-category-filter').on('change', function () {
+        productsTable.ajax.reload();
+    });
+
+    // Filtro por status
+    $('#id-status-filter').on('change', function () {
+        productsTable.ajax.reload();
     });
 }
 

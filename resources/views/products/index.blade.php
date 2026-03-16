@@ -164,7 +164,7 @@
                 <div class="row g-3 mb-1">
                     <div class="col-12 col-md-12 col-lg-3">
                         <div class="search-box">
-                            <input type="text" class="form-control" id="search-category-input" placeholder="Buscar Categoria">
+                            <input type="text" class="form-control" id="search-product-input" placeholder="Buscar Producto">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
@@ -176,6 +176,19 @@
                                 @foreach ($departments as $department)
                                 <option value="{{ $department->id }}">
                                     {{ $department->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <!--end col-->
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div>
+                            <select class="form-control" data-plugin="choices" data-choices data-choices-search-false name="choices-category" id="id-category-filter">
+                                <option value="all-category" selected>Todo las categorias</option>
+                                @foreach ($categories as $category)
+                                <option value="{{ $category->id }}">
+                                    {{ $category->name }}
                                 </option>
                                 @endforeach
                             </select>
