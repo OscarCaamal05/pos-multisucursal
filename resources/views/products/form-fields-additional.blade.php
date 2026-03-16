@@ -2,8 +2,8 @@
     <div class="col-12">
         <!-- Comentario -->
         <div class="mb-3">
-            <label for="product_description" class="form-label">Comentario</label>
-            <textarea class="form-control" id="product_description" name="product_description" rows="3"></textarea>
+            <label for="description" class="form-label">Comentario</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
         </div>
     </div>
 
@@ -69,7 +69,7 @@
         <div class="mb-3">
             <label for="stock_min">Stock minimo</label>
             <input type="number"
-                class="form-control only-numbers @error('stock_min') is-invalid @enderror"
+                class="form-control text-end only-numbers @error('stock_min') is-invalid @enderror"
                 name="stock_min"
                 id="stock_min"
                 value="{{ old('stock_min') }}">
@@ -84,7 +84,7 @@
         <div class="mb-3">
             <label for="stock_max">Stock maximo</label>
             <input type="number"
-                class="form-control only-numbers @error('stock_max') is-invalid @enderror"
+                class="form-control text-end only-numbers @error('stock_max') is-invalid @enderror"
                 name="stock_max"
                 id="stock_max"
                 value="{{ old('stock_max') }}">
@@ -97,32 +97,32 @@
         <div class="mb-3">
             <label class="form-label mb-0">Fecha de caducidad</label>
             <div class="mt-2">
-                <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y">
+                <input type="text" id="expiry-date" name="expiry_date" class="form-control" data-provider="flatpickr" data-date-format="d M, Y">
             </div>
         </div>
     </div>
     <div class="col-2">
         <div class="mb-3">
-            <label for="days_remaining">Días Restantes</label>
+            <label for="shelf_life_days">Días Restantes</label>
             <input type="number"
-                class="form-control only-numbers @error('days_remaining') is-invalid @enderror"
-                name="days_remaining"
-                id="days_remaining"
-                value="{{ old('days_remaining') }}">
-            @error('days_remaining')
+                class="form-control text-end only-numbers @error('shelf_life_days') is-invalid @enderror"
+                name="shelf_life_days"
+                id="shelf_life_days"
+                value="{{ old('shelf_life_days') }}">
+            @error('shelf_life_days')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
     </div>
     <div class="col-3">
         <div class="mb-3">
-            <label for="alert_days_before_expiry">Alertar x días antes de vencer</label>
+            <label for="alert_days_before_expiration">Alertar x días antes de vencer</label>
             <input type="number"
-                class="form-control only-numbers @error('alert_days_before_expiry') is-invalid @enderror"
-                name="alert_days_before_expiry"
-                id="alert_days_before_expiry"
-                value="{{ old('alert_days_before_expiry') }}">
-            @error('alert_days_before_expiry')
+                class="form-control text-end only-numbers @error('alert_days_before_expiration') is-invalid @enderror"
+                name="alert_days_before_expiration"
+                id="alert_days_before_expiration"
+                value="{{ old('alert_days_before_expiration') }}">
+            @error('alert_days_before_expiration')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>

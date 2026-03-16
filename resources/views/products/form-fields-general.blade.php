@@ -159,12 +159,12 @@
                 @foreach ($taxes as $tax)
                 <div class="form-check checkbox checkbox-secondary mb-0">
 
-                    <!--CHECK PARA EL PRECIO NETO DEL PRODUCTO-->
+                    <!--CHECK PARA LOS IMPUESTOS APLICADOS AL PRODUCTO-->
                     <input class="form-check-input"
-                        id="{{ $tax->name }}"
-                        name="{{ $tax->id}}"
-                        value="{{ $tax->rate}}"
-                        type="checkbox">
+                        id="taxes"
+                        name="taxes[]"
+                        value="{{ $tax->id}}"
+                        type="checkbox" data-tax-value="{{ $tax->rate }}">
                     <label class="form-check-label tax-name">{{ $tax->name }}</label>
 
                 </div>
@@ -200,11 +200,11 @@
 
                 <!--CHECK PARA EL PRECIO NETO DEL PRODUCTO-->
                 <input class="form-check-input"
-                    id="neto"
-                    name="neto"
+                    id="is_net_price"
+                    name="is_net_price"
                     value="1"
                     type="checkbox" checked>
-                <label class="form-check-label" for="neto">Neto</label>
+                <label class="form-check-label" for="is_net_price">Neto</label>
 
             </div>
         </div>

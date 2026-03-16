@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class BranchInventory extends Model 
+class BranchInventories extends Model 
 {
     protected $fillable = [
         'id',

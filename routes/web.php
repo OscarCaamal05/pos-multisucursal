@@ -58,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('temp_purchases_detail', TempPurchaseDetailController::class)->names('temp_purchases_detail');
     Route::get('/temp_purchases_detail/{supplier}/show', [TempPurchaseDetailController::class, 'show']);
 
+    Route::post('/products/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->name('products.adjustStock');
+
     Route::post('/temp_purchases_detail/add', [TempPurchaseDetailController::class, 'addProduct']);
     Route::get('/temp_purchases_detail/totals/{temp_purchase_id}', [TempPurchaseDetailController::class, 'getTotals']);
     Route::get('/temp_purchases_detail/getDataProductTemp/{id}', [TempPurchaseDetailController::class, 'getTempDetail']);

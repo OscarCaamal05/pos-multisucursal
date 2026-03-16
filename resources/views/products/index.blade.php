@@ -2,6 +2,9 @@
 @section('title') @lang('translation.starter') @endsection
 @section('css')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" type="text/css" />
+<link href="{{ URL::asset('build/libs/dropzone/dropzone.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ URL::asset('build/libs/filepond/filepond.min.css') }}" type="text/css" />
+<link rel="stylesheet" href="{{ URL::asset('build/libs/filepond-plugin-image-preview/filepond-plugin-image-preview.min.css') }}">
 @endsection
 @section('content')
 @component('components.breadcrumb')
@@ -9,8 +12,8 @@
 @slot('title') Productos @endslot
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxProducts.js')
-<!-- Modal para crear/editar -->
-<!-- Modal -->
+
+<!-- MODAL PARA CREAR/EDITAR PRODUCTO -->
 <div class="modal fade zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -44,26 +47,23 @@
             <form id="productForm"
                 data-store-url="{{ route('products.store') }}"
                 data-update-url-base="/products/">
+                @csrf
                 <input type="hidden" name="productId" id="productId" value="0">
                 <div class="modal-body">
-                    <form id="productForm"
-                        data-store-url="{{ route('products.store') }}"
-                        data-update-url-base="/products/">
-                        <input type="hidden" name="productId" id="productId" value="0">
-                        <div class="tab-content">
-                            <div class="tab-pane active" id="generalDetails" role="tabpanel">
-                                @include('products.form-fields-general')
-                            </div>
-                            <div class="tab-pane" id="additionalDetails" role="tabpanel">
-                                @include('products.form-fields-additional')
-                            </div>
-                            <div class="tab-pane" id="imageDetails" role="tabpanel">
-                                @include('products.form-fields-image')
-                            </div>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="generalDetails" role="tabpanel">
+                            @include('products.form-fields-general')
                         </div>
+                        <div class="tab-pane" id="additionalDetails" role="tabpanel">
+                            @include('products.form-fields-additional')
+                        </div>
+                        <div class="tab-pane" id="imageDetails" role="tabpanel">
+                            @include('products.form-fields-image')
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-product">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
@@ -72,7 +72,7 @@
 </div>
 <!--end modal-->
 
-<!-- Modal para crear/editar -->
+<!-- MODAL PARA CREAR UNA CATEGORIA -->
 <div class="modal zoomIn" id="categoryModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -97,6 +97,7 @@
     </div>
 </div>
 
+<!-- MODAL PARA CREAR UN DEPARTAMENTO -->
 <div class="modal zoomIn" id="departmentModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -121,6 +122,29 @@
     </div>
 </div>
 
+<!-- MODAL PARA AJUSTAR EL INVENTARIO -->
+<div class="modal zoomIn" id="inventoryModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inventoryModalLabel">Ajustar Inventario</h5>
+                <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-inventory"></button>
+            </div>
+            <form id="inventoryForm">
+                @csrf
+                <input type="hidden" name="product-adjust-id" id="product-adjust-id" value="0">
+                <div class="modal-body">
+                    @include('products.form-fields-inventory-adjustment')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btn-cancel-modal-inventory">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-modal-inventory">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-xl-12">
         <div class="card">
@@ -128,7 +152,7 @@
                 <h4 class="card-title mb-0 flex-grow-1">Lista de Productos</h4>
                 <div class="flex-shrink-0">
                     <div class="form-check form-switch form-switch-right form-switch-md">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productsModal"><i class="ri-add-line align-bottom me-1"></i> Agregar Articulo</button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productsModal"><i class="ri-add-line align-bottom me-1"></i> Agregar Producto</button>
                         <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Importar</button>
                         <button type="button" class="btn btn-danger"><i class=" ri-file-pdf-line align-bottom me-1"></i> Exportar</button>
                         <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Exportar</button>
@@ -206,6 +230,19 @@
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script src="{{ URL::asset('build/libs/dropzone/dropzone-min.js') }}"></script>
+<script src="{{ URL::asset('build/libs/filepond/filepond.min.js') }}"></script>
+<script src="{{ URL::asset('build/libs/filepond-plugin-image-preview/filepond-plugin-image-preview.min.js') }}">
+</script>
+<script
+    src="{{ URL::asset('build/libs/filepond-plugin-file-validate-size/filepond-plugin-file-validate-size.min.js') }}">
+</script>
+<script
+    src="{{ URL::asset('build/libs/filepond-plugin-image-exif-orientation/filepond-plugin-image-exif-orientation.min.js') }}">
+</script>
+<script src="{{ URL::asset('build/libs/filepond-plugin-file-encode/filepond-plugin-file-encode.min.js') }}"></script>
+<script src="{{ URL::asset('build/js/pages/form-file-upload.init.js') }}"></script>
 
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>

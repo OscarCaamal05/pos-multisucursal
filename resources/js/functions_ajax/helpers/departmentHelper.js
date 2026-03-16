@@ -16,6 +16,7 @@ export function bindDepartmentFormSubmit({
 } = {}) {
     $(formSelector).off('submit').on('submit', function (e) {
         e.preventDefault();
+        e.stopPropagation();
 
         const $form = $(this);
         const departmentId = $('#departmentId').val();

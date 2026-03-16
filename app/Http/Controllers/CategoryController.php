@@ -54,7 +54,7 @@ class CategoryController extends Controller
             'status' => 'create',
             'category' => [
                 'id' => $category->id,
-                'name' => $category->name,
+                'category_name' => $category->name,
                 'department' => $category->department ? [
                     'id' => $category->department->id,
                     'department_name' => $category->department->name,
