@@ -255,7 +255,6 @@
     src="{{ URL::asset('build/libs/filepond-plugin-image-exif-orientation/filepond-plugin-image-exif-orientation.min.js') }}">
 </script>
 <script src="{{ URL::asset('build/libs/filepond-plugin-file-encode/filepond-plugin-file-encode.min.js') }}"></script>
-<script src="{{ URL::asset('build/js/pages/form-file-upload.init.js') }}"></script>
 
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>

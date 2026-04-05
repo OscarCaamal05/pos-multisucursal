@@ -1,17 +1,18 @@
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4 class="card-title mb-0">Multiple File Upload</h4>
-                        </div><!-- end card header -->
+<div class="row mt-2 justify-content-center">
+    <div class="col-lg-6">
+        <div class="justify-content-between d-flex align-items-center mb-3">
+            <h5 class="mb-0 pb-1">Imagen del Producto</h5>
+        </div>
 
-                        <div class="card-body">
-                            <p class="text-muted">FilePond is a JavaScript library that
-                                optimizes multiple images for faster uploads and offers a great, accessible, silky
-                                smooth user experience.</p>
-                            <input type="file" class="filepond filepond-input-multiple" multiple name="filepond"
-                                data-allow-reorder="true" data-max-file-size="3MB" data-max-files="3">
-                        </div>
-                        <!-- end card body -->
-                    </div>
-                    <!-- end card -->
-                </div> <!-- end col -->
+        <div class="">
+            <div class="card-body" style="min-height: 400px;">
+                <input type="file" 
+                       id="product-images-input" 
+                       class="filepond" 
+                       name="image"
+                       data-max-file-size="3MB"
+                       accept="image/*">
+            </div>
+        </div>
+    </div>
+</div>

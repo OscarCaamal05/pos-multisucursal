@@ -12,6 +12,7 @@ import flatpickr from 'flatpickr';
 // =========================================
 
 let productsTable = null;
+let productFilePond = null;
 
 // =========================================
 // INICIALIZACIÓN PRINCIPAL
@@ -26,6 +27,7 @@ $(document).ready(function () {
     bindEditEvents();
     bindDeleteEvents();
     bindToggleStatusEvents();
+    initializeProductFilePond();
     // =========================================
     // Inicializando la funcion para crear o actualizar la categoria
     // =========================================
@@ -849,3 +851,74 @@ const idiomaEspanol = {
     emptyTable: "No hay datos disponibles",
     info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
 };
+
+// =========================================
+// FUNCIÓN: Inicializa FilePond para imagen de producto
+// =========================================
+function initializeProductFilePond() {
+    const inputElement = document.querySelector('#product-images-input');
+    
+    if (!inputElement) {
+        console.warn('Input de FilePond no encontrado');
+        return;
+    }
+
+    // Registrar plugins de FilePond si no están registrados
+    if (typeof FilePond !== 'undefined') {
+        // Destruir instancia previa si existe
+        if (productFilePond) {
+            productFilePond.destroy();
+        }
+
+        // Registrar plugins
+        FilePond.registerPlugin(
+            FilePondPluginFileEncode,
+            FilePondPluginFileValidateSize,
+            FilePondPluginImageExifOrientation,
+            FilePondPluginImagePreview
+        );
+
+        // Crear instancia de FilePond
+        productFilePond = FilePond.create(inputElement, {
+            allowMultiple: false,  // Solo una imagen
+            maxFiles: 1,           // Máximo 1 archivo
+            maxFileSize: '3MB',
+            acceptedFileTypes: ['image/*'],
+            instantUpload: false,  // NO subir automáticamente
+            
+            // Etiquetas en español
+            labelIdle: 'Arrastra y suelta tu imagen o <span class="filepond--label-action">Examinar</span>',
+            labelFileLoading: 'Cargando',
+            labelFileLoadError: 'Error al cargar',
+            labelFileProcessing: 'Procesando',
+            labelFileProcessingComplete: 'Procesado',
+            labelFileProcessingAborted: 'Procesamiento cancelado',
+            labelFileProcessingError: 'Error al procesar',
+            labelTapToCancel: 'toca para cancelar',
+            labelTapToRetry: 'toca para reintentar',
+            labelTapToUndo: 'toca para deshacer',
+            labelButtonRemoveItem: 'Eliminar',
+            labelButtonAbortItemLoad: 'Abortar',
+            labelButtonRetryItemLoad: 'Reintentar',
+            labelButtonAbortItemProcessing: 'Cancelar',
+            labelButtonUndoItemProcessing: 'Deshacer',
+            labelButtonRetryItemProcessing: 'Reintentar',
+            labelButtonProcessItem: 'Procesar',
+            labelFileTypeNotAllowed: 'Tipo de archivo no válido',
+            fileValidateTypeLabelExpectedTypes: 'Espera {allButLastType} o {lastType}',
+            labelMaxFileSizeExceeded: 'Archivo demasiado grande',
+            labelMaxFileSize: 'El tamaño máximo es {filesize}',
+            
+            // Configuración visual
+            imagePreviewHeight: 450,
+            imageCropAspectRatio: '1:1',
+            imageResizeTargetWidth: 200,
+            imageResizeTargetHeight: 200,
+            stylePanelLayout: 'compact',
+        });
+
+    } else {
+        console.error('FilePond no está disponible');
+    }
+}
+
