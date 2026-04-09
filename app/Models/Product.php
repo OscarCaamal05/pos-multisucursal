@@ -48,6 +48,39 @@ class Product extends Model
         'is_active' => 'boolean',
     ];
 
+    // =========================================
+    // ACCESSOR: URL completa de la imagen
+    // =========================================
+    
+    /**
+     * Obtiene la URL completa de la imagen del producto
+     *
+     * @return string|null
+     */
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene el nombre del archivo de la imagen
+     *
+     * @return string|null
+     */
+    public function getImageNameAttribute()
+    {
+        if ($this->image) {
+            return basename($this->image);
+        }
+        return null;
+    }
+
+    // =========================================
+    // MÉTODOS ESTÁTICOS
+    // =========================================
 
     public static function getProductsData()
     {

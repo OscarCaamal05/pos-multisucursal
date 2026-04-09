@@ -4,7 +4,7 @@
             <h5 class="mb-0 pb-1">Imagen del Producto</h5>
         </div>
 
-        <div class="">
+        <div class="mt-3">
             <div class="card-body" style="min-height: 400px;">
                 <input type="file" 
                        id="product-images-input" 

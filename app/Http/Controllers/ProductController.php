@@ -72,7 +72,7 @@ class ProductController extends Controller
      */
     public function store(SaveProductsRequest $request)
     {
-        Log::info('Datos recibidos:', $request->all());
+
         try {
             DB::beginTransaction();
 
@@ -84,6 +84,14 @@ class ProductController extends Controller
 
             // Remover campos que no van en la tabla products
             unset($productData['taxes']);
+
+            // Manejo de la imagen (si se proporciona)
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $imagePath = $image->storeAs('products', $imageName, 'public');
+                $productData['image'] = $imagePath;
+            }
 
             // Crear el producto
             $product = Product::create($productData);
@@ -248,10 +256,19 @@ class ProductController extends Controller
     {
         $product_data = Product::getWithDetails()->where('p.id', $product->id)->first();
 
-        if (!$product) {
+        if (!$product_data) {
             return response()->json(['status' => 'error', 'message' => 'Product not found'], 404);
         }
 
+        // Agregar URL completa de la imagen y nombre del archivo
+        $product_data->image_url = $product_data->image
+            ? asset('storage/' . $product_data->image)
+            : null;
+        
+        $product_data->image_name = $product_data->image
+            ? basename($product_data->image)
+            : null;
+            
         return response()->json([
             'status' => 'success',
             'data' => $product_data
@@ -264,6 +281,7 @@ class ProductController extends Controller
     public function update(SaveProductsRequest $request, Product $product)
     {
         try {
+
             DB::beginTransaction();
 
             // Obtener datos validados
@@ -274,6 +292,32 @@ class ProductController extends Controller
 
             // Remover campos que no van en la tabla products
             unset($productData['taxes']);
+
+            // Manejo de la imagen al actualizar (si se proporciona una nueva imagen)
+            if ($request->hasFile('image')) {
+                // Eliminar imagen anterior si existe
+                if ($product->image && \Storage::disk('public')->exists($product->image)) {
+                    \Storage::disk('public')->delete($product->image);
+                }
+
+                $image = $request->file('image');
+
+                // Generar nombre único para la nueva imagen
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+                // Guardar en storage/app/public/products
+                $imagePath = $image->storeAs('products', $imageName, 'public');
+
+                // Agregar ruta al array de datos
+                $productData['image'] = $imagePath;
+            } else {
+                // Eliminar la ruta y la imagen de la carpeta
+                
+                    if (\Storage::disk('public')->exists($product->image)) {
+                        \Storage::disk('public')->delete($product->image);
+                    }
+                    $productData['image'] = null; // Eliminar la ruta de la imagen en la base de datos
+            }
 
             // Actualizar el producto
             $product->update($productData);

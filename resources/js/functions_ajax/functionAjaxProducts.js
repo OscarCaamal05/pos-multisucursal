@@ -490,6 +490,16 @@ function bindEditEvents() {
                                 $('#requires_batch_control').prop('checked', response.data.requires_batch_control === 1);
                                 $('#requires_serial_number').prop('checked', response.data.requires_serial_number === 1);
 
+                                // =========================================
+                                // CARGAR IMAGEN EXISTENTE EN FILEPOND
+                                // =========================================
+                                if (response.data.image_url) {
+                                    loadProductImage(response.data.image_url, response.data.image_name);
+                                } else {
+                                    // Limpiar FilePond si no hay imagen
+                                    resetProductFilePond();
+                                }
+
                                 console.log(response.data);
                             } else {
                                 showAlert('error', 'Error', response.message);
@@ -857,7 +867,7 @@ const idiomaEspanol = {
 // =========================================
 function initializeProductFilePond() {
     const inputElement = document.querySelector('#product-images-input');
-    
+
     if (!inputElement) {
         console.warn('Input de FilePond no encontrado');
         return;
@@ -885,7 +895,7 @@ function initializeProductFilePond() {
             maxFileSize: '3MB',
             acceptedFileTypes: ['image/*'],
             instantUpload: false,  // NO subir automáticamente
-            
+
             // Etiquetas en español
             labelIdle: 'Arrastra y suelta tu imagen o <span class="filepond--label-action">Examinar</span>',
             labelFileLoading: 'Cargando',
@@ -908,7 +918,7 @@ function initializeProductFilePond() {
             fileValidateTypeLabelExpectedTypes: 'Espera {allButLastType} o {lastType}',
             labelMaxFileSizeExceeded: 'Archivo demasiado grande',
             labelMaxFileSize: 'El tamaño máximo es {filesize}',
-            
+
             // Configuración visual
             imagePreviewHeight: 450,
             imageCropAspectRatio: '1:1',
@@ -917,8 +927,59 @@ function initializeProductFilePond() {
             stylePanelLayout: 'compact',
         });
 
+        // Exportar a window después de crear la instancia
+        window.productFilePond = productFilePond;
+        
+        console.log('FilePond inicializado correctamente');
     } else {
         console.error('FilePond no está disponible');
     }
 }
+
+// =========================================
+// FUNCIÓN: Limpiar FilePond
+// =========================================
+function resetProductFilePond() {
+    if (productFilePond) {
+        productFilePond.removeFiles();
+    }
+}
+
+// =========================================
+// FUNCIÓN: Cargar imagen existente en FilePond (para edición)
+// =========================================
+function loadProductImage(imageUrl, imageName) {
+    if (productFilePond && imageUrl) {
+        // Limpiar archivos existentes primero
+        productFilePond.removeFiles();
+        
+        // Cargar la imagen desde URL
+        productFilePond.addFile(imageUrl)
+            .then(file => {
+                console.log('Imagen cargada en FilePond:', file);
+            })
+            .catch(error => {
+                console.error('Error al cargar imagen en FilePond:', error);
+            });
+    }
+}
+
+// =========================================
+// FUNCIÓN: Obtener imagen de FilePond
+// =========================================
+window.getProductImage = function () {
+    if (productFilePond) {
+        const files = productFilePond.getFiles();
+        if (files.length > 0) {
+            return files[0].file;
+        }
+    }
+    return null;
+};
+
+// =========================================
+// EXPORTAR FUNCIONES GLOBALES
+// =========================================
+window.loadProductImage = loadProductImage;
+window.resetProductFilePond = resetProductFilePond;
 
