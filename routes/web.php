@@ -37,7 +37,8 @@ Route::put('/categories/{category}/status', [CategoryController::class, 'toggleS
 Route::put('/customers/{customer}/status', [CustomerController::class, 'toggleStatus'])->name('customers.toggleStatus');
 Route::put('/suppliers/{supplier}/status', [SuppliersController::class, 'toggleStatus'])->name('suppliers.toggleStatus');
 Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus'])->name('products.toggleStatus');
-
+Route::get('/products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download-template');
+Route::post('/products/import', [ProductController::class, 'importFromExcel'])->name('products.import');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

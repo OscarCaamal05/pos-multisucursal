@@ -28,6 +28,7 @@ $(document).ready(function () {
     bindDeleteEvents();
     bindToggleStatusEvents();
     initializeProductFilePond();
+    bindImportExcelEvents();
     // =========================================
     // Inicializando la funcion para crear o actualizar la categoria
     // =========================================

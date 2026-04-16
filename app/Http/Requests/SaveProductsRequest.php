@@ -41,7 +41,7 @@ class SaveProductsRequest extends FormRequest
             'price_2_min_qty' => 'nullable|numeric',
             'price_3_min_qty' => 'nullable|numeric',
             'unit_price' => 'required|numeric',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
 
             // Relaciones - AÑADIR exists
@@ -63,11 +63,11 @@ class SaveProductsRequest extends FormRequest
             'allow_decimal_quantity' => 'nullable|boolean',
             'requires_batch_control' => 'nullable|boolean',
             'requires_serial_number' => 'nullable|boolean',
-            'is_service' => 'nullable|boolean',
-            'is_net_price' => 'nullable|boolean',
+            'is_service' => 'nullable',
+            'is_net_price' => 'nullable',
 
             // Fechas
-            'expiry-date' => 'nullable|date',
+            'expiry_date' => 'nullable|date',
             'shelf_life_days' => 'nullable|integer',
             'alert_days_before_expiration' => 'nullable|integer',
         ];

@@ -22,6 +22,7 @@ class Product extends Model
         'requires_serial_number',
         'shelf_life_days',
         'alert_days_before_expiration',
+        'expiry_date',
         'purchase_price',
         'sale_price_1',
         'price_1_min_qty',
@@ -31,7 +32,6 @@ class Product extends Model
         'price_3_min_qty',
         'unit_price',
         'image',
-        'expiry_date',
         'is_active',
         'category_id',
         'department_id',
@@ -51,7 +51,7 @@ class Product extends Model
     // =========================================
     // ACCESSOR: URL completa de la imagen
     // =========================================
-    
+
     /**
      * Obtiene la URL completa de la imagen del producto
      *
@@ -88,18 +88,21 @@ class Product extends Model
             ->join('categories as c', 'p.category_id', '=', 'c.id')
             ->join('departments as d', 'p.department_id', '=', 'd.id')
             ->join('units as u', 'p.sale_unit_id', '=', 'u.id')
-            ->join('branch_inventories as bi', 'p.id', '=', 'bi.product_id')
             ->select(
                 'p.id',
                 'p.name',
                 'p.barcode',
                 'c.name as category_name',
                 'd.name as department_name',
-                'bi.quantity as stock',
+                DB::raw('COALESCE(bi.quantity, 0) as stock'),  // Stock desde branch_inventories
                 'p.sale_price_1',
                 'u.name as sale_unit_name',
                 'p.is_active',
-            );
+            )
+            ->leftJoin('branch_inventories as bi', function ($join) {
+                $join->on('p.id', '=', 'bi.product_id')
+                    ->where('bi.branch_id', '=', 1);
+            });
     }
 
     public static function getWithDetails()
@@ -109,7 +112,10 @@ class Product extends Model
             ->join('departments as d', 'p.department_id', '=', 'd.id')
             ->join('units as u_sale', 'p.sale_unit_id', '=', 'u_sale.id')
             ->join('units as u_purchase', 'p.purchase_unit_id', '=', 'u_purchase.id')
-            ->join('branch_inventories as bi', 'p.id', '=', 'bi.product_id')
+            ->leftJoin('branch_inventories as bi', function ($join) {
+                $join->on('p.id', '=', 'bi.product_id')
+                    ->where('bi.branch_id', '=', 1);
+            })
             ->leftJoin('product_taxes as pt', 'p.id', '=', 'pt.product_id')
             ->select(
                 'p.*',
@@ -117,9 +123,9 @@ class Product extends Model
                 'c.id as category_id',
                 'd.name as department_name',
                 'd.id as department_id',
-                'bi.quantity as stock',
-                'bi.stock_min',
-                'bi.stock_max',
+                DB::raw('COALESCE(bi.quantity, 0) as stock'),
+                DB::raw('COALESCE(bi.stock_min, 0) as stock_min'),
+                DB::raw('COALESCE(bi.stock_max, 0) as stock_max'),
                 'u_sale.id as sale_unit_id',
                 'u_sale.name as sale_unit_name',
                 'u_purchase.id as purchase_unit_id',

@@ -12,6 +12,7 @@
 @slot('title') Productos @endslot
 @endcomponent
 @vite('resources/js/functions_ajax/functionAjaxProducts.js')
+@vite('resources/js/functions_ajax/importProducts.js')
 
 <!-- MODAL PARA CREAR/EDITAR PRODUCTO -->
 <div class="modal fade zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
@@ -145,6 +146,66 @@
     </div>
 </div>
 
+<!-- Modal para importar productos desde Excel -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title mb-2">
+                    <i class="ri-file-excel-2-line me-2"></i>Importar Productos desde Excel
+                </h5>
+                <button type="button" class="btn-close mb-2" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="importProductsForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <!-- Información importante -->
+                    <div class="alert alert-info" role="alert">
+                        <h6 class="alert-heading"><i class="ri-information-line me-2"></i>Instrucciones:</h6>
+                        <ul class="mb-0 ps-3">
+                            <li>El archivo debe estar en formato .xlsx o .xls</li>
+                            <li>Descarga la plantilla para conocer el formato correcto</li>
+                            <li>Los campos obligatorios son: Nombre, Código de barras, Categoría, Departamento, Precio de compra, Precio de venta</li>
+                        </ul>
+                    </div>
+
+                    <!-- Botón para descargar plantilla -->
+                    <div class="mb-3">
+                        <a href="{{ route('products.download-template') }}" class="btn btn-soft-success w-100">
+                            <i class="ri-download-2-line me-2"></i>Descargar Plantilla de Excel
+                        </a>
+                    </div>
+
+                    <!-- Input para subir archivo -->
+                    <div class="mb-3">
+                        <label for="excel_file" class="form-label">Seleccionar archivo Excel</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" 
+                               accept=".xlsx,.xls" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <!-- Barra de progreso (oculta inicialmente) -->
+                    <div class="progress mb-3" id="upload-progress" style="display: none;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%">
+                            <span class="progress-text">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Resultado de la importación (oculto inicialmente) -->
+                    <div id="import-result" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-import">
+                        <i class="ri-upload-2-line me-1"></i>Importar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-xl-12">
         <div class="card">
@@ -153,7 +214,7 @@
                 <div class="flex-shrink-0">
                     <div class="form-check form-switch form-switch-right form-switch-md">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productsModal"><i class="ri-add-line align-bottom me-1"></i> Agregar Producto</button>
-                        <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Importar</button>
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importExcelModal"><i class="ri-file-excel-2-line align-bottom me-1"></i> Importar</button>
                         <button type="button" class="btn btn-danger"><i class=" ri-file-pdf-line align-bottom me-1"></i> Exportar</button>
                         <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Exportar</button>
                     </div>
