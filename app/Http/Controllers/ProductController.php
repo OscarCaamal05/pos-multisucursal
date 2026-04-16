@@ -298,8 +298,9 @@ class ProductController extends Controller
             // Remover campos que no van en la tabla products
             unset($productData['taxes']);
 
-            // Manejo de la imagen al actualizar (si se proporciona una nueva imagen)
+            // Manejo de la imagen al actualizar
             if ($request->hasFile('image')) {
+                // Se envió una nueva imagen
                 // Eliminar imagen anterior si existe
                 if ($product->image && \Storage::disk('public')->exists($product->image)) {
                     \Storage::disk('public')->delete($product->image);
@@ -315,14 +316,16 @@ class ProductController extends Controller
 
                 // Agregar ruta al array de datos
                 $productData['image'] = $imagePath;
-            } else {
-                // Eliminar la ruta y la imagen de la carpeta
-                
-                    if (\Storage::disk('public')->exists($product->image)) {
-                        \Storage::disk('public')->delete($product->image);
-                    }
-                    $productData['image'] = null; // Eliminar la ruta de la imagen en la base de datos
+            } elseif ($request->has('remove_image') && $request->input('remove_image') == '1') {
+                // Se solicitó eliminar la imagen
+                // Eliminar imagen física si existe
+                if ($product->image && \Storage::disk('public')->exists($product->image)) {
+                    \Storage::disk('public')->delete($product->image);
+                }
+                // Establecer imagen como null en la base de datos
+                $productData['image'] = null;
             }
+            // Si no se envía ninguna de las dos opciones, mantener la imagen actual
 
             // Actualizar el producto
             $product->update($productData);
