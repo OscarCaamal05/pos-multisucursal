@@ -20,6 +20,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use Mpdf\Mpdf;
+
 
 class ProductController extends Controller
 {
@@ -815,6 +817,261 @@ class ProductController extends Controller
         }
     }
 
+    /**
+     * Exportar los datos de los productos en un archivo de PDF.
+     */
+    public function exportPdf(Request $request)
+    {
+        try {
+            // Obtener datos
+            $products = DB::table('products as p')
+                ->join('categories as c', 'p.category_id', '=', 'c.id')
+                ->join('departments as d', 'p.department_id', '=', 'd.id')
+                ->join('units as u', 'p.sale_unit_id', '=', 'u.id')
+                ->leftJoin('branch_inventories as bi', 'p.id', '=', 'bi.product_id')
+                ->select(
+                    'p.id',
+                    'p.name',
+                    'p.barcode',
+                    'c.name as category_name',
+                    'd.name as department_name',
+                    DB::raw('COALESCE(bi.quantity, 0) as stock'),
+                    DB::raw('COALESCE(bi.stock_min, 0) as stock_min'),
+                    DB::raw('COALESCE(bi.stock_max, 0) as stock_max'),
+                    'p.purchase_price',
+                    'p.sale_price_1',
+                    'p.is_active'
+                )
+                ->orderBy('p.id', 'ASC')
+                ->get();
+
+            // Calcular resumen
+            $totalProducts = $products->count();
+            $activeProducts = $products->where('is_active', 1)->count();
+            $inactiveProducts = $products->where('is_active', 0)->count();
+            $lowStockProducts = $products->filter(fn($p) => $p->stock <= $p->stock_min)->count();
+            $totalStock = $products->sum('stock');
+            $totalValue = $products->sum(fn($p) => $p->stock * $p->purchase_price);
+
+            // Preparar datos para la vista
+            $data = [
+                'products' => $products,
+                'fecha' => now()->format('d/m/Y H:i:s'),
+                'totalProducts' => $totalProducts,
+                'activeProducts' => $activeProducts,
+                'inactiveProducts' => $inactiveProducts,
+                'lowStockProducts' => $lowStockProducts,
+                'totalStock' => $totalStock,
+                'totalValue' => $totalValue,
+            ];
+
+            // Renderizar la vista Blade a HTML
+            $html = view('products.export-pdf-print', $data)->render();
+
+            // Crear PDF con Mpdf
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'Letter-L',
+                'default_font' => 'arial',
+                'margin_left' => 10,
+                'margin_right' => 10,
+                'margin_top' => 10,
+                'margin_bottom' => 15,
+            ]);
+
+            $mpdf->SetTitle('Reporte de Productos');
+            $mpdf->WriteHTML($html);
+
+            $fileName = 'reporte_productos_' . date('Y-m-d_His') . '.pdf';
+
+            return response()->streamDownload(function () use ($mpdf) {
+                echo $mpdf->Output('', 'S');
+            }, $fileName, [
+                'Content-Type' => 'application/pdf',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al generar PDF: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Exportar productos a Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Productos');
+
+            // ===== INFORMACIÓN DEL REPORTE =====
+            $sheet->setCellValue('A1', 'REPORTE DE PRODUCTOS');
+            $sheet->mergeCells('A1:L1');
+            $sheet->getStyle('A1')->applyFromArray([
+                'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => '000000']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+
+            $sheet->setCellValue('A2', 'Fecha de generación: ' . now()->format('d/m/Y H:i:s'));
+            $sheet->mergeCells('A2:L2');
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // ===== ENCABEZADOS =====
+            $headers = [
+                'A4' => 'ID',
+                'B4' => 'Nombre',
+                'C4' => 'Código de Barras',
+                'D4' => 'Categoría',
+                'E4' => 'Departamento',
+                'F4' => 'Stock',
+                'G4' => 'Stock Mínimo',
+                'H4' => 'Stock Máximo',
+                'I4' => 'Precio Compra',
+                'J4' => 'Precio Venta 1',
+                'K4' => 'Unidad',
+                'L4' => 'Estado',
+            ];
+
+            foreach ($headers as $cell => $value) {
+                $sheet->setCellValue($cell, $value);
+            }
+
+            // Estilos de encabezado
+            $headerStyle = [
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
+            ];
+            $sheet->getStyle('A4:L4')->applyFromArray($headerStyle);
+
+            // ===== OBTENER DATOS =====
+            $products = DB::table('products as p')
+                ->join('categories as c', 'p.category_id', '=', 'c.id')
+                ->join('departments as d', 'p.department_id', '=', 'd.id')
+                ->join('units as u', 'p.sale_unit_id', '=', 'u.id')
+                ->leftJoin('branch_inventories as bi', 'p.id', '=', 'bi.product_id')
+                ->select(
+                    'p.id',
+                    'p.name',
+                    'p.barcode',
+                    'c.name as category_name',
+                    'd.name as department_name',
+                    DB::raw('COALESCE(bi.quantity, 0) as stock'),
+                    DB::raw('COALESCE(bi.stock_min, 0) as stock_min'),
+                    DB::raw('COALESCE(bi.stock_max, 0) as stock_max'),
+                    'p.purchase_price',
+                    'p.sale_price_1',
+                    'u.name as unit_name',
+                    'p.is_active'
+                )
+                ->orderBy('p.id', 'ASC')
+                ->get();
+
+            // ===== LLENAR DATOS =====
+            $row = 5;
+            foreach ($products as $product) {
+                $sheet->setCellValue('A' . $row, $product->id);
+                $sheet->setCellValue('B' . $row, $product->name);
+                $sheet->setCellValue('C' . $row, $product->barcode);
+                $sheet->setCellValue('D' . $row, $product->category_name);
+                $sheet->setCellValue('E' . $row, $product->department_name);
+                $sheet->setCellValue('F' . $row, $product->stock);
+                $sheet->setCellValue('G' . $row, $product->stock_min);
+                $sheet->setCellValue('H' . $row, $product->stock_max);
+                $sheet->setCellValue('I' . $row, '$' . number_format($product->purchase_price, 2));
+                $sheet->setCellValue('J' . $row, '$' . number_format($product->sale_price_1, 2));
+                $sheet->setCellValue('K' . $row, $product->unit_name);
+                $sheet->setCellValue('L' . $row, $product->is_active ? 'Activo' : 'Inactivo');
+
+                // Aplicar color a fila según estado
+                if (!$product->is_active) {
+                    $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFE6E6']],
+                    ]);
+                }
+
+                // Resaltar stock bajo
+                if ($product->stock <= $product->stock_min) {
+                    $sheet->getStyle('F' . $row)->applyFromArray([
+                        'font' => ['color' => ['rgb' => 'FF0000'], 'bold' => true],
+                    ]);
+                }
+
+                $row++;
+            }
+
+            // ===== TOTALES =====
+            $sheet->setCellValue('A' . $row, 'TOTALES');
+            $sheet->mergeCells('A' . $row . ':E' . $row);
+            $sheet->setCellValue('F' . $row, '=SUM(F5:F' . ($row - 1) . ')');
+            $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E6E6']],
+            ]);
+
+            // ===== RESUMEN =====
+            $row += 2;
+            $totalProducts = $products->count();
+            $activeProducts = $products->where('is_active', 1)->count();
+            $inactiveProducts = $products->where('is_active', 0)->count();
+            $lowStockProducts = $products->filter(fn($p) => $p->stock <= $p->stock_min)->count();
+
+            $sheet->setCellValue('A' . $row, 'RESUMEN DEL INVENTARIO');
+            $sheet->mergeCells('A' . $row . ':B' . $row);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+
+            $summary = [
+                ['Total de productos:', $totalProducts],
+                ['Productos activos:', $activeProducts],
+                ['Productos inactivos:', $inactiveProducts],
+                ['Productos con stock bajo:', $lowStockProducts],
+            ];
+
+            foreach ($summary as $item) {
+                $sheet->setCellValue('A' . $row, $item[0]);
+                $sheet->setCellValue('B' . $row, $item[1]);
+                $row++;
+            }
+
+            // ===== APLICAR BORDES =====
+            $lastRow = $row - 1;
+            $sheet->getStyle('A4:L' . $lastRow)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
+            ]);
+
+            // ===== AJUSTAR ANCHOS =====
+            $sheet->getColumnDimension('A')->setWidth(8);
+            $sheet->getColumnDimension('B')->setWidth(35);
+            $sheet->getColumnDimension('C')->setWidth(18);
+            $sheet->getColumnDimension('D')->setWidth(20);
+            $sheet->getColumnDimension('E')->setWidth(20);
+            $sheet->getColumnDimension('F')->setWidth(12);
+            $sheet->getColumnDimension('G')->setWidth(14);
+            $sheet->getColumnDimension('H')->setWidth(14);
+            $sheet->getColumnDimension('I')->setWidth(15);
+            $sheet->getColumnDimension('J')->setWidth(15);
+            $sheet->getColumnDimension('K')->setWidth(12);
+            $sheet->getColumnDimension('L')->setWidth(12);
+
+            // ===== GENERAR Y DESCARGAR ARCHIVO =====
+            $fileName = 'reporte_productos_' . date('Y-m-d_His') . '.xlsx';
+            $writer = new Xlsx($spreadsheet);
+
+            // Usar StreamedResponse de Laravel en lugar de header() y exit
+            return response()->streamDownload(function () use ($writer) {
+                $writer->save('php://output');
+            }, $fileName, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'max-age=0',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al exportar Excel: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar Excel: ' . $e->getMessage());
+        }
+    }
     /**
      * Validar una fila de producto
      */

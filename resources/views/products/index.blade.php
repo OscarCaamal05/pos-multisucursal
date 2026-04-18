@@ -179,15 +179,15 @@
                     <!-- Input para subir archivo -->
                     <div class="mb-3">
                         <label for="excel_file" class="form-label">Seleccionar archivo Excel</label>
-                        <input type="file" class="form-control" id="excel_file" name="excel_file" 
-                               accept=".xlsx,.xls" required>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file"
+                            accept=".xlsx,.xls" required>
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <!-- Barra de progreso (oculta inicialmente) -->
                     <div class="progress mb-3" id="upload-progress" style="display: none;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                             role="progressbar" style="width: 0%">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                            role="progressbar" style="width: 0%">
                             <span class="progress-text">0%</span>
                         </div>
                     </div>
@@ -214,9 +214,24 @@
                 <div class="flex-shrink-0">
                     <div class="form-check form-switch form-switch-right form-switch-md">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productsModal"><i class="ri-add-line align-bottom me-1"></i> Agregar Producto</button>
-                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importExcelModal"><i class="ri-file-excel-2-line align-bottom me-1"></i> Importar</button>
-                        <button type="button" class="btn btn-danger"><i class=" ri-file-pdf-line align-bottom me-1"></i> Exportar</button>
-                        <button type="button" class="btn btn-success"><i class="ri-file-excel-2-line align-bottom me-1"></i> Exportar</button>
+                        <button type="button" class="btn btn-soft-secondary material-shadow-none" data-bs-toggle="modal" data-bs-target="#importExcelModal"><i class=" ri-file-download-line align-bottom me-1"></i> Importar</button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-soft-secondary material-shadow-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ri-file-upload-line align-bottom me-1"></i> Exportar
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('products.export-excel') }}">
+                                        <i class="ri-file-excel-2-line me-2 text-success"></i>Exportar a Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('products.export-pdf') }}">
+                                        <i class="ri-file-pdf-line me-2 text-danger"></i>Exportar a PDF
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div><!-- end card header -->

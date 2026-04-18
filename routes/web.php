@@ -21,6 +21,8 @@ use App\Models\tempPurchaseDetail;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// ===== RUTAS PÚBLICAS (sin autenticación) =====
 Route::get('/users/data', [UserController::class, 'getUsers'])->name('users.data');
 Route::get('/roles/data', [RolesController::class, 'getRoles'])->name('roles.data');
 Route::get('/categories/data', [CategoryController::class, 'getCategories'])->name('categories.data');
@@ -29,16 +31,30 @@ Route::get('/permission/data', [PermissionController::class, 'getPermission'])->
 Route::get('/temp_purchases_detail/data', [TempPurchaseDetailController::class, 'getProductDetails'])->name('temp_purchases_detail.data');
 Route::get('/temp_sale_detail/data', [TempSaleDetailController::class, 'getProductDetails'])->name('temp_sale_detail.data');
 Route::get('/temp_purchases_detail/getPendingPurchases', [TempPurchaseDetailController::class, 'getPendingPurchases']);
+
+// RUTAS DE PRODUCTOS (ANTES DEL RESOURCE)
+Route::get('/products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download-template');
+Route::get('/products/download-test-file', [ProductController::class, 'generateTestFile'])->name('products.download-test-file');
+Route::get('/products/export-excel', [ProductController::class, 'exportExcel'])->name('products.export-excel');
+Route::get('/products/export-pdf', [ProductController::class, 'exportPdf'])->name('products.export-pdf');
+Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');
 Route::get('/products/data', [ProductController::class, 'getProducts'])->name('products.data');
+
 Route::get('/customers/data', [CustomerController::class, 'getCustomers'])->name('customers.data');
 Route::get('/suppliers/data', [SuppliersController::class, 'getSuppliers'])->name('suppliers.data');
+
+// ===== RUTAS DE ACTUALIZACIÓN DE ESTADO =====
 Route::put('/users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
 Route::put('/categories/{category}/status', [CategoryController::class, 'toggleStatus'])->name('categories.toggleStatus');
 Route::put('/customers/{customer}/status', [CustomerController::class, 'toggleStatus'])->name('customers.toggleStatus');
 Route::put('/suppliers/{supplier}/status', [SuppliersController::class, 'toggleStatus'])->name('suppliers.toggleStatus');
 Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus'])->name('products.toggleStatus');
-Route::get('/products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download-template');
-Route::post('/products/import', [ProductController::class, 'importFromExcel'])->name('products.import');
+
+Route::view('dashboard', 'dashboard')
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+// ===== RUTAS CON AUTENTICACIÓN =====
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -52,15 +68,14 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('categories', CategoryController::class)->names('categories');
     Route::resource('customers', CustomerController::class)->names('customers');
     Route::resource('suppliers', SuppliersController::class)->names('suppliers');
-    Route::resource('products', ProductController::class)->names('products');
+
+    // EXCLUIR show del resource de productos
+    Route::resource('products', ProductController::class)->except(['show'])->names('products');
+
     Route::resource('temp_purchase', TempPurchaseController::class)->names('temp_purchase');
-
-    //Route::get('temp_purchase', [TempPurchaseController::class, 'getOrCreateTempPurchase']);
     Route::resource('temp_purchases_detail', TempPurchaseDetailController::class)->names('temp_purchases_detail');
+
     Route::get('/temp_purchases_detail/{supplier}/show', [TempPurchaseDetailController::class, 'show']);
-
-    Route::post('/products/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->name('products.adjustStock');
-
     Route::post('/temp_purchases_detail/add', [TempPurchaseDetailController::class, 'addProduct']);
     Route::get('/temp_purchases_detail/totals/{temp_purchase_id}', [TempPurchaseDetailController::class, 'getTotals']);
     Route::get('/temp_purchases_detail/getDataProductTemp/{id}', [TempPurchaseDetailController::class, 'getTempDetail']);
@@ -70,14 +85,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/cancelPurchase/{temp_id}', [TempPurchaseDetailController::class, 'cancelPurchase']);
     Route::post('/temp_purchases_detail/getPurchaseOnWaitingList', [TempPurchaseDetailController::class, 'getPurchaseOnWaitingList']);
     Route::post('/temp_purchases_detail/processPurchase', [TempPurchaseDetailController::class, 'processPurchases']);
-
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
 
     Route::resource('temp_sale', TempSaleController::class)->names('temp_sale');
     Route::get('/temp_sale_detail/{customer}', [TempSaleDetailController::class, 'getDataCustomer']);
     Route::get('/temp_sale/totals/{temp_sale_id}', [TempSaleController::class, 'getTotals']);
-
     Route::get('/temp_sale_detail/autoCompleteCustomers/{query}', [TempSaleDetailController::class, 'autoCompleteCustomers']);
     Route::get('/temp_sale_detail/autoCompleteProducts/{query}', [TempSaleDetailController::class, 'autoCompleteProducts']);
     Route::post('/temp_sale_detail/addProductToSalesDetails', [TempSaleDetailController::class, 'addProductToSalesDetails']);
