@@ -6,6 +6,9 @@
 
         <div class="mt-3">
             <div class="card-body" style="min-height: 400px;">
+                <!-- Input hidden para controlar eliminación de imagen -->
+                <input type="hidden" name="remove_image" id="remove_image" value="0">
+                
                 <input type="file" 
                        id="product-images-input" 
                        class="filepond" 

@@ -191,6 +191,9 @@ export function resetProductForm() {
     $('#purchase_unit_id').val(1).trigger('change');
     $('#sale_unit_id').val(1).trigger('change');
     
+    // Resetear bandera de eliminación de imagen
+    $('#remove_image').val('0');
+    
     // Limpiar FilePond
     if (typeof window.resetProductFilePond === 'function') {
         window.resetProductFilePond();

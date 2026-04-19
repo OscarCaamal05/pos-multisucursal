@@ -500,7 +500,6 @@ function bindEditEvents() {
                                     resetProductFilePond();
                                 }
 
-                                console.log(response.data);
                             } else {
                                 showAlert('error', 'Error', response.message);
                             }
@@ -640,7 +639,6 @@ function updateProductStatus(productId, status) {
  * @param {number} productId - ID del producto
  */
 function updateStock(adjustmentType, adjustmentQuantity, productId) {
-    console.log(adjustmentQuantity, adjustmentType, productId);
     $.ajax({
         url: `/products/${productId}/adjust-stock`,
         type: 'POST',
@@ -774,7 +772,7 @@ export function calculateMarginFromSalePrice(unitPrice, salePrice) {
     const price = parseFloat(unitPrice) || 0;
     const sale = parseFloat(salePrice) || 0;
     // Valida que los precios sean números y mayores a cero
-    if (isNaN(price) || isNaN(sale) || price <= 0) {
+    if (isNaN(price) || isNaN(sale) || price <= 0 || sale <= 0) {
         return 0;
     }
 
@@ -921,16 +919,31 @@ function initializeProductFilePond() {
 
             // Configuración visual
             imagePreviewHeight: 450,
-            imageCropAspectRatio: '1:1',
-            imageResizeTargetWidth: 200,
-            imageResizeTargetHeight: 200,
-            stylePanelLayout: 'compact',
+            stylePanelLayout: 'integrated', // Muestra la imagen debajo del área de carga
+            stylePanelAspectRatio: '1:1',
+            styleLoadIndicatorPosition: 'center bottom',
+            styleProgressIndicatorPosition: 'right bottom',
+            styleButtonRemoveItemPosition: 'left bottom',
+            styleButtonProcessItemPosition: 'right bottom',
+
+            // Evento cuando se elimina un archivo
+            onremovefile: (error, file) => {
+                // Marcar que se debe eliminar la imagen del servidor
+                $('#remove_image').val('1');
+            },
+
+            // Evento cuando se agrega un archivo
+            onaddfile: (error, file) => {
+                if (!error) {
+                    // Resetear la bandera de eliminación cuando se agrega una nueva imagen
+                    $('#remove_image').val('0');
+                }
+            },
         });
 
         // Exportar a window después de crear la instancia
         window.productFilePond = productFilePond;
         
-        console.log('FilePond inicializado correctamente');
     } else {
         console.error('FilePond no está disponible');
     }
@@ -943,6 +956,8 @@ function resetProductFilePond() {
     if (productFilePond) {
         productFilePond.removeFiles();
     }
+    // Resetear bandera de eliminación
+    $('#remove_image').val('0');
 }
 
 // =========================================
@@ -953,14 +968,11 @@ function loadProductImage(imageUrl, imageName) {
         // Limpiar archivos existentes primero
         productFilePond.removeFiles();
         
+        // Resetear bandera de eliminación cuando se carga una imagen existente
+        $('#remove_image').val('0');
+        
         // Cargar la imagen desde URL
         productFilePond.addFile(imageUrl)
-            .then(file => {
-                console.log('Imagen cargada en FilePond:', file);
-            })
-            .catch(error => {
-                console.error('Error al cargar imagen en FilePond:', error);
-            });
     }
 }
 

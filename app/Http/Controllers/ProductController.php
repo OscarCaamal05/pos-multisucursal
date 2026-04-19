@@ -384,10 +384,32 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
-        $product = Product::findOrFail($id);
-        $product->delete();
+        try {
+            DB::beginTransaction();
 
-        return response()->json(['delete' => true]);
+            $product = Product::findOrFail($id);
+
+            // Eliminar imagen física si existe
+            if ($product->image && \Storage::disk('public')->exists($product->image)) {
+                \Storage::disk('public')->delete($product->image);
+            }
+
+            // Eliminar el producto (las relaciones se eliminarán en cascada si está configurado)
+            $product->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'delete' => true,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'delete' => false,
+                'message' => 'Error al eliminar el producto: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function toggleStatus(Request $request, Product $product)
