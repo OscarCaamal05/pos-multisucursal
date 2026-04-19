@@ -25,16 +25,35 @@ export function bindProductFormSubmit({
         const disabledFields = $(this).find(':input:disabled').removeAttr('disabled');
         const formObject = {};
 
-        // Para depurar los datos del formulario
-        /*$(this).serializeArray().forEach(({ name, value }) => {
-            formObject[name] = value;
-        });
-        console.log(formObject)*/
+        // =========================================
+        // CREAR FORMDATA PARA SOPORTAR ARCHIVOS
+        // =========================================
+        const formData = new FormData(this);
+
+        // Agregar el método PUT si es edición (Laravel no lo reconoce en FormData)
+        if (isEdit) {
+            formData.append('_method', 'PUT');
+        }
+
+        // Obtener la imagen de FilePond si existe
+        const productImage = getProductImage();
+        if (productImage) {
+            formData.append('image', productImage);
+        }
+
+        // Para depurar FormData
+        /*console.log('=== DEBUG FORMDATA ===');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ':', pair[1]);
+        }
+        console.log('======================');*/
 
         $.ajax({
             url: isEdit ? `/products/${productId}` : $form.data('storeUrl'),
-            method: isEdit ? 'PUT' : 'POST',
-            data: $form.serialize(),
+            method: 'POST', // Siempre POST con FormData
+            data: formData,
+            processData: false,  // NO procesar los datos
+            contentType: false,  // NO establecer contentType (automático)
             success: function (response) {
                 // Cierra el modal
                 $(modalSelector).modal('hide');
@@ -64,6 +83,30 @@ export function bindProductFormSubmit({
             }
         });
     });
+}
+
+// =========================================
+// FUNCIÓN: Obtener archivo de FilePond
+// =========================================
+function getProductImage() {
+    console.log('Intentando obtener imagen de FilePond...');
+    console.log('window.productFilePond:', window.productFilePond);
+    
+    // Acceder a la variable global
+    if (window.productFilePond) {
+        const files = window.productFilePond.getFiles();
+        console.log('Archivos en FilePond:', files);
+        
+        if (files.length > 0) {
+            console.log('Archivo encontrado:', files[0].file);
+            return files[0].file;
+        } else {
+            console.warn('No hay archivos en FilePond');
+        }
+    } else {
+        console.error('window.productFilePond no está definido');
+    }
+    return null;
 }
 
 // =========================================
@@ -147,6 +190,14 @@ export function resetProductForm() {
     $('#product_category_id').val(1).trigger('change');
     $('#purchase_unit_id').val(1).trigger('change');
     $('#sale_unit_id').val(1).trigger('change');
+    
+    // Resetear bandera de eliminación de imagen
+    $('#remove_image').val('0');
+    
+    // Limpiar FilePond
+    if (typeof window.resetProductFilePond === 'function') {
+        window.resetProductFilePond();
+    }
+    
     clearValidationErrors();
-    $('#productsModalLabel').text('Agregar Producto');
 }

@@ -1,4 +1,4 @@
-import { showAlert, clearValidationErrors, handleValidationError } from '../utils/alerts';
+import { showAlert, showConfirmationAlert, clearValidationErrors, handleValidationError } from '../utils/alerts';
 
 /**
  * Asigna el submit de un formulario de categoría con opciones personalizadas.
@@ -16,6 +16,7 @@ export function bindCategoryFormSubmit({
 } = {}) {
     $(formSelector).off('submit').on('submit', function (e) {
         e.preventDefault();
+        e.stopPropagation();
 
         const $form = $(this);
         const categoryId = $form.find('#categoryId').val();

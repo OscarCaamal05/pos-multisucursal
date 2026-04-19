@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class kardex extends Model
 {
+    protected $table = 'kardex';
+    
     protected $fillable = [
+        'branch_id',
         'product_id',
         'movement_type',
         'movement_reason',
