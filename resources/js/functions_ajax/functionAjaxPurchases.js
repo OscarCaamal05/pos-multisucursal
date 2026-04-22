@@ -956,6 +956,8 @@ function addProductToTempList() {
                 $('#modal-product-details').modal('hide');
                 $('#temp_id').val(0);
                 $('.factor').prop('disabled', false);
+                $('#auto_complete_product').val('');
+                loadTotals(response.temp_purchase_id || $('#temp_purchase_id').val());
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -979,6 +981,7 @@ function loadTotals(temp_purchase_id) {
         dataType: 'json',
         success: function (response) {
             showTotals(response);
+            console.log(response);
         }
     });
 }
@@ -1212,7 +1215,7 @@ function showProductDetailModal(data, isEdit) {
     $('.product-name').text(data.product_name || '');
     $('.barcode').text(data.barcode || '');
     $('.stock').text(data.stock || 0);
-
+    console.log(data);
     // Validar factor con fallback seguro
     const conversionFactor = parseFloat(data.conversion_factor || 1);
     $('.factor').text(conversionFactor).val(conversionFactor);
@@ -1542,7 +1545,7 @@ function loadListProducts() {
         ajax: '/products/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'product_name', name: 'product_name' },
+            { data: 'name', name: 'name' },
             {
                 data: 'barcode',
                 name: 'barcode',

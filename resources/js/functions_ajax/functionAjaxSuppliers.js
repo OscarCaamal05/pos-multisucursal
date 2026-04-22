@@ -60,8 +60,8 @@ function initializeDataTable() {
             { data: 'representative', name: 'representative' },
             { data: 'company_name', name: 'company_name' },
             {
-                data: 'rfc',
-                name: 'rfc',
+                data: 'tax_id',
+                name: 'tax_id',
                 orderable: false,
                 searchable: false
             },

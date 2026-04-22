@@ -387,9 +387,9 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="document-type">Documento</label>
                                 <select class="form-select" id="document-type">
-                                    @foreach ($documentTypes as $documents)
+                                    @foreach ($typesDocuments as $documents)
                                     <option value="{{ $documents->id }}">
-                                        {{ $documents->type_name }}
+                                        {{ $documents->name }}
                                     </option>
                                     @endforeach
                                 </select>
@@ -400,9 +400,9 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="voucher-type">Comprobante</label>
                                 <select class="form-select" id="voucher-type">
-                                    @foreach ($voucherTypes as $voucher)
+                                    @foreach ($typesReceipts as $voucher)
                                     <option value="{{ $voucher->id }}">
-                                        {{ $voucher->voucher_name }}
+                                        {{ $voucher->name }}
                                     </option>
                                     @endforeach
                                 </select>

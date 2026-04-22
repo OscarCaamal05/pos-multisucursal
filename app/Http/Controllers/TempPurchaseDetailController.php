@@ -24,7 +24,10 @@ class TempPurchaseDetailController extends Controller
     public function getDataProduct($productId)
     {
         try {
-            $product = Product::with('purchaseUnit')->find($productId);
+            // Obtener producto con detalles incluyendo el inventario de la sucursal
+            $product = Product::getWithDetails()
+                ->where('p.id', $productId)
+                ->first();
 
             if (!$product) {
                 return response()->json([
@@ -62,10 +65,10 @@ class TempPurchaseDetailController extends Controller
             // Producto no existe - devolver datos para nuevo registro
             $productData = [
                 'product_id' => $product->id,
-                'product_name' => $product->product_name,
+                'product_name' => $product->name,
                 'barcode' => $product->barcode,
-                'stock' => $product->stock,
-                'unit_name' => $product->purchaseUnit->name ?? '',
+                'stock' => $product->stock, // Ya viene desde branch_inventories.quantity
+                'unit_name' => $product->purchase_unit_name ?? '',
                 'conversion_factor' => $product->conversion_factor,
                 'purchase_price' => $product->purchase_price,
                 'sale_price_1' => $product->sale_price_1,
@@ -157,7 +160,7 @@ class TempPurchaseDetailController extends Controller
             $detail = TempPurchaseDetail::create([
                 'temp_purchase_id' => (int) $tempPurchaseId,
                 'product_id' => (int) $product->id,
-                'product_name' => $product->product_name,
+                'product_name' => $product->name,
                 'barcode' => $product->barcode,
                 'purchase_price' => (float) ($request->cost ?? 0),
                 'new_sale_price_1' => (float) ($request->new_price_sale_1 ?? $request->new_price_sale_1 ?? 0),
@@ -760,12 +763,12 @@ class TempPurchaseDetailController extends Controller
 
     public function autoCompleteProducts($query)
     {
-        $results = Product::where('product_name', 'LIKE', '%' . $query . '%')
+        $results = Product::where('name', 'LIKE', '%' . $query . '%')
             ->orWhere('barcode', 'LIKE', '%' . $query . '%')
             ->limit(10) // Limita la cantidad de resultados
             ->get([
                 'id',
-                'product_name',
+                'name',
                 'barcode',
             ]);
 
@@ -773,7 +776,7 @@ class TempPurchaseDetailController extends Controller
             'data' => $results->map(function ($product) {
                 return [
                     'id' => $product->id,
-                    'value' => $product->product_name . ' - ' . $product->barcode, // <== Este campo se debe llamar "value"
+                    'value' => $product->name . ' - ' . $product->barcode, // <== Este campo se debe llamar "value"
                 ];
             })
         ]);
@@ -799,8 +802,11 @@ class TempPurchaseDetailController extends Controller
             return response()->json(['error' => 'No encontrado'], 404);
         }
 
-        // Obtener el producto asociado
-        $product = Product::with('purchaseUnit')->find($detail->product_id);
+        // Obtener el producto asociado con inventario de sucursal
+        $product = Product::getWithDetails()
+            ->where('p.id', $detail->product_id)
+            ->first();
+        
         if (!$product) {
             \Log::error('Producto no encontrado:', ['product_id' => $detail->product_id]);
             return response()->json(['error' => 'Producto no encontrado'], 404);
@@ -809,10 +815,10 @@ class TempPurchaseDetailController extends Controller
         // Combinar datos
         $combinedData = [
             'product_id' => $product->id,
-            'product_name' => $product->product_name,
+            'product_name' => $product->name,
             'barcode' => $product->barcode,
-            'stock' => $product->stock,
-            'unit_name' => $product->purchaseUnit ? $product->purchaseUnit->name : null,
+            'stock' => $product->stock, // Ya viene desde branch_inventories.quantity
+            'unit_name' => $product->purchase_unit_name ?? null,
             'conversion_factor' => $product->conversion_factor,
 
             // Precios originales

@@ -9,7 +9,7 @@ class Supplier extends Model
     protected $fillable = [
         'representative',
         'company_name',
-        'rfc',
+        'tax_id',
         'address',
         'phone',
         'email',
