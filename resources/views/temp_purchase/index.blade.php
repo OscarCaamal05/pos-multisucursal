@@ -301,11 +301,8 @@
                                 <th scope="col">RFC</th>
                                 <th scope="col">Telefono</th>
                                 <th scope="col">Correo</th>
-                                <th scope="col">Direccion</th>
-                                <th scope="col">Credito disponible</th>
-                                <th scope="col">Credito</th>
-                                <th scope="col">Días</th>
-                                <th scope="col">Vencimiento</th>
+                                <th scope="col">Limite de Credito</th>
+                                <th scope="col">Credito Disponible</th>
                             </tr>
                         </thead>
 
@@ -325,12 +322,29 @@
 <!------------------------------------------------------------------------------------------------------------
     Modal para agregar un nuevo proveedor
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="supplierModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
+            </div>
+            <div class="modal-content border-0 mt-3">
+
+                <ul class="nav nav-tabs nav-tabs-custom nav-success p-2 pb-0 bg-light" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#generalDetails" role="tab"
+                            aria-selected="true">
+                            General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#additionalDetails" role="tab"
+                            aria-selected="false">
+                            Adicionales
+                        </a>
+                    </li>
+                </ul>
             </div>
             <form id="supplierForm"
                 data-store-url="{{ route('suppliers.store') }}"
@@ -338,7 +352,14 @@
                 @csrf
                 <input type="hidden" name="supplierId" id="supplierId" value="0">
                 <div class="modal-body">
-                    @include('suppliers.form-fields')
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="generalDetails" role="tabpanel">
+                            @include('suppliers.form-fields-general')
+                        </div>
+                        <div class="tab-pane" id="additionalDetails" role="tabpanel">
+                            @include('suppliers.form-fields-additional')
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar-supplier">Cancelar</button>
@@ -661,6 +682,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/autoComplete.min.js') }}"></script>
 <script src="{{ URL::asset('build/libs/cleave.js/cleave.min.js') }}"></script>
+<script src="{{ URL::asset('build/libs/flatpickr/l10n/es.js') }}"></script>
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 

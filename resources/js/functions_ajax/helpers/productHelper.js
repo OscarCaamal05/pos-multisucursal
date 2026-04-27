@@ -169,7 +169,7 @@ export function showProductsModal(data = null) {
             dataType: 'json'
         });
     } else {
-        $('#productsModalLabel').text('Agregar departamento');
+        $('#productsModalLabel').text('Agregar Producto');
         $('#productsModal').modal('show');
         return Promise.resolve(null);
     }

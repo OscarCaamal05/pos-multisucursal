@@ -37,7 +37,14 @@ class SuppliersController extends Controller
      */
     public function store(SaveSuppliersRequest $request)
     {
-        $supplier = Supplier::create($request->validated());
+        $data = $request->validated();
+        
+        // Para registro nuevo: credit_balance es 0, entonces credit_available = credit_limit_granted
+        $data['credit_balance'] = $data['credit_balance'] ?? 0;
+        $data['credit_limit_granted'] = $data['credit_limit_granted'] ?? 0;
+        $data['credit_available'] = $data['credit_limit_granted'] - $data['credit_balance'];
+
+        $supplier = Supplier::create($data);
 
         return response()->json(
             [
@@ -62,7 +69,16 @@ class SuppliersController extends Controller
      */
     public function edit(Supplier $supplier)
     {
-        //
+        $supplier_data = Supplier::where('id', $supplier->id)->first();
+
+        if (!$supplier_data) {
+            return response()->json(['status' => 'error', 'message' => 'Supplier not found'], 404);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $supplier_data
+        ]);
     }
 
     /**
@@ -70,8 +86,14 @@ class SuppliersController extends Controller
      */
     public function update(SaveSuppliersRequest $request, Supplier $supplier)
     {
+        $data = $request->validated();
+        
+        // Calcular credit_available basado en los valores actuales o nuevos
+        $creditBalance = $data['credit_balance'] ?? $supplier->credit_balance ?? 0;
+        $creditLimit = $data['credit_limit_granted'] ?? $supplier->credit_limit_granted ?? 0;
+        $data['credit_available'] = $creditLimit - $creditBalance;
 
-        $supplier->update($request->validated());
+        $supplier->update($data);
 
         return response()->json(['update' => true]);
     }

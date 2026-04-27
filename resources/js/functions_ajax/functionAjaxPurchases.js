@@ -73,7 +73,7 @@ $(document).ready(function () {
     });
 
     closeProductModal();
-    
+
     // ========================================================================================================
     // * FUNCIONES PARA EL FORM PARA AGREGAR DEPARTAMENTOS *
     // ========================================================================================================
@@ -735,11 +735,8 @@ function getSupplierData(supplierId) {
             $('.company_name').text(response.company_name || 'No hay dato');
             $('.email_supplier').text(response.email || 'No hay dato');
             $('.phone_supplier').text(phoneFormat || 'No hay dato');
-            $('.rfc_supplier').text(response.rfc || 'No hay dato');
-            $('.credit_supplier').text(response.credit_available || 'No hay dato');
-            $('.credit-limit-supplier').val(response.credit_limit || 0);
-            $('.credit-terms').val(response.credit_days || 0);
-            $('.credit-due-date').val(response.credit_due_date || 0);
+            $('.rfc_supplier').text(response.tax_id || 'No hay dato');
+            $('.credit_supplier').text(response.credit_available || 0.00);
             $('#supplier_id').val(supplierId || 0);
             // Guardar datos en localStorage para permanencia al recargar la pagina
             const supplier = {
@@ -748,11 +745,8 @@ function getSupplierData(supplierId) {
                 company_name: response.company_name,
                 email: response.email,
                 phone: phoneFormat,
-                rfc: response.rfc,
+                tax_id: response.tax_id,
                 credit_available: response.credit_available,
-                credit_limit: response.credit_limit,
-                credit_days: response.credit_days,
-                credit_due_date: response.credit_due_date,
             };
             localStorage.setItem("proveedorSeleccionado", JSON.stringify(supplier));
 
@@ -773,11 +767,8 @@ function initSupplier() {
         $('.company_name').text(data.company_name || 'No hay dato');
         $('.email_supplier').text(data.email || 'No hay dato');
         $('.phone_supplier').text(data.phone || 'No hay dato');
-        $('.rfc_supplier').text(data.rfc || 'No hay dato');
-        $('.credit_supplier').text(data.credit_available || 'No hay dato');
-        $('.credit-limit-supplier').val(data.credit_limit || 0);
-        $('.credit-terms').val(data.credit_days || 0);
-        $('.credit-due-date').val(data.credit_due_date || 0);
+        $('.rfc_supplier').text(data.tax_id || 'No hay dato');
+        $('.credit_supplier').text(data.credit_available || 0.00);
         $('#supplier_id').val(data.supplierId || 0);
     }
 }
@@ -981,7 +972,6 @@ function loadTotals(temp_purchase_id) {
         dataType: 'json',
         success: function (response) {
             showTotals(response);
-            console.log(response);
         }
     });
 }
@@ -1018,10 +1008,10 @@ function applyDiscount(discount_applied) {
 // FUNCIÓN: Para mostrar los totales de la compra en la vista
 // =========================================
 function showTotals(totals) {
-    $('.sub-total').text(`$${parseFloat(totals.sub_total).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-    $('.total-tax').text(`$${parseFloat(totals.total_siva).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-    $('.tax').text(`$${parseFloat(totals.tax).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-    $('.total').text(`$${parseFloat(totals.total).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    $('.sub-total').text(`$${parseFloat(totals.sub_total).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    $('.total-tax').text(`$${parseFloat(totals.total_siva).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    $('.tax').text(`$${parseFloat(totals.tax).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    $('.total').text(`$${parseFloat(totals.total).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     $('.discount-general').val((totals.discount || 0.00).toFixed(2));
 
 }
@@ -1445,8 +1435,8 @@ function loadListSuppliers() {
             { data: 'representative', name: 'representative' },
             { data: 'company_name', name: 'company_name' },
             {
-                data: 'rfc',
-                name: 'rfc',
+                data: 'tax_id',
+                name: 'tax_id',
                 orderable: false,
                 searchable: false
             },
@@ -1477,35 +1467,15 @@ function loadListSuppliers() {
                 orderable: false,
             },
             {
-                data: 'address',
-                name: 'address',
-                orderable: false,
-                searchable: false,
-                visible: false
+                data: 'credit_limit_granted',
+                name: 'credit_limit_granted',
+                orderable: false
             },
             {
-                data: null,
+                data: 'credit_available',
                 name: 'credit_available',
                 orderable: false,
                 searchable: false,
-                render: function (data, type, row) {
-                    return data.credit_available - data.credit;
-                }
-            },
-            {
-                data: 'credit',
-                name: 'credit',
-                visible: false
-            },
-            {
-                data: 'credit_due_date',
-                name: 'credit_due_date',
-                visible: false
-            },
-            {
-                data: 'credit_terms',
-                name: 'credit_terms',
-                visible: false
             },
 
         ],
@@ -1843,6 +1813,6 @@ const idiomaEspanol = {
     processing: "Procesando...",
     search: "Buscar:",
     lengthMenu: "Mostrar _MENU_ registros",
-    emptyTable: "No hay datos disponibles",
+    emptyTable: "Agregue productos para mostrar",
     info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
 };
