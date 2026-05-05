@@ -23,7 +23,6 @@ export function bindDepartmentFormSubmit({
         const isEdit = departmentId != 0;
 
         clearValidationErrors();
-        console.log('Enviando al bindDepartment');
         $.ajax({
             url: isEdit ? `/departments/${departmentId}` : $form.data('storeUrl'),
             method: isEdit ? 'PUT' : 'POST',

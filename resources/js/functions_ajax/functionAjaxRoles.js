@@ -279,7 +279,6 @@ function showAsignPermissionModal(id) {
         method: 'GET',
         dataType: 'json',
         success: function (response) {
-            console.log(response);
             $('#rolIdPermission').val(response.role.id);
             $('#assignPermissionLabel').text('Asignar permisos: ' + response.role.name);
             // Agregar opciones al <select>

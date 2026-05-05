@@ -6,6 +6,7 @@ import { bindCategoryFormSubmit, closeCategoryModal, selectCategoryAndDept } fro
 import { bindDepartmentFormSubmit, closeDepartmentModal, selectDepartmet } from './helpers/departmentHelper';
 import { bindProductFormSubmit, closeProductModal, showProductsModal } from './helpers/productHelper';
 import flatpickr from 'flatpickr';
+import { initFilePond, destroyFilePond, getFilePondFile, loadFilePondImage, clearFilePondFiles } from './utils/filePondManager';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -13,7 +14,9 @@ import flatpickr from 'flatpickr';
 
 let productsTable = null;
 let productFilePond = null;
-
+let filePondInitialized = false;
+let pendingProductImage = null;
+let imageLoadTimeout = null; // Para cancelar el setTimeout si se cierra el modal
 // =========================================
 // INICIALIZACIÓN PRINCIPAL
 // =========================================
@@ -27,7 +30,8 @@ $(document).ready(function () {
     bindEditEvents();
     bindDeleteEvents();
     bindToggleStatusEvents();
-    initializeProductFilePond();
+    //const inputElement = document.querySelector('#product-images-input');
+    //initializeProductFilePond(inputElement);
     // =========================================
     // Inicializando la funcion para crear o actualizar la categoria
     // =========================================
@@ -191,7 +195,66 @@ $(document).ready(function () {
 
     });
 
-})
+    // Inicializar FilePond cuando se muestra el tab de Imagen
+    $('a[href="#imageDetails"]').off('shown.bs.tab.filepond').on('shown.bs.tab.filepond', function () {
+        if (!$('#productsModal').hasClass('show')) {
+            return;
+        }
+
+        if (!filePondInitialized) {
+            const pond = initFilePond(
+                'product-main',
+                '#product-images-input',
+                {
+                    removeInputSelector: '#remove_image',
+                    onaddfile: (error, file) => {
+                        if (!error) {
+                            $('#remove_image').val('0');
+                        }
+                    }
+                }
+            );
+
+            if (pond) {
+                filePondInitialized = true;
+
+                if (pendingProductImage) {
+                    imageLoadTimeout = setTimeout(() => {
+                        if (!$('#productsModal').hasClass('show')) {
+                            return;
+                        }
+                        loadFilePondImage('product-main', pendingProductImage);
+                        pendingProductImage = null;
+                        imageLoadTimeout = null;
+                    }, 150);
+                }
+            }
+        }
+    });
+
+    // Destruir al cerrar el modal
+    $('#productsModal').off('hidden.bs.modal.filepond').on('hidden.bs.modal.filepond', function () {
+        if (imageLoadTimeout) {
+            clearTimeout(imageLoadTimeout);
+            imageLoadTimeout = null;
+        }
+
+        if (filePondInitialized) {
+            destroyFilePond('product-main');
+            filePondInitialized = false;
+        }
+
+        pendingProductImage = null;
+    });
+
+    // Si el modal se abre con el tab de imagen activo
+    $('#productsModal').off('shown.bs.modal.filepond').on('shown.bs.modal.filepond', function () {
+        if ($('#imageDetails').hasClass('active') && !filePondInitialized) {
+            $('a[href="#imageDetails"]').trigger('shown.bs.tab');
+        }
+    });
+
+});
 
 function initializeDataTable() {
     productsTable = $('#productsTable').DataTable({
@@ -426,7 +489,6 @@ function bindEditEvents() {
                     showProductsModal({ id: rowData.id })
                         .then((response) => {
                             if (response.status === 'success') {
-
                                 // Valores para inputs de texto en general
                                 $('#name').val(response.data.name);
                                 $('#barcode').val(response.data.barcode);
@@ -493,11 +555,30 @@ function bindEditEvents() {
                                 // =========================================
                                 // CARGAR IMAGEN EXISTENTE EN FILEPOND
                                 // =========================================
-                                if (response.data.image_url) {
-                                    loadProductImage(response.data.image_url, response.data.image_name);
+                                // =========================================
+                                // CARGAR IMAGEN EXISTENTE EN FILEPOND
+                                // =========================================
+                                // =========================================
+                                // CARGAR IMAGEN EXISTENTE EN FILEPOND
+                                // =========================================
+                                if (response.data.image_url || response.data.image) {
+                                    const imagePath = response.data.image_url || response.data.image;
+
+                                    // Guardar en variable JavaScript
+                                    pendingProductImage = imagePath;
+
+                                    // Si ya está inicializado (tab activo), cargar inmediatamente
+                                    if (filePondInitialized) {
+                                        loadFilePondImage('product-main', imagePath);
+                                        pendingProductImage = null; // Limpiar inmediatamente
+                                    }
                                 } else {
-                                    // Limpiar FilePond si no hay imagen
-                                    resetProductFilePond();
+                                    // Limpiar si no hay imagen
+                                    pendingProductImage = null;
+                                    if (filePondInitialized) {
+                                        clearFilePondFiles('product-main');
+                                    }
+                                    $('#remove_image').val('0');
                                 }
 
                             } else {
@@ -859,139 +940,3 @@ const idiomaEspanol = {
     emptyTable: "No hay datos disponibles",
     info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
 };
-
-// =========================================
-// FUNCIÓN: Inicializa FilePond para imagen de producto
-// =========================================
-function initializeProductFilePond() {
-    const inputElement = document.querySelector('#product-images-input');
-
-    if (!inputElement) {
-        console.warn('Input de FilePond no encontrado');
-        return;
-    }
-
-    // Registrar plugins de FilePond si no están registrados
-    if (typeof FilePond !== 'undefined') {
-        // Destruir instancia previa si existe
-        if (productFilePond) {
-            productFilePond.destroy();
-        }
-
-        // Registrar plugins
-        FilePond.registerPlugin(
-            FilePondPluginFileEncode,
-            FilePondPluginFileValidateSize,
-            FilePondPluginImageExifOrientation,
-            FilePondPluginImagePreview
-        );
-
-        // Crear instancia de FilePond
-        productFilePond = FilePond.create(inputElement, {
-            allowMultiple: false,  // Solo una imagen
-            maxFiles: 1,           // Máximo 1 archivo
-            maxFileSize: '3MB',
-            acceptedFileTypes: ['image/*'],
-            instantUpload: false,  // NO subir automáticamente
-
-            // Etiquetas en español
-            labelIdle: 'Arrastra y suelta tu imagen o <span class="filepond--label-action">Examinar</span>',
-            labelFileLoading: 'Cargando',
-            labelFileLoadError: 'Error al cargar',
-            labelFileProcessing: 'Procesando',
-            labelFileProcessingComplete: 'Procesado',
-            labelFileProcessingAborted: 'Procesamiento cancelado',
-            labelFileProcessingError: 'Error al procesar',
-            labelTapToCancel: 'toca para cancelar',
-            labelTapToRetry: 'toca para reintentar',
-            labelTapToUndo: 'toca para deshacer',
-            labelButtonRemoveItem: 'Eliminar',
-            labelButtonAbortItemLoad: 'Abortar',
-            labelButtonRetryItemLoad: 'Reintentar',
-            labelButtonAbortItemProcessing: 'Cancelar',
-            labelButtonUndoItemProcessing: 'Deshacer',
-            labelButtonRetryItemProcessing: 'Reintentar',
-            labelButtonProcessItem: 'Procesar',
-            labelFileTypeNotAllowed: 'Tipo de archivo no válido',
-            fileValidateTypeLabelExpectedTypes: 'Espera {allButLastType} o {lastType}',
-            labelMaxFileSizeExceeded: 'Archivo demasiado grande',
-            labelMaxFileSize: 'El tamaño máximo es {filesize}',
-
-            // Configuración visual
-            imagePreviewHeight: 450,
-            stylePanelLayout: 'integrated', // Muestra la imagen debajo del área de carga
-            stylePanelAspectRatio: '1:1',
-            styleLoadIndicatorPosition: 'center bottom',
-            styleProgressIndicatorPosition: 'right bottom',
-            styleButtonRemoveItemPosition: 'left bottom',
-            styleButtonProcessItemPosition: 'right bottom',
-
-            // Evento cuando se elimina un archivo
-            onremovefile: (error, file) => {
-                // Marcar que se debe eliminar la imagen del servidor
-                $('#remove_image').val('1');
-            },
-
-            // Evento cuando se agrega un archivo
-            onaddfile: (error, file) => {
-                if (!error) {
-                    // Resetear la bandera de eliminación cuando se agrega una nueva imagen
-                    $('#remove_image').val('0');
-                }
-            },
-        });
-
-        // Exportar a window después de crear la instancia
-        window.productFilePond = productFilePond;
-        
-    } else {
-        console.error('FilePond no está disponible');
-    }
-}
-
-// =========================================
-// FUNCIÓN: Limpiar FilePond
-// =========================================
-function resetProductFilePond() {
-    if (productFilePond) {
-        productFilePond.removeFiles();
-    }
-    // Resetear bandera de eliminación
-    $('#remove_image').val('0');
-}
-
-// =========================================
-// FUNCIÓN: Cargar imagen existente en FilePond (para edición)
-// =========================================
-function loadProductImage(imageUrl, imageName) {
-    if (productFilePond && imageUrl) {
-        // Limpiar archivos existentes primero
-        productFilePond.removeFiles();
-        
-        // Resetear bandera de eliminación cuando se carga una imagen existente
-        $('#remove_image').val('0');
-        
-        // Cargar la imagen desde URL
-        productFilePond.addFile(imageUrl)
-    }
-}
-
-// =========================================
-// FUNCIÓN: Obtener imagen de FilePond
-// =========================================
-window.getProductImage = function () {
-    if (productFilePond) {
-        const files = productFilePond.getFiles();
-        if (files.length > 0) {
-            return files[0].file;
-        }
-    }
-    return null;
-};
-
-// =========================================
-// EXPORTAR FUNCIONES GLOBALES
-// =========================================
-window.loadProductImage = loadProductImage;
-window.resetProductFilePond = resetProductFilePond;
-

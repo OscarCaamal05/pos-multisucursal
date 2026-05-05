@@ -5,6 +5,8 @@ import { initCreditTermsAndDate, closeSupplierModal, bindSupplierFormSubmit, for
 import { closeProductModal, bindProductFormSubmit } from './helpers/productHelper';
 import { closeDepartmentModal, bindDepartmentFormSubmit, selectDepartmet } from './helpers/departmentHelper';
 import { closeCategoryModal, bindCategoryFormSubmit, selectCategoryAndDept } from './helpers/categoryHelper';
+import { getDataTableLanguage } from './utils/datatableLanguage';
+import { initFilePond, destroyFilePond, getFilePondFile } from './utils/filePondManager';
 
 // Importar helpers de compras
 import {
@@ -18,6 +20,7 @@ import {
     bindEditProduct,
     renderActionsColumnProduct,
 } from './helpers/PurchasesHelper';
+import { get } from 'lodash';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -28,6 +31,9 @@ let selectedRowDetail = null;
 let productsTable = null;
 let purchasesTable = null;
 let suppliersTable = null;
+let filePondInitialized = false;
+let pendingProductImage = null;
+let imageLoadTimeout = null; // Para cancelar el setTimeout si se cierra el modal
 
 $(document).ready(function () {
     const input_date = $('#purchase-date');
@@ -51,6 +57,72 @@ $(document).ready(function () {
     addProductToTempList();
     bindDeleteEvents();
     validatePaymentMethod();
+    //initFilePond('product-purchase', '#product-images-input');
+
+    // Inicializar FilePond cuando se muestra el tab de Imagen
+    $('a[href="#imageDetails"]').off('shown.bs.tab.filepond').on('shown.bs.tab.filepond', function () {
+        // Verificar que el modal esté realmente visible
+        if (!$('#productsModal').hasClass('show')) {
+            return;
+        }
+        
+        if (!filePondInitialized) {
+            const pond = initFilePond(
+                'product-purchase',
+                '#product-images-input',
+                {
+                    removeInputSelector: '#remove_image',
+                    onaddfile: (error, file) => {
+                        if (!error) {
+                            $('#remove_image').val('0');
+                        }
+                    }
+                }
+            );
+
+            if (pond) {
+                filePondInitialized = true;
+
+                // CARGAR IMAGEN PENDIENTE SI EXISTE (usando variable)
+                if (pendingProductImage) {
+                    imageLoadTimeout = setTimeout(() => {
+                        // Verificar nuevamente que el modal sigue abierto
+                        if (!$('#productsModal').hasClass('show')) {
+                            return;
+                        }
+                        loadFilePondImage('product-purchase', pendingProductImage);
+                        pendingProductImage = null;
+                        imageLoadTimeout = null;
+                    }, 150);
+                }
+            }
+        }
+    });
+
+    // Destruir al cerrar el modal
+    $('#productsModal').off('hidden.bs.modal.filepond').on('hidden.bs.modal.filepond', function () {
+        // Cancelar el setTimeout si está pendiente
+        if (imageLoadTimeout) {
+            clearTimeout(imageLoadTimeout);
+            imageLoadTimeout = null;
+        }
+        
+        if (filePondInitialized) {
+            destroyFilePond('product-purchase');
+            filePondInitialized = false;
+        }
+        
+        // Limpiar imagen pendiente
+        pendingProductImage = null;
+    });
+
+    // Si el modal se abre con el tab de imagen activo
+    $('#productsModal').off('shown.bs.modal.filepond').on('shown.bs.modal.filepond', function () {
+        if ($('#imageDetails').hasClass('active') && !filePondInitialized) {
+            $('a[href="#imageDetails"]').trigger('shown.bs.tab');
+        }
+    });
+
     // =============================================================================
     // Funciones para el form para agregar proveedor
     // =============================================================================
@@ -120,7 +192,7 @@ $(document).ready(function () {
     makeNumericInput('#payment-card', { type: 'decimal', min: 1, decimals: 2 });
     makeNumericInput('#payment-cash', { type: 'decimal', min: 1, decimals: 2 });
     makeNumericInput('#payment-transfer', { type: 'decimal', min: 1, decimals: 2 });
-    makeNumericInput('#payment-voucher', { type: 'decimla', min: 1, decimals: 2 });
+    makeNumericInput('#payment-voucher', { type: 'decimal', min: 1, decimals: 2 });
     // =============================================================================
     // EVENTO: inicializa el autocompletado para proveedores
     // =============================================================================
@@ -598,7 +670,9 @@ function initTableDetails() {
         scrollY: 500,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "No hay productos agregados a la compra",
+        }),
         searching: false,
         ordering: false,
         paging: false,
@@ -654,7 +728,6 @@ function autoCompleteSuppliers() {
                     const response = await autoCompleteSupplier(query);
                     return response.data;
                 } catch (error) {
-                    console.error('Error en autocompletado de proveedores:', error);
                     return [];
                 }
             },
@@ -785,7 +858,6 @@ function autoCompleteProducts() {
                     const response = await autoCompleteProduct(query);
                     return response.data;
                 } catch (error) {
-                    console.error('Error en autocompletado de productos:', error);
                     return [];
                 }
             },
@@ -893,7 +965,6 @@ function getDataProductDetail(detailId, isEdit = true) {
             showProductDetailModal(data, isEdit);
         },
         error: function (xhr) {
-            console.error('Error al obtener datos:', xhr);
             showAlert('error', 'Error', 'No se pudieron obtener los datos del producto');
         }
     })
@@ -1186,7 +1257,9 @@ function listPendingPurchases() {
         scrollY: 400,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "No hay compras en espera"
+        }),
         searching: false,
         info: false,
         lengthChange: false,
@@ -1205,7 +1278,6 @@ function showProductDetailModal(data, isEdit) {
     $('.product-name').text(data.product_name || '');
     $('.barcode').text(data.barcode || '');
     $('.stock').text(data.stock || 0);
-    console.log(data);
     // Validar factor con fallback seguro
     const conversionFactor = parseFloat(data.conversion_factor || 1);
     $('.factor').text(conversionFactor).val(conversionFactor);
@@ -1482,7 +1554,10 @@ function loadListSuppliers() {
         scrollY: 450,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "Sin proveedores registrados",
+            zeroRecords: "No se encontraron proveedores"
+        }),
         searching: true,
         info: false,
         dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
@@ -1563,7 +1638,9 @@ function loadListProducts() {
         scrollY: 500,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "Sin productos disponibles"
+        }),
         searching: true,
         info: false,
         dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
@@ -1799,20 +1876,3 @@ function getValidSalePrice(data, index, hasTemp) {
 
     return salePrice;
 }
-// =========================================
-// CONSTANTES: Configuración idioma DataTable
-// =========================================
-const idiomaEspanol = {
-    loadingRecords: "Cargando...",
-    paginate: {
-        first: "Primero",
-        last: "Último",
-        next: "Siguiente",
-        previous: "Anterior"
-    },
-    processing: "Procesando...",
-    search: "Buscar:",
-    lengthMenu: "Mostrar _MENU_ registros",
-    emptyTable: "Agregue productos para mostrar",
-    info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
-};

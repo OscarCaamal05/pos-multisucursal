@@ -1,4 +1,5 @@
 import { showAlert, clearValidationErrors, handleValidationError, showConfirmationAlert } from '../utils/alerts';
+import { getFilePondFile, clearFilePondFiles } from '../utils/filePondManager';
 /**
  * Asigna el submit de un formulario de departamento con opciones personalizadas.
  *
@@ -35,18 +36,13 @@ export function bindProductFormSubmit({
             formData.append('_method', 'PUT');
         }
 
-        // Obtener la imagen de FilePond si existe
+        // Obtener la imagen de FilePond si existe (compatible con múltiples módulos)
         const productImage = getProductImage();
         if (productImage) {
             formData.append('image', productImage);
+        } else if ($('#remove_image').val() === '1') {
+            formData.append('remove_image', '1');
         }
-
-        // Para depurar FormData
-        /*console.log('=== DEBUG FORMDATA ===');
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ':', pair[1]);
-        }
-        console.log('======================');*/
 
         $.ajax({
             url: isEdit ? `/products/${productId}` : $form.data('storeUrl'),
@@ -89,23 +85,20 @@ export function bindProductFormSubmit({
 // FUNCIÓN: Obtener archivo de FilePond
 // =========================================
 function getProductImage() {
-    console.log('Intentando obtener imagen de FilePond...');
-    console.log('window.productFilePond:', window.productFilePond);
-    
-    // Acceder a la variable global
-    if (window.productFilePond) {
-        const files = window.productFilePond.getFiles();
-        console.log('Archivos en FilePond:', files);
-        
-        if (files.length > 0) {
-            console.log('Archivo encontrado:', files[0].file);
-            return files[0].file;
-        } else {
-            console.warn('No hay archivos en FilePond');
+    // Intentar obtener de las instancias conocidas
+    const instances = [
+        'product-purchase',  // Desde módulo de compras
+        'product-main',      // Desde módulo de productos
+        'product-sale'       // Desde módulo de ventas (futuro)
+    ];
+
+    for (const instanceId of instances) {
+        const file = getFilePondFile(instanceId);
+        if (file) {
+            return file;
         }
-    } else {
-        console.error('window.productFilePond no está definido');
     }
+
     return null;
 }
 
@@ -190,14 +183,15 @@ export function resetProductForm() {
     $('#product_category_id').val(1).trigger('change');
     $('#purchase_unit_id').val(1).trigger('change');
     $('#sale_unit_id').val(1).trigger('change');
-    
+
     // Resetear bandera de eliminación de imagen
     $('#remove_image').val('0');
     
-    // Limpiar FilePond
-    if (typeof window.resetProductFilePond === 'function') {
-        window.resetProductFilePond();
-    }
+    // Limpiar todas las instancias de FilePond
+    const instances = ['product-purchase', 'product-main', 'product-sale'];
+    instances.forEach(instanceId => {
+        clearFilePondFiles(instanceId);
+    });
     
     clearValidationErrors();
 }

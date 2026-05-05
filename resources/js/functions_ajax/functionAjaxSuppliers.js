@@ -207,7 +207,6 @@ function bindEditEvents() {
                 if (confirmed) {
                     showSupplierModal({ id: rowData.id })
                         .then((response) => {
-                            console.log(response);
                             if (response.status === 'success') {
                                 // Valores generales
                                 $('#representative').val(response.data.representative);
