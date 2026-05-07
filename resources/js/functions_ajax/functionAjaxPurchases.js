@@ -17,7 +17,6 @@ import {
     renderActionsColumn,
     validateSupplierSelected,
     formatPhoneNumber,
-    bindEditProduct,
     renderActionsColumnProduct,
 } from './helpers/PurchasesHelper';
 import { get } from 'lodash';
@@ -1627,13 +1626,6 @@ function loadListProducts() {
                 searchable: false,
                 className: 'text-center',
             },
-            {
-                data: 'id',
-                name: 'actions',
-                orderable: false,
-                searchable: false,
-                render: renderActionsColumnProduct,
-            },
         ],
         scrollY: 500,
         deferRender: true,
@@ -1647,7 +1639,7 @@ function loadListProducts() {
     });
 
     // Vincular eventos de edición ahora que la tabla está inicializada
-    bindEditProduct(productsTable);
+    // bindEditProduct(productsTable);
 
     // Agregar funcionalidad al input personalizado de búsqueda
     $('#searchArticleInput').off('keyup.articleSearch').on('keyup.articleSearch', function () {

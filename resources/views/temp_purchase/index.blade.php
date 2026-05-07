@@ -138,7 +138,6 @@
                                 <th scope="col" class="text-center">Precio venta</th>
                                 <th scope="col" class="text-center">Exist.</th>
                                 <th scope="col" class="text-center">Unit venta</th>
-                                <th scope="col" class="text-center"></th>
                             </tr>
                         </thead>
 

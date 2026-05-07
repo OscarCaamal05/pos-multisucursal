@@ -555,12 +555,6 @@ function bindEditEvents() {
                                 // =========================================
                                 // CARGAR IMAGEN EXISTENTE EN FILEPOND
                                 // =========================================
-                                // =========================================
-                                // CARGAR IMAGEN EXISTENTE EN FILEPOND
-                                // =========================================
-                                // =========================================
-                                // CARGAR IMAGEN EXISTENTE EN FILEPOND
-                                // =========================================
                                 if (response.data.image_url || response.data.image) {
                                     const imagePath = response.data.image_url || response.data.image;
 
