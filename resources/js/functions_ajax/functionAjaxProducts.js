@@ -167,13 +167,13 @@ $(document).ready(function () {
         validateInputChecked();
     });
 
-    flatpickr('#expiry-date', {
+    flatpickr('#expiry_date', {
         minDate: new Date().fp_incr(1), // Establece la fecha mínima como mañana
         dateFormat: 'Y-m-d', // Formato de fecha para enviar al backend
         altInput: true,
         altFormat: 'd M, Y', // Formato de fecha para mostrar al usuario
     });
-    $('#expiry-date').on('change', function () {
+    $('#expiry_date').on('change', function () {
         const selectedData = new Date($(this).val());
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Establece la hora a medianoche para comparar solo fechas
