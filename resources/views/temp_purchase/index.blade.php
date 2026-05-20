@@ -12,7 +12,7 @@
 @slot('li_1') Compras @endslot
 @slot('title') Realizar una compra @endslot
 @endcomponent
-@vite('resources/js/functions_ajax/functionAjaxPurchases.js')
+@vite('resources/js/functions_ajax/modules/purchases/purchaseMain.js')
 
 <!------------------------------------------------------------------------------------------------------------
     Modal para detalles de pago 
@@ -21,7 +21,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-end" id="modal-product-details-Label">Compra</h5>
+                <h5 class="modal-title text-end" id="modal-product-details-Label">Finalizar La Compra</h5>
             </div>
             <form id="paymentDetails">
                 @csrf
@@ -321,7 +321,7 @@
 <!------------------------------------------------------------------------------------------------------------
     Modal para agregar un nuevo proveedor
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -432,7 +432,7 @@
                         <div class="col-sm-2">
                             <div class="input-group align-items-center auto-select">
                                 <label class="form-label me-3" for="invoice_number">Folio</label>
-                                <input type="text" class="form-control" id="invoice_number">
+                                <input type="text" class="form-control" id="invoice-number">
                             </div>
                         </div><!--end col-->
                     </div><!--end row -->
@@ -577,7 +577,7 @@
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-bank-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="rfc_supplier">
+                            <span class="tax_id_supplier">
 
                             </span>
                         </span>

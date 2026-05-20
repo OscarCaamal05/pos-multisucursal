@@ -67,7 +67,7 @@
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Días de crédito: </label>
-                <input type="text" class="form-control text-end credit-terms auto-select" id="credit-days-limit" name="credit-days-limit" value="0" disabled readonly>
+                <input type="text" class="form-control text-end credit-terms auto-select" id="credit-days-limit" name="credit-days-limit" value="30" disabled readonly>
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Limite de crédito: </label>
@@ -75,7 +75,7 @@
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Crédito disponible: </label>
-                <input type="text" class="form-control text-end credit_available auto-select" id="credit_available" name="credit_available" value="0" disabled readonly>
+                <input type="text" class="form-control text-end credit-available auto-select" id="credit-available" name="credit-available" value="0" disabled readonly>
             </div>
         </div>
         <div class="row justify-content-center g-3">
@@ -85,7 +85,7 @@
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Días de crédito: </label>
-                <input type="text" class="form-control text-end credit-terms auto-select" id="credit-days" name="credit-days" value="0">
+                <input type="text" class="form-control text-end credit-terms auto-select" id="grace_period_days" name="grace_period_days" value="30">
             </div>
             <div class="col-sm-4">
                 <label for="colFormLabel" class="col-form-label">Fecha de Vencimiento: </label>

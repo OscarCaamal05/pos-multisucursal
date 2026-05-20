@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\TempPurchase;
 use App\Models\purchases;
 use App\Models\purchases_detail;
+use App\Models\BranchInventories;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -211,16 +212,16 @@ class TempPurchaseDetailController extends Controller
         if (!$supplier) {
             return response()->json(['error' => 'Proveedor no encontrado'], 404);
         }
-        $credit_available = round($supplier->credit_available - $supplier->credit, 2);
+        
         return response()->json([
             'company_name' => $supplier->company_name,
             'representative' => $supplier->representative,
             'phone' => $supplier->phone,
             'email' => $supplier->email,
-            'rfc' => $supplier->rfc,
-            'credit_available' => $credit_available,
-            'credit_limit' => $supplier->credit_available,
-            'credit_days' => $supplier->credit_terms,
+            'tax_id' => $supplier->tax_id,
+            'credit_available' => $supplier->credit_available,
+            'credit_limit' => $supplier->credit_limit_granted,
+            'credit_days' => $supplier->payment_days_granted,
             'credit_due_date' => $supplier->credit_due_date,
         ]);
     }
@@ -563,9 +564,10 @@ class TempPurchaseDetailController extends Controller
                 $supplier = Supplier::find($data['id_supplier']);
                 if ($supplier) {
                     // El monto total de la compra se suma al crédito del proveedor
-                    $supplier->credit += $totals['total'];
+                    $supplier->credit_balance += $totals['total'];
                     $supplier->credit_due_date = $dueDate;
-                    $supplier->credit_terms = $creditDays;  
+                    $supplier->payment_days_granted = $creditDays;  
+                    $supplier->credit_available = max(0, $supplier->credit_limit_granted - $totals['total']); // Actualiza el crédito disponible
                     $supplier->save();
                 }
             }
@@ -646,9 +648,9 @@ class TempPurchaseDetailController extends Controller
      */
     private function updateProductStock($productId, $quantity)
     {
-        $product = Product::find($productId);
+        $product = BranchInventories::where('product_id', $productId)->first();
         if ($product) {
-            $product->stock += $quantity;
+            $product->quantity += $quantity;
             $product->save();
         }
     }
@@ -660,6 +662,7 @@ class TempPurchaseDetailController extends Controller
     {
         DB::table('kardex')->insert([
             'product_id' => $productId,
+            'branch_id' => 1, // Cambiar cuando se implemente multi-sucursal
             'movement_type' => 'entrada',
             'movement_reason' => 'compra',
             'reference_type' => null,
@@ -682,8 +685,8 @@ class TempPurchaseDetailController extends Controller
      */
     private function getProductCurrentStock($productId, $addedQuantity)
     {
-        $product = Product::find($productId);
-        return $product ? ($product->stock + $addedQuantity) : $addedQuantity;
+        $product = BranchInventories::where('product_id', $productId)->first();
+        return $product ? ($product->quantity + $addedQuantity) : $addedQuantity;
     }
 
     /**
