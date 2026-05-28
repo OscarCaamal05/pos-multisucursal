@@ -332,13 +332,13 @@
 
                 <ul class="nav nav-tabs nav-tabs-custom nav-success p-2 pb-0 bg-light" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#generalDetails" role="tab"
+                        <a class="nav-link active" data-bs-toggle="tab" href="#supplierGeneralDetails" role="tab"
                             aria-selected="true">
                             General
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#additionalDetails" role="tab"
+                        <a class="nav-link" data-bs-toggle="tab" href="#supplierAdditionalDetails" role="tab"
                             aria-selected="false">
                             Adicionales
                         </a>
@@ -352,10 +352,10 @@
                 <input type="hidden" name="supplierId" id="supplierId" value="0">
                 <div class="modal-body">
                     <div class="tab-content">
-                        <div class="tab-pane active" id="generalDetails" role="tabpanel">
+                        <div class="tab-pane active" id="supplierGeneralDetails" role="tabpanel">
                             @include('suppliers.form-fields-general')
                         </div>
-                        <div class="tab-pane" id="additionalDetails" role="tabpanel">
+                        <div class="tab-pane" id="supplierAdditionalDetails" role="tabpanel">
                             @include('suppliers.form-fields-additional')
                         </div>
                     </div>

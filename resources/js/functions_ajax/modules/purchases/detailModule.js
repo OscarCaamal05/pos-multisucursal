@@ -499,7 +499,7 @@ export function cleanInputPurchase() {
     $('#auto_complete_product').val('');
 
     // Selects del documento
-    $('#document-type').val(1).trigger('change');
+    $('#document-type').val(2).trigger('change');
     $('#voucher-type').val(1).trigger('change');
     $('#invoice_number').val('');
 
