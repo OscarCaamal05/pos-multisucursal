@@ -97,7 +97,7 @@
         <div class="mb-3">
             <label class="form-label mb-0">Fecha de caducidad</label>
             <div class="mt-2">
-                <input type="text" id="expiry-date" name="expiry_date" class="form-control" data-provider="flatpickr" data-date-format="d M, Y">
+                <input type="text" id="expiry_date" name="expiry_date" class="form-control" data-provider="flatpickr" data-date-format="d M, Y">
             </div>
         </div>
     </div>
@@ -121,7 +121,7 @@
                 class="form-control text-end only-numbers @error('alert_days_before_expiration') is-invalid @enderror"
                 name="alert_days_before_expiration"
                 id="alert_days_before_expiration"
-                value="{{ old('alert_days_before_expiration') }}">
+                value="{{ old('alert_days_before_expiration', 30) }}">
             @error('alert_days_before_expiration')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror

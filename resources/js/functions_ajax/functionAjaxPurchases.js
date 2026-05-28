@@ -5,6 +5,8 @@ import { initCreditTermsAndDate, closeSupplierModal, bindSupplierFormSubmit, for
 import { closeProductModal, bindProductFormSubmit } from './helpers/productHelper';
 import { closeDepartmentModal, bindDepartmentFormSubmit, selectDepartmet } from './helpers/departmentHelper';
 import { closeCategoryModal, bindCategoryFormSubmit, selectCategoryAndDept } from './helpers/categoryHelper';
+import { getDataTableLanguage } from './utils/datatableLanguage';
+import { initFilePond, destroyFilePond, getFilePondFile } from './utils/filePondManager';
 
 // Importar helpers de compras
 import {
@@ -15,9 +17,9 @@ import {
     renderActionsColumn,
     validateSupplierSelected,
     formatPhoneNumber,
-    bindEditProduct,
     renderActionsColumnProduct,
 } from './helpers/PurchasesHelper';
+import { get } from 'lodash';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -28,6 +30,9 @@ let selectedRowDetail = null;
 let productsTable = null;
 let purchasesTable = null;
 let suppliersTable = null;
+let filePondInitialized = false;
+let pendingProductImage = null;
+let imageLoadTimeout = null; // Para cancelar el setTimeout si se cierra el modal
 
 $(document).ready(function () {
     const input_date = $('#purchase-date');
@@ -51,6 +56,72 @@ $(document).ready(function () {
     addProductToTempList();
     bindDeleteEvents();
     validatePaymentMethod();
+    //initFilePond('product-purchase', '#product-images-input');
+
+    // Inicializar FilePond cuando se muestra el tab de Imagen
+    $('a[href="#imageDetails"]').off('shown.bs.tab.filepond').on('shown.bs.tab.filepond', function () {
+        // Verificar que el modal esté realmente visible
+        if (!$('#productsModal').hasClass('show')) {
+            return;
+        }
+        
+        if (!filePondInitialized) {
+            const pond = initFilePond(
+                'product-purchase',
+                '#product-images-input',
+                {
+                    removeInputSelector: '#remove_image',
+                    onaddfile: (error, file) => {
+                        if (!error) {
+                            $('#remove_image').val('0');
+                        }
+                    }
+                }
+            );
+
+            if (pond) {
+                filePondInitialized = true;
+
+                // CARGAR IMAGEN PENDIENTE SI EXISTE (usando variable)
+                if (pendingProductImage) {
+                    imageLoadTimeout = setTimeout(() => {
+                        // Verificar nuevamente que el modal sigue abierto
+                        if (!$('#productsModal').hasClass('show')) {
+                            return;
+                        }
+                        loadFilePondImage('product-purchase', pendingProductImage);
+                        pendingProductImage = null;
+                        imageLoadTimeout = null;
+                    }, 150);
+                }
+            }
+        }
+    });
+
+    // Destruir al cerrar el modal
+    $('#productsModal').off('hidden.bs.modal.filepond').on('hidden.bs.modal.filepond', function () {
+        // Cancelar el setTimeout si está pendiente
+        if (imageLoadTimeout) {
+            clearTimeout(imageLoadTimeout);
+            imageLoadTimeout = null;
+        }
+        
+        if (filePondInitialized) {
+            destroyFilePond('product-purchase');
+            filePondInitialized = false;
+        }
+        
+        // Limpiar imagen pendiente
+        pendingProductImage = null;
+    });
+
+    // Si el modal se abre con el tab de imagen activo
+    $('#productsModal').off('shown.bs.modal.filepond').on('shown.bs.modal.filepond', function () {
+        if ($('#imageDetails').hasClass('active') && !filePondInitialized) {
+            $('a[href="#imageDetails"]').trigger('shown.bs.tab');
+        }
+    });
+
     // =============================================================================
     // Funciones para el form para agregar proveedor
     // =============================================================================
@@ -73,7 +144,7 @@ $(document).ready(function () {
     });
 
     closeProductModal();
-    
+
     // ========================================================================================================
     // * FUNCIONES PARA EL FORM PARA AGREGAR DEPARTAMENTOS *
     // ========================================================================================================
@@ -120,7 +191,7 @@ $(document).ready(function () {
     makeNumericInput('#payment-card', { type: 'decimal', min: 1, decimals: 2 });
     makeNumericInput('#payment-cash', { type: 'decimal', min: 1, decimals: 2 });
     makeNumericInput('#payment-transfer', { type: 'decimal', min: 1, decimals: 2 });
-    makeNumericInput('#payment-voucher', { type: 'decimla', min: 1, decimals: 2 });
+    makeNumericInput('#payment-voucher', { type: 'decimal', min: 1, decimals: 2 });
     // =============================================================================
     // EVENTO: inicializa el autocompletado para proveedores
     // =============================================================================
@@ -598,7 +669,9 @@ function initTableDetails() {
         scrollY: 500,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "No hay productos agregados a la compra",
+        }),
         searching: false,
         ordering: false,
         paging: false,
@@ -654,7 +727,6 @@ function autoCompleteSuppliers() {
                     const response = await autoCompleteSupplier(query);
                     return response.data;
                 } catch (error) {
-                    console.error('Error en autocompletado de proveedores:', error);
                     return [];
                 }
             },
@@ -735,11 +807,8 @@ function getSupplierData(supplierId) {
             $('.company_name').text(response.company_name || 'No hay dato');
             $('.email_supplier').text(response.email || 'No hay dato');
             $('.phone_supplier').text(phoneFormat || 'No hay dato');
-            $('.rfc_supplier').text(response.rfc || 'No hay dato');
-            $('.credit_supplier').text(response.credit_available || 'No hay dato');
-            $('.credit-limit-supplier').val(response.credit_limit || 0);
-            $('.credit-terms').val(response.credit_days || 0);
-            $('.credit-due-date').val(response.credit_due_date || 0);
+            $('.rfc_supplier').text(response.tax_id || 'No hay dato');
+            $('.credit_supplier').text(response.credit_available || 0.00);
             $('#supplier_id').val(supplierId || 0);
             // Guardar datos en localStorage para permanencia al recargar la pagina
             const supplier = {
@@ -748,11 +817,8 @@ function getSupplierData(supplierId) {
                 company_name: response.company_name,
                 email: response.email,
                 phone: phoneFormat,
-                rfc: response.rfc,
+                tax_id: response.tax_id,
                 credit_available: response.credit_available,
-                credit_limit: response.credit_limit,
-                credit_days: response.credit_days,
-                credit_due_date: response.credit_due_date,
             };
             localStorage.setItem("proveedorSeleccionado", JSON.stringify(supplier));
 
@@ -773,11 +839,8 @@ function initSupplier() {
         $('.company_name').text(data.company_name || 'No hay dato');
         $('.email_supplier').text(data.email || 'No hay dato');
         $('.phone_supplier').text(data.phone || 'No hay dato');
-        $('.rfc_supplier').text(data.rfc || 'No hay dato');
-        $('.credit_supplier').text(data.credit_available || 'No hay dato');
-        $('.credit-limit-supplier').val(data.credit_limit || 0);
-        $('.credit-terms').val(data.credit_days || 0);
-        $('.credit-due-date').val(data.credit_due_date || 0);
+        $('.rfc_supplier').text(data.tax_id || 'No hay dato');
+        $('.credit_supplier').text(data.credit_available || 0.00);
         $('#supplier_id').val(data.supplierId || 0);
     }
 }
@@ -794,7 +857,6 @@ function autoCompleteProducts() {
                     const response = await autoCompleteProduct(query);
                     return response.data;
                 } catch (error) {
-                    console.error('Error en autocompletado de productos:', error);
                     return [];
                 }
             },
@@ -902,7 +964,6 @@ function getDataProductDetail(detailId, isEdit = true) {
             showProductDetailModal(data, isEdit);
         },
         error: function (xhr) {
-            console.error('Error al obtener datos:', xhr);
             showAlert('error', 'Error', 'No se pudieron obtener los datos del producto');
         }
     })
@@ -956,6 +1017,8 @@ function addProductToTempList() {
                 $('#modal-product-details').modal('hide');
                 $('#temp_id').val(0);
                 $('.factor').prop('disabled', false);
+                $('#auto_complete_product').val('');
+                loadTotals(response.temp_purchase_id || $('#temp_purchase_id').val());
             },
             error: function (xhr) {
                 handleValidationError(xhr);
@@ -1015,10 +1078,10 @@ function applyDiscount(discount_applied) {
 // FUNCIÓN: Para mostrar los totales de la compra en la vista
 // =========================================
 function showTotals(totals) {
-    $('.sub-total').text(`$${parseFloat(totals.sub_total).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-    $('.total-tax').text(`$${parseFloat(totals.total_siva).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-    $('.tax').text(`$${parseFloat(totals.tax).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-    $('.total').text(`$${parseFloat(totals.total).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    $('.sub-total').text(`$${parseFloat(totals.sub_total).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    $('.total-tax').text(`$${parseFloat(totals.total_siva).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    $('.tax').text(`$${parseFloat(totals.tax).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    $('.total').text(`$${parseFloat(totals.total).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     $('.discount-general').val((totals.discount || 0.00).toFixed(2));
 
 }
@@ -1193,7 +1256,9 @@ function listPendingPurchases() {
         scrollY: 400,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "No hay compras en espera"
+        }),
         searching: false,
         info: false,
         lengthChange: false,
@@ -1212,7 +1277,6 @@ function showProductDetailModal(data, isEdit) {
     $('.product-name').text(data.product_name || '');
     $('.barcode').text(data.barcode || '');
     $('.stock').text(data.stock || 0);
-
     // Validar factor con fallback seguro
     const conversionFactor = parseFloat(data.conversion_factor || 1);
     $('.factor').text(conversionFactor).val(conversionFactor);
@@ -1442,8 +1506,8 @@ function loadListSuppliers() {
             { data: 'representative', name: 'representative' },
             { data: 'company_name', name: 'company_name' },
             {
-                data: 'rfc',
-                name: 'rfc',
+                data: 'tax_id',
+                name: 'tax_id',
                 orderable: false,
                 searchable: false
             },
@@ -1474,42 +1538,25 @@ function loadListSuppliers() {
                 orderable: false,
             },
             {
-                data: 'address',
-                name: 'address',
-                orderable: false,
-                searchable: false,
-                visible: false
+                data: 'credit_limit_granted',
+                name: 'credit_limit_granted',
+                orderable: false
             },
             {
-                data: null,
+                data: 'credit_available',
                 name: 'credit_available',
                 orderable: false,
                 searchable: false,
-                render: function (data, type, row) {
-                    return data.credit_available - data.credit;
-                }
-            },
-            {
-                data: 'credit',
-                name: 'credit',
-                visible: false
-            },
-            {
-                data: 'credit_due_date',
-                name: 'credit_due_date',
-                visible: false
-            },
-            {
-                data: 'credit_terms',
-                name: 'credit_terms',
-                visible: false
             },
 
         ],
         scrollY: 450,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "Sin proveedores registrados",
+            zeroRecords: "No se encontraron proveedores"
+        }),
         searching: true,
         info: false,
         dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
@@ -1542,7 +1589,7 @@ function loadListProducts() {
         ajax: '/products/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'product_name', name: 'product_name' },
+            { data: 'name', name: 'name' },
             {
                 data: 'barcode',
                 name: 'barcode',
@@ -1579,25 +1626,20 @@ function loadListProducts() {
                 searchable: false,
                 className: 'text-center',
             },
-            {
-                data: 'id',
-                name: 'actions',
-                orderable: false,
-                searchable: false,
-                render: renderActionsColumnProduct,
-            },
         ],
         scrollY: 500,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "Sin productos disponibles"
+        }),
         searching: true,
         info: false,
         dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
     });
 
     // Vincular eventos de edición ahora que la tabla está inicializada
-    bindEditProduct(productsTable);
+    // bindEditProduct(productsTable);
 
     // Agregar funcionalidad al input personalizado de búsqueda
     $('#searchArticleInput').off('keyup.articleSearch').on('keyup.articleSearch', function () {
@@ -1826,20 +1868,3 @@ function getValidSalePrice(data, index, hasTemp) {
 
     return salePrice;
 }
-// =========================================
-// CONSTANTES: Configuración idioma DataTable
-// =========================================
-const idiomaEspanol = {
-    loadingRecords: "Cargando...",
-    paginate: {
-        first: "Primero",
-        last: "Último",
-        next: "Siguiente",
-        previous: "Anterior"
-    },
-    processing: "Procesando...",
-    search: "Buscar:",
-    lengthMenu: "Mostrar _MENU_ registros",
-    emptyTable: "No hay datos disponibles",
-    info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
-};

@@ -11,6 +11,7 @@
                 
                 <input type="file" 
                        id="product-images-input" 
+                       data-pending-image=""
                        class="filepond" 
                        name="image"
                        data-max-file-size="3MB"

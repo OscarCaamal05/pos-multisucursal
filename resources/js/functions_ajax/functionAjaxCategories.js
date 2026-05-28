@@ -28,7 +28,6 @@ $(document).ready(function () {
     bindDepartmentFormSubmit({
         onSuccess: (response) => {
             //Auto completa el select del modal de categorias cuando el registro se crea desde la vista de categoria
-            console.log(response);
             if (response.status === 'create' && response.department) {
                 selectDepartmet(response.department, '#department_id');
             }

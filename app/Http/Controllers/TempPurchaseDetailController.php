@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\TempPurchase;
 use App\Models\purchases;
 use App\Models\purchases_detail;
+use App\Models\BranchInventories;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -24,7 +25,10 @@ class TempPurchaseDetailController extends Controller
     public function getDataProduct($productId)
     {
         try {
-            $product = Product::with('purchaseUnit')->find($productId);
+            // Obtener producto con detalles incluyendo el inventario de la sucursal
+            $product = Product::getWithDetails()
+                ->where('p.id', $productId)
+                ->first();
 
             if (!$product) {
                 return response()->json([
@@ -62,10 +66,10 @@ class TempPurchaseDetailController extends Controller
             // Producto no existe - devolver datos para nuevo registro
             $productData = [
                 'product_id' => $product->id,
-                'product_name' => $product->product_name,
+                'product_name' => $product->name,
                 'barcode' => $product->barcode,
-                'stock' => $product->stock,
-                'unit_name' => $product->purchaseUnit->name ?? '',
+                'stock' => $product->stock, // Ya viene desde branch_inventories.quantity
+                'unit_name' => $product->purchase_unit_name ?? '',
                 'conversion_factor' => $product->conversion_factor,
                 'purchase_price' => $product->purchase_price,
                 'sale_price_1' => $product->sale_price_1,
@@ -157,7 +161,7 @@ class TempPurchaseDetailController extends Controller
             $detail = TempPurchaseDetail::create([
                 'temp_purchase_id' => (int) $tempPurchaseId,
                 'product_id' => (int) $product->id,
-                'product_name' => $product->product_name,
+                'product_name' => $product->name,
                 'barcode' => $product->barcode,
                 'purchase_price' => (float) ($request->cost ?? 0),
                 'new_sale_price_1' => (float) ($request->new_price_sale_1 ?? $request->new_price_sale_1 ?? 0),
@@ -208,16 +212,16 @@ class TempPurchaseDetailController extends Controller
         if (!$supplier) {
             return response()->json(['error' => 'Proveedor no encontrado'], 404);
         }
-        $credit_available = round($supplier->credit_available - $supplier->credit, 2);
+        
         return response()->json([
             'company_name' => $supplier->company_name,
             'representative' => $supplier->representative,
             'phone' => $supplier->phone,
             'email' => $supplier->email,
-            'rfc' => $supplier->rfc,
-            'credit_available' => $credit_available,
-            'credit_limit' => $supplier->credit_available,
-            'credit_days' => $supplier->credit_terms,
+            'tax_id' => $supplier->tax_id,
+            'credit_available' => $supplier->credit_available,
+            'credit_limit' => $supplier->credit_limit_granted,
+            'credit_days' => $supplier->payment_days_granted,
             'credit_due_date' => $supplier->credit_due_date,
         ]);
     }
@@ -560,9 +564,10 @@ class TempPurchaseDetailController extends Controller
                 $supplier = Supplier::find($data['id_supplier']);
                 if ($supplier) {
                     // El monto total de la compra se suma al crédito del proveedor
-                    $supplier->credit += $totals['total'];
+                    $supplier->credit_balance += $totals['total'];
                     $supplier->credit_due_date = $dueDate;
-                    $supplier->credit_terms = $creditDays;  
+                    $supplier->payment_days_granted = $creditDays;  
+                    $supplier->credit_available = max(0, $supplier->credit_limit_granted - $totals['total']); // Actualiza el crédito disponible
                     $supplier->save();
                 }
             }
@@ -643,9 +648,9 @@ class TempPurchaseDetailController extends Controller
      */
     private function updateProductStock($productId, $quantity)
     {
-        $product = Product::find($productId);
+        $product = BranchInventories::where('product_id', $productId)->first();
         if ($product) {
-            $product->stock += $quantity;
+            $product->quantity += $quantity;
             $product->save();
         }
     }
@@ -657,6 +662,7 @@ class TempPurchaseDetailController extends Controller
     {
         DB::table('kardex')->insert([
             'product_id' => $productId,
+            'branch_id' => 1, // Cambiar cuando se implemente multi-sucursal
             'movement_type' => 'entrada',
             'movement_reason' => 'compra',
             'reference_type' => null,
@@ -679,8 +685,8 @@ class TempPurchaseDetailController extends Controller
      */
     private function getProductCurrentStock($productId, $addedQuantity)
     {
-        $product = Product::find($productId);
-        return $product ? ($product->stock + $addedQuantity) : $addedQuantity;
+        $product = BranchInventories::where('product_id', $productId)->first();
+        return $product ? ($product->quantity + $addedQuantity) : $addedQuantity;
     }
 
     /**
@@ -760,12 +766,12 @@ class TempPurchaseDetailController extends Controller
 
     public function autoCompleteProducts($query)
     {
-        $results = Product::where('product_name', 'LIKE', '%' . $query . '%')
+        $results = Product::where('name', 'LIKE', '%' . $query . '%')
             ->orWhere('barcode', 'LIKE', '%' . $query . '%')
             ->limit(10) // Limita la cantidad de resultados
             ->get([
                 'id',
-                'product_name',
+                'name',
                 'barcode',
             ]);
 
@@ -773,7 +779,7 @@ class TempPurchaseDetailController extends Controller
             'data' => $results->map(function ($product) {
                 return [
                     'id' => $product->id,
-                    'value' => $product->product_name . ' - ' . $product->barcode, // <== Este campo se debe llamar "value"
+                    'value' => $product->name . ' - ' . $product->barcode, // <== Este campo se debe llamar "value"
                 ];
             })
         ]);
@@ -799,8 +805,11 @@ class TempPurchaseDetailController extends Controller
             return response()->json(['error' => 'No encontrado'], 404);
         }
 
-        // Obtener el producto asociado
-        $product = Product::with('purchaseUnit')->find($detail->product_id);
+        // Obtener el producto asociado con inventario de sucursal
+        $product = Product::getWithDetails()
+            ->where('p.id', $detail->product_id)
+            ->first();
+        
         if (!$product) {
             \Log::error('Producto no encontrado:', ['product_id' => $detail->product_id]);
             return response()->json(['error' => 'Producto no encontrado'], 404);
@@ -809,10 +818,10 @@ class TempPurchaseDetailController extends Controller
         // Combinar datos
         $combinedData = [
             'product_id' => $product->id,
-            'product_name' => $product->product_name,
+            'product_name' => $product->name,
             'barcode' => $product->barcode,
-            'stock' => $product->stock,
-            'unit_name' => $product->purchaseUnit ? $product->purchaseUnit->name : null,
+            'stock' => $product->stock, // Ya viene desde branch_inventories.quantity
+            'unit_name' => $product->purchase_unit_name ?? null,
             'conversion_factor' => $product->conversion_factor,
 
             // Precios originales

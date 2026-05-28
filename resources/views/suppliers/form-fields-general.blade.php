@@ -41,15 +41,15 @@
     <div class="col-6">
 
         <div class="mb-3">
-            <label for="rfc">RFC</label>
+            <label for="tax_id">RFC</label>
             <div class="form-icon">
                 <input type="text"
-                    class="form-control form-control-icon @error('rfc') is-invalid @enderror"
-                    name="rfc"
-                    id="rfc"
-                    value="{{ old('rfc') }}">
+                    class="form-control form-control-icon @error('tax_id') is-invalid @enderror"
+                    name="tax_id"
+                    id="tax_id"
+                    value="{{ old('tax_id') }}">
                 <i class="ri-auction-line"></i>
-                @error('rfc')
+                @error('tax_id')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -118,15 +118,15 @@
     <div class="col-5">
 
         <div class="mb-3">
-            <label for="credit_available">Credito</label>
+            <label for="credit_limit_granted">Credito</label>
             <div class="form-icon">
                 <input type="text"
-                    class="form-control form-control-icon @error('credit_available') is-invalid @enderror"
-                    name="credit_available"
-                    id="credit_available"
-                    value="{{ old('credit_available') }}">
+                    class="form-control form-control-icon @error('credit_limit_granted') is-invalid @enderror"
+                    name="credit_limit_granted"
+                    id="credit_limit_granted"
+                    value="{{ old('credit_limit_granted') }}">
                 <i class="ri-coins-line"></i>
-                @error('credit_available')
+                @error('credit_limit_granted')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -137,13 +137,13 @@
     <div class="col-2">
 
         <div class="mb-3">
-            <label for="credit_terms">Días</label>
+            <label for="payment_days_granted">Días</label>
             <input type="text"
-                class="form-control @error('credit_terms') is-invalid @enderror"
-                name="credit_terms"
-                id="credit_terms"
-                value="{{ old('credit_terms', '30') }}">
-            @error('credit_terms')
+                class="form-control @error('payment_days_granted') is-invalid @enderror"
+                name="payment_days_granted"
+                id="payment_days_granted"
+                value="{{ old('payment_days_granted', '30') }}">
+            @error('payment_days_granted')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
 

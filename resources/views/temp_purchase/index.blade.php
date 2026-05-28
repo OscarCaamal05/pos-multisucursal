@@ -3,13 +3,16 @@
 @section('css')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" type="text/css" />
 <link href="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/css/autoComplete.css') }}" rel="stylesheet">
+<link href="{{ URL::asset('build/libs/dropzone/dropzone.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ URL::asset('build/libs/filepond/filepond.min.css') }}" type="text/css" />
+<link rel="stylesheet" href="{{ URL::asset('build/libs/filepond-plugin-image-preview/filepond-plugin-image-preview.min.css') }}">
 @endsection
 @section('content')
 @component('components.breadcrumb')
 @slot('li_1') Compras @endslot
 @slot('title') Realizar una compra @endslot
 @endcomponent
-@vite('resources/js/functions_ajax/functionAjaxPurchases.js')
+@vite('resources/js/functions_ajax/modules/purchases/purchaseMain.js')
 
 <!------------------------------------------------------------------------------------------------------------
     Modal para detalles de pago 
@@ -18,7 +21,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-end" id="modal-product-details-Label">Compra</h5>
+                <h5 class="modal-title text-end" id="modal-product-details-Label">Finalizar La Compra</h5>
             </div>
             <form id="paymentDetails">
                 @csrf
@@ -135,7 +138,6 @@
                                 <th scope="col" class="text-center">Precio venta</th>
                                 <th scope="col" class="text-center">Exist.</th>
                                 <th scope="col" class="text-center">Unit venta</th>
-                                <th scope="col" class="text-center"></th>
                             </tr>
                         </thead>
 
@@ -155,56 +157,53 @@
 <!------------------------------------------------------------------------------------------------------------
     Modal para agregar articulos al almacén
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="productsModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+<div class="modal fade zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="false" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="productsModalLabel">Agregar Producto</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-product"></button>
             </div>
+            <div class="modal-content border-0 mt-3">
+
+                <ul class="nav nav-tabs nav-tabs-custom nav-success p-2 pb-0 bg-light" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#generalDetails" role="tab"
+                            aria-selected="true">
+                            General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#additionalDetails" role="tab"
+                            aria-selected="false">
+                            Adicionales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#imageDetails" role="tab"
+                            aria-selected="false">
+                            Imagen
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <form id="productForm"
                 data-store-url="{{ route('products.store') }}"
                 data-update-url-base="/products/">
+                @csrf
+                <input type="hidden" name="productId" id="productId" value="0">
                 <div class="modal-body">
-                    @csrf
-                    <input type="hidden" name="productId" id="productId" value="0">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="nav nav-pills flex-column nav-pills-tab custom-verti-nav-pills text-center" role="tablist" aria-orientation="vertical">
-                                <a class="nav-link active show" id="custom-v-pills-general-tab" data-bs-toggle="pill" href="#custom-v-pills-general" role="tab" aria-controls="custom-v-pills-general"
-                                    aria-selected="true">
-                                    <i class="ri-home-4-line d-block fs-20 mb-1"></i>
-                                    General</a>
-                                <a class="nav-link" id="custom-v-pills-additional-tab" data-bs-toggle="pill" href="#custom-v-pills-additional" role="tab" aria-controls="custom-v-pills-additional"
-                                    aria-selected="false">
-                                    <i class="ri-file-add-line  d-block fs-20 mb-1"></i>
-                                    Adicional</a>
-                                <a class="nav-link" id="custom-v-pills-price-suppliers-tab" data-bs-toggle="pill" href="#custom-v-pills-price-suppliers" role="tab" aria-controls="custom-v-pills-price-suppliers"
-                                    aria-selected="false">
-                                    <i class="ri-user-2-line d-block fs-20 mb-1"></i>
-                                    Precio Por Proveedor</a>
-                                <a class="nav-link" id="custom-v-pills-image-tab" data-bs-toggle="pill" href="#custom-v-pills-image" role="tab" aria-controls="custom-v-pills-image"
-                                    aria-selected="false">
-                                    <i class="ri-image-add-fill d-block fs-20 mb-1"></i>
-                                    Imagen</a>
-                            </div>
-                        </div> <!-- end col-->
-                        <div class="col-lg-10">
-                            <div class="tab-content text-muted mt-3 mt-lg-0">
-                                <div class="tab-pane fade active show" id="custom-v-pills-general" role="tabpanel" aria-labelledby="custom-v-pills-general-tab">
-                                    @include('products.form-fields-general')
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-additional" role="tabpanel" aria-labelledby="custom-v-pills-additional-tab">
-                                    @include('products.form-fields-additional')
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-price-suppliers" role="tabpanel" aria-labelledby="custom-v-pills-price-suppliers-tab">
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-image" role="tabpanel" aria-labelledby="custom-v-pills-image-tab">
-                                    @include('products.form-fields-image')
-                                </div><!--end tab-pane-->
-                            </div>
-                        </div> <!-- end col-->
-                    </div> <!-- end row-->
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="generalDetails" role="tabpanel">
+                            @include('products.form-fields-general')
+                        </div>
+                        <div class="tab-pane" id="additionalDetails" role="tabpanel">
+                            @include('products.form-fields-additional')
+                        </div>
+                        <div class="tab-pane" id="imageDetails" role="tabpanel">
+                            @include('products.form-fields-image')
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar-product">Cancelar</button>
@@ -301,11 +300,8 @@
                                 <th scope="col">RFC</th>
                                 <th scope="col">Telefono</th>
                                 <th scope="col">Correo</th>
-                                <th scope="col">Direccion</th>
-                                <th scope="col">Credito disponible</th>
-                                <th scope="col">Credito</th>
-                                <th scope="col">Días</th>
-                                <th scope="col">Vencimiento</th>
+                                <th scope="col">Limite de Credito</th>
+                                <th scope="col">Credito Disponible</th>
                             </tr>
                         </thead>
 
@@ -325,12 +321,29 @@
 <!------------------------------------------------------------------------------------------------------------
     Modal para agregar un nuevo proveedor
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="supplierModal" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+<div class="modal zoomIn" id="supplierModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="supplierModalLabel">Agregar Proveedores</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-supplier"></button>
+            </div>
+            <div class="modal-content border-0 mt-3">
+
+                <ul class="nav nav-tabs nav-tabs-custom nav-success p-2 pb-0 bg-light" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#supplierGeneralDetails" role="tab"
+                            aria-selected="true">
+                            General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#supplierAdditionalDetails" role="tab"
+                            aria-selected="false">
+                            Adicionales
+                        </a>
+                    </li>
+                </ul>
             </div>
             <form id="supplierForm"
                 data-store-url="{{ route('suppliers.store') }}"
@@ -338,7 +351,14 @@
                 @csrf
                 <input type="hidden" name="supplierId" id="supplierId" value="0">
                 <div class="modal-body">
-                    @include('suppliers.form-fields')
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="supplierGeneralDetails" role="tabpanel">
+                            @include('suppliers.form-fields-general')
+                        </div>
+                        <div class="tab-pane" id="supplierAdditionalDetails" role="tabpanel">
+                            @include('suppliers.form-fields-additional')
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar-supplier">Cancelar</button>
@@ -387,9 +407,9 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="document-type">Documento</label>
                                 <select class="form-select" id="document-type">
-                                    @foreach ($documentTypes as $documents)
+                                    @foreach ($typesDocuments as $documents)
                                     <option value="{{ $documents->id }}">
-                                        {{ $documents->type_name }}
+                                        {{ $documents->name }}
                                     </option>
                                     @endforeach
                                 </select>
@@ -400,9 +420,9 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="voucher-type">Comprobante</label>
                                 <select class="form-select" id="voucher-type">
-                                    @foreach ($voucherTypes as $voucher)
+                                    @foreach ($typesReceipts as $voucher)
                                     <option value="{{ $voucher->id }}">
-                                        {{ $voucher->voucher_name }}
+                                        {{ $voucher->name }}
                                     </option>
                                     @endforeach
                                 </select>
@@ -412,7 +432,7 @@
                         <div class="col-sm-2">
                             <div class="input-group align-items-center auto-select">
                                 <label class="form-label me-3" for="invoice_number">Folio</label>
-                                <input type="text" class="form-control" id="invoice_number">
+                                <input type="text" class="form-control" id="invoice-number">
                             </div>
                         </div><!--end col-->
                     </div><!--end row -->
@@ -557,7 +577,7 @@
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-bank-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="rfc_supplier">
+                            <span class="tax_id_supplier">
 
                             </span>
                         </span>
@@ -578,7 +598,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0"><i class="ri-secure-payment-line align-bottom me-1 text-muted"></i>
-                    Detalles del pago</h5>
+                    Detalles de pago</h5>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -661,6 +681,19 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/autoComplete.min.js') }}"></script>
 <script src="{{ URL::asset('build/libs/cleave.js/cleave.min.js') }}"></script>
+<script src="{{ URL::asset('build/libs/flatpickr/l10n/es.js') }}"></script>
+
+<script src="{{ URL::asset('build/libs/dropzone/dropzone-min.js') }}"></script>
+<script src="{{ URL::asset('build/libs/filepond/filepond.min.js') }}"></script>
+<script src="{{ URL::asset('build/libs/filepond-plugin-image-preview/filepond-plugin-image-preview.min.js') }}">
+</script>
+<script
+    src="{{ URL::asset('build/libs/filepond-plugin-file-validate-size/filepond-plugin-file-validate-size.min.js') }}">
+</script>
+<script
+    src="{{ URL::asset('build/libs/filepond-plugin-image-exif-orientation/filepond-plugin-image-exif-orientation.min.js') }}">
+</script>
+<script src="{{ URL::asset('build/libs/filepond-plugin-file-encode/filepond-plugin-file-encode.min.js') }}"></script>
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 

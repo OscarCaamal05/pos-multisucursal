@@ -31,7 +31,7 @@ class TempPurchase extends Model
                 DB::raw('SUM(td.total) - t.discount as total_amount')
             )
             ->where('t.status', 'en_espera')
-            ->groupBy('t.id_temp_purchase', 't.supplier_id', 's.company_name', 's.representative', 't.created_at');
+            ->groupBy('t.id_temp_purchase', 't.supplier_id', 's.company_name', 's.representative', 't.updated_at');
     }
 
     public function details()
