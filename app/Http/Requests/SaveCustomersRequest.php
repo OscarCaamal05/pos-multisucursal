@@ -23,15 +23,14 @@ class SaveCustomersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name' => [
+            'name' => [
                 'required',
                 'string',
             ],
-            'rfc' => [
+            'tax_id' => [
                 'nullable',
                 'string',
-                'size:13',
-                Rule::unique('customers', 'rfc')
+                Rule::unique('customers', 'tax_id')
                     ->ignore(optional($this->customer)->id)
             ],
             'address' => 'string|nullable|max:255',
@@ -50,8 +49,9 @@ class SaveCustomersRequest extends FormRequest
                 Rule::unique('customers', 'email')
                     ->ignore(optional($this->customer)->id)
             ],
+            'credit_limit' => 'nullable|numeric',
             'credit_available' => 'nullable|numeric',
-            'credit_terms' => 'nullable|integer',
+            'default_credit_days' => 'nullable|integer',
             'credit_due_date' => 'nullable',
         ];
     }

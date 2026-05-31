@@ -31,14 +31,14 @@ $(document).ready(function () {
     // EVENTO: Para selccionar el primer input del formulario
     // =========================================
     $('#customerModal').on('shown.bs.modal', function () {
-        $('#full_name').trigger('focus');
+        $('#name').trigger('focus');
     });
 
     $('#credit_available').on('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 
-    initCreditTermsAndDate("#credit_terms", "#credit_due_date", 30);
+    initCreditTermsAndDate("#default_credit_days", "#credit_due_date", 30);
 })
 
 function bindEvents() {
@@ -56,10 +56,10 @@ function initializeDataTable() {
         ajax: '/customers/data',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'full_name', name: 'full_name' },
+            { data: 'name', name: 'name' },
             {
-                data: 'rfc',
-                name: 'rfc',
+                data: 'tax_id',
+                name: 'tax_id',
                 orderable: false,
                 searchable: false
             },
@@ -97,28 +97,10 @@ function initializeDataTable() {
                 visible: false
             },
             {
-                data: null,
+                data: 'credit_available',
                 name: 'credit_available',
                 orderable: false,
                 searchable: false,
-                render: function (data, type, row) {
-                    return data.credit_available - data.credit;
-                }
-            },
-            {
-                data: 'credit',
-                name: 'credit',
-                visible: false
-            },
-            {
-                data: 'credit_due_date',
-                name: 'credit_due_date',
-                visible: false
-            },
-            {
-                data: 'credit_terms',
-                name: 'credit_terms',
-                visible: false
             },
             {
                 data: 'status',
@@ -202,7 +184,31 @@ function bindEditEvents() {
             'Cancelar',
             (confirmed) => {
                 if (confirmed) {
-                    showCustomerModal(rowData);
+                    showCustomerModal({ id: rowData.id })
+                        .then((response) => {
+                            if (response.status === 'success') {
+                                formatCleave();
+                                $('#name').val(response.customer.name);
+                                $('#tax_id').val(response.customer.tax_id);
+                                $('#address').val(response.customer.address);
+                                $('#email').val(response.customer.email);
+                                const phoneEl = document.querySelector('#phone');
+                                if (phoneEl && phoneEl.cleave) {
+                                    phoneEl.cleave.setRawValue(response.customer.phone);
+                                } else {
+                                    $('#phone').val(response.customer.phone);
+                                }
+                                $('#credit_limit').val(response.customer.credit_limit);
+                                $('#credit_due_date').val(response.customer.credit_due_date);
+                            }
+                        })
+                        .catch(() => {
+                            showAlert(
+                                'error',
+                                'Error',
+                                'No se pudieron cargar los datos del registro.'
+                            );
+                        });
                 }
             }
         );

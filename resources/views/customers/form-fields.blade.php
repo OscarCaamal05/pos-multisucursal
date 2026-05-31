@@ -3,15 +3,15 @@
     <div class="col-12">
 
         <div class="mb-3">
-            <label for="full_name">Nombre Completo</label>
+            <label for="name">Nombre Completo</label>
             <div class="form-icon">
                 <input type="text"
-                    class="form-control form-control-icon @error('full_name') is-invalid @enderror"
-                    name="full_name"
-                    id="full_name"
-                    value="{{ old('full_name') }}">
+                    class="form-control form-control-icon @error('name') is-invalid @enderror"
+                    name="name"
+                    id="name"
+                    value="{{ old('name') }}">
                 <i class="ri-contacts-line"></i>
-                @error('full_name')
+                @error('name')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -22,15 +22,15 @@
     <div class="col-6">
 
         <div class="mb-3">
-            <label for="rfc">RFC</label>
+            <label for="tax_id">RFC</label>
             <div class="form-icon">
                 <input type="text"
-                    class="form-control form-control-icon @error('rfc') is-invalid @enderror"
-                    name="rfc"
-                    id="rfc"
-                    value="{{ old('rfc') }}">
+                    class="form-control form-control-icon @error('tax_id') is-invalid @enderror"
+                    name="tax_id"
+                    id="tax_id"
+                    value="{{ old('tax_id') }}">
                 <i class="ri-auction-line"></i>
-                @error('rfc')
+                @error('tax_id')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -97,15 +97,15 @@
     <div class="col-5">
 
         <div class="mb-3">
-            <label for="credit_available">Credito</label>
+            <label for="credit_limit">Credito</label>
             <div class="form-icon">
                 <input type="text"
-                    class="form-control form-control-icon @error('credit_available') is-invalid @enderror"
-                    name="credit_available"
-                    id="credit_available"
-                    value="{{ old('credit_available') }}">
+                    class="form-control form-control-icon @error('credit_limit') is-invalid @enderror"
+                    name="credit_limit"
+                    id="credit_limit"
+                    value="{{ old('credit_limit') }}">
                 <i class="ri-coins-line"></i>
-                @error('credit_available')
+                @error('credit_limit')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -116,13 +116,13 @@
     <div class="col-2">
 
         <div class="mb-3">
-            <label for="credit_terms">Días</label>
+            <label for="default_credit_days">Días</label>
             <input type="text"
-                class="form-control @error('credit_terms') is-invalid @enderror"
-                name="credit_terms"
-                id="credit_terms"
-                value="{{ old('credit_terms', '30') }}">
-            @error('credit_terms')
+                class="form-control @error('default_credit_days') is-invalid @enderror"
+                name="default_credit_days"
+                id="default_credit_days"
+                value="{{ old('default_credit_days', '30') }}">
+            @error('default_credit_days')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
 

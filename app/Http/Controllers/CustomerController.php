@@ -37,7 +37,13 @@ class CustomerController extends Controller
      */
     public function store(SaveCustomersRequest $request)
     {
-        $customer = Customer::create($request->validated());
+        $data = $request->validated();
+
+        $data['credit_used'] = $data['credit_used'] ?? 0;
+        $data['credit_limit'] = $data['credit_limit'] ?? 0;
+        $data['credit_available'] = $data['credit_limit'] - $data['credit_used'];
+
+        $customer = Customer::create($data);
 
         return response()->json([
             'status' => 'create',
@@ -60,7 +66,16 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
-        //
+        $customer_data = Customer::where('id', $customer->id)->first();
+
+        if(!$customer_data) {
+            return response()->json(['status' => 'error', 'message' => 'Cliente no encontrado'], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'customer' => $customer_data
+        ]);
     }
 
     /**
@@ -68,7 +83,13 @@ class CustomerController extends Controller
      */
     public function update(SaveCustomersRequest $request, Customer $customer)
     {
-        $customer->update($request->validated());
+        $data = $request->validated();
+
+        $data['credit_used'] = $data['credit_used'] ?? 0;
+        $data['credit_limit'] = $data['credit_limit'] ?? 0;
+        $data['credit_available'] = $data['credit_limit'] - $data['credit_used'];
+
+        $customer->update($data);
 
         return response()->json(['update' => true]);
     }
