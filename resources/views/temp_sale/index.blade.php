@@ -301,6 +301,7 @@
                                 <th scope="col">Telefono</th>
                                 <th scope="col">Correo</th>
                                 <th scope="col">Credito disponible</th>
+                                <th scope="col">Credito limite</th>
                             </tr>
                         </thead>
 
@@ -386,9 +387,9 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="document-type">Documento</label>
                                 <select class="form-select" id="document-type">
-                                    @foreach ($documentTypes as $documents)
+                                    @foreach ($typesDocuments as $documents)
                                     <option value="{{ $documents->id }}">
-                                        {{ $documents->type_name }}
+                                        {{ $documents->name }}
                                     </option>
                                     @endforeach
                                 </select>
@@ -399,9 +400,9 @@
                             <div class="input-group align-items-center">
                                 <label class="form-label me-3" for="voucher-type">Comprobante</label>
                                 <select class="form-select" id="voucher-type">
-                                    @foreach ($voucherTypes as $voucher)
+                                    @foreach ($typesReceipts as $voucher)
                                     <option value="{{ $voucher->id }}">
-                                        {{ $voucher->voucher_name }}
+                                        {{ $voucher->name }}
                                     </option>
                                     @endforeach
                                 </select>
@@ -555,7 +556,7 @@
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-bank-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="customer-rfc">
+                            <span class="customer-tax-id">
                                 No registrado
                             </span>
                         </span>
@@ -563,7 +564,7 @@
                     <div class="col-sm-6 mb-2">
                         <span>
                             <i class="ri-wallet-3-line me-2 align-middle text-muted fs-16"></i>
-                            <span class="customer-available-credit">
+                            <span class="customer-credit-available">
                                 Crédito disponible: $0.00
                             </span>
                         </span>

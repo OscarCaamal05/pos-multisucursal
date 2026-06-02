@@ -95,20 +95,20 @@ class TempSaleDetailController extends Controller
      */
     public function autoCompleteCustomers($query)
     {
-        $customers = Customer::where('full_name', 'LIKE', "%$query%")
+        $customers = Customer::where('name', 'LIKE', "%$query%")
             ->orWhere('phone', 'LIKE', "%$query%")
             ->where('status', 1)
             ->limit(10)
             ->get([
                 'id',
-                'full_name'
+                'name'
             ]);
 
         return response()->json([
             'data' => $customers->map(function ($customer) {
                 return [
                     'id' => $customer->id,
-                    'value' => $customer->full_name
+                    'value' => $customer->name
                 ];
             })
         ]);
@@ -117,24 +117,26 @@ class TempSaleDetailController extends Controller
     /**
      * METODO PARA OBTENER LOS DATOS DEL CLIENTE EN LA VENTA TEMPORAL
      */
-    public function getDataCustomer($supplierId)
+    public function getDataCustomer($customerId)
     {
-        $customer = Customer::find($supplierId);
+        $customer = Customer::find($customerId);
 
         if (!$customer) {
             return response()->json(['message' => 'Cliente no encontrado'], 404);
         }
 
-        $credit_available = round($customer->credit_available - $customer->credit, 2);
         return response()->json([
-            'full_name' => $customer->full_name,
+            'id' => $customer->id,
+            'name' => $customer->name,
             'phone' => $customer->phone,
             'email' => $customer->email,
-            'rfc' => $customer->rfc,
-            'credit_available' => $credit_available,
-            'credit_limit' => $customer->credit_available,
-            'credit_days' => $customer->credit_terms,
+            'tax_id' => $customer->tax_id,
+            'credit_available' => $customer->credit_available,
+            'default_credit_days' => $customer->default_credit_days,
             'credit_due_date' => $customer->credit_due_date,
+            'credit_limit' => $customer->credit_limit,
+
         ]);
+
     }
 }

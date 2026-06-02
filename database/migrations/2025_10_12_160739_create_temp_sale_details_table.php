@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('temp_sale_details', function (Blueprint $table) {
             $table->id('id_temp_sale_detail');
             $table->unsignedBigInteger('temp_sale_id');
-            $table->unsignedBigInteger('product_id');
+            $table->integer('product_id')->nullable();
             $table->string('product_name', 50);
             $table->string('barcode', 50);
             $table->decimal('price', 10, 2);
@@ -28,7 +28,6 @@ return new class extends Migration
 
             // Relaciones con llaves foráneas
             $table->foreign('temp_sale_id')->references('id_temp_sale')->on('temp_sales')->onDelete('cascade');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('unit_id')->references('id')->on('units')->onDelete('cascade');
 
             $table->timestamps();

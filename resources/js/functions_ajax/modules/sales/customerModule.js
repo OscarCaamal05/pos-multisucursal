@@ -1,420 +1,441 @@
 import { showAlert } from '../../utils/alerts';
-import { SALES_CONFIG } from './saleMain';
-import { bindCustomerFormSubmit, closeCustomerModal } from '../../helpers/customerHelper';
+import { getDataTableLanguage } from '../../utils/datatableLanguage';
+import {
+    bindCustomerFormSubmit,
+    closeCustomerModal,
+    formatCleave,
+    initCreditTermsAndDate,
+} from '../../helpers/customerHelper';
+import {
+    SALES_CONFIG as CONFIG,
+    formatPhoneNumber,
+    validateCustomerSelected,
+} from '../../helpers/SalesHelper';
 
 // =========================================
 // VARIABLES LOCALES DEL MÓDULO
 // =========================================
-let autoCompleteCustomers = null;
 let customersTable = null;
+let autoCompleteInstance = null;
 
 // =========================================
 // INICIALIZACIÓN DEL MÓDULO
 // =========================================
+
+/**
+ * Punto de entrada del módulo de clientes.
+ * Se llama desde salesMain.js dentro del $(document).ready
+ */
 export function initCustomerModule() {
+    initStoredCustomer();
+    setupCustomerAutoComplete();
+    bindCustomerEvents();
+    bindCustomerFormSubmit({
+        table: customersTable,
+        onSuccess: (response) => {
+            getCustomerData(response.customer.id);
+            $('#modal-customers').modal('hide');
+        }
+    });
+    closeCustomerModal();
+    formatCleave();
+    initCreditTermsAndDate('#default_credit_days', '#credit_due_date', 30);
+}
+
+// =========================================
+// LOCALSTORAGE: Recuperar Cliente guardado
+// =========================================
+
+/**
+ * Lee el cliente guardado en localStorage y lo muestra en la interfaz.
+ * Se ejecuta al cargar la página para restaurar el estado previo.
+ */
+function initStoredCustomer() {
+    const stored = localStorage.getItem(CONFIG.storage.customerKey);
+    if (!stored) return;
+
     try {
-        initStoredCustomer();
-        setupCustomerAutoComplete();
-        bindCustomerEvents();
-        console.log('✅ Módulo de clientes inicializado');
+        const data = JSON.parse(stored);
+        updateCustomerUI(data);
+        $('#customer_id').val(data.customerId || 0);
     } catch (error) {
-        console.error('❌ Error al inicializar módulo de clientes:', error);
+        console.error('Error al parsear cliente guardado:', error);
+        localStorage.removeItem(CONFIG.storage.customerKey);
     }
 }
 
 // =========================================
 // AUTOCOMPLETADO DE CLIENTES
 // =========================================
+
+/**
+ * Inicializa la librería autoComplete.js para el campo de búsqueda de clientes.
+ */
 function setupCustomerAutoComplete() {
-    autoCompleteCustomers = new autoComplete({
-        selector: SALES_CONFIG.selectors.autoCompleteCustomer,
+    autoCompleteInstance = new autoComplete({
+        selector: '#auto_complete_customer',
         data: {
             src: async (query) => {
                 try {
                     const response = await searchCustomers(query);
                     return response.data;
                 } catch (error) {
-                    console.error('Error en búsqueda de clientes:', error);
+                    console.error('Error en autocompletado de clientes:', error);
                     return [];
                 }
             },
             keys: ['value'],
-            cache: false
+            cache: false,
         },
         resultsList: {
             element: function (list, data) {
                 if (!data.results.length) {
-                    const message = document.createElement("div");
-                    message.setAttribute("class", CONFIG.cssClasses.noResult);
+                    const message = document.createElement('div');
+                    message.setAttribute('class', CONFIG.cssClasses.noResult);
                     message.innerHTML = `<span>No se encontraron resultados para "${data.query}"</span>`;
                     list.prepend(message);
                 }
             },
-            noResults: true
+            noResults: true,
         },
         resultItem: {
-            highlight: true
+            highlight: true,
         },
         events: {
             input: {
                 selection: function (event) {
                     const selection = event.detail.selection;
-                    const selectedText = typeof selection.value === 'string'
-                        ? selection.value
-                        : (selection.value?.value || '');
+                    const selectedText =
+                        typeof selection.value === 'string'
+                            ? selection.value
+                            : selection.value?.value || '';
 
-                    autoCompleteCustomers.input.value = selectedText;
-                    autoCompleteCustomers.input.select();
-
-                    // Actualizar el campo hidden del ID del cliente
-                    $(SALES_CONFIG.selectors.customerId).val(selection.value.id).trigger('change');
-                }
-            }
-        }
+                    autoCompleteInstance.input.value = selectedText;
+                    autoCompleteInstance.input.select();
+                    $('#customer_id').val(selection.value.id).trigger('change');
+                },
+            },
+        },
     });
 }
 
 // =========================================
-// GESTIÓN DE CLIENTES
+// AJAX: Búsqueda de clientes (autocomplete)
 // =========================================
 
 /**
- * FUNCIÓN PARA INICIALIZAR EL CLIENTE GUARDADO EN LOCALSTORAGE
- * @param {number} customerId 
+ * Envía la cadena de búsqueda al servidor para el autocompletado.
+ *
+ * @param {string} query - Texto introducido por el usuario
+ * @returns {Promise} Promesa con la respuesta del servidor
  */
-export async function getCustomerData(customerId) {
-    try {
-        //showAlert('info', 'Cargando', 'Obteniendo datos del cliente...');
-
-        const response = await $.ajax({
-            url: `${SALES_CONFIG.api.base}/${customerId}`,
-            method: 'GET'
-        });
-
-        updateCustomerUI(response);
-        saveCustomerToStorage(customerId, response);
-
-
-    } catch (error) {
-        console.error('Error al obtener datos del cliente:', error);
-        showAlert('error', 'Error', 'No se pudieron obtener los datos del cliente');
-    }
+function searchCustomers(query) {
+    return $.ajax({
+        url: `temp_sale_detail/autoCompleteCustomers/${query}`,
+        type: 'GET',
+        dataType: 'json',
+    });
 }
 
+// =========================================
+// AJAX: Obtener datos de un cliente por ID
+// =========================================
+
 /**
- * MUESTRA LOS DATOS DEL CLIENTE EN LA INTERFAZ DE USUARIO
- * @param {object} customerData // Objeto con los datos del cliente
+ * Consulta los datos completos de un cliente y los muestra en la interfaz.
+ * También guarda los datos en localStorage para persistencia al recargar.
+ *
+ * @param {number} customerId - ID del cliente seleccionado
  */
-function updateCustomerUI(customerData) {
+export function getCustomerData(customerId) {
+    $.ajax({
+        url: `/temp_sale_detail/${customerId}`,
+        method: 'GET',
+        success: function (response) {
+            console.log(response);
+            const phoneFormatted = formatPhoneNumber(response.phone);
+            updateCustomerUI({
+                name: response.name,
+                email: response.email,
+                phone: phoneFormatted,
+                tax_id: response.tax_id,
+                credit_available: response.credit_available,
+                credit_limit: response.credit_limit,
+                default_credit_days: response.default_credit_days,
+                credit_due_date: response.credit_due_date,
+            });
 
-    $('.customer-name').text(customerData.full_name || 'Publico General');
-    $('.customer-email').text(customerData.email || 'No registrado');
-    $('.customer-phone').text(formatPhoneNumber(customerData.phone) || 'No registrado');
-    $('.customer-available-credit').text(`$Credito disponible: ${customerData.credit_limit}` || '$0.00');
+            $('#customer_id').val(customerId || 0);
 
-    // Actualizar información adicional si existe
-    if (customerData.rfc) {
-        $('.customer-rfc').text(customerData.rfc);
-    }
+            saveCustomerToStorage(customerId, response);
+        },
+        error: function (xhr) {
+            console.error('Error al obtener datos del cliente:', xhr);
+            showAlert('error', 'Error', 'No se pudieron obtener los datos del cliente.');
+        },
+    });
 }
 
+// =========================================
+// UI: Actualizar campos del cliente en pantalla
+// =========================================
+
 /**
- * FUNCIÓN PARA SELECCIONAR UN CLIENTE DEL AUTOCOMPLETADO
- * @param {string|object} customerData // Cadena de ingresa en el input de busqueda o el objeto seleccionado
+ * Refleja los datos del cliente en los elementos de la vista.
+ *
+ * @param {Object} data - Datos del cliente
  */
-function selectCustomer(customerData) {
-    // Si es una cadena vacía o undefined, limpiar selección
-    if (!customerData) {
-        cleanCustomerData();
-        return;
-    }
-
-    // Determinar el texto y el ID del cliente
-    let selectedText, customerId;
-
-    if (typeof customerData === 'string') {
-        selectedText = customerData;
-        customerId = 0; // Si es solo texto, no tenemos ID
-    } else if (typeof customerData === 'object' && customerData !== null) {
-        selectedText = customerData.value || customerData.label || '';
-        customerId = customerData.id || 0;
-    } else {
-        console.error('Tipo de dato no esperado en selectCustomer:', typeof customerData);
-        return;
-    }
-    // Actualizar el input del autocompletado
-    if (autoCompleteCustomers && autoCompleteCustomers.input) {
-        autoCompleteCustomers.input.value = selectedText;
-    }
-
-    // Actualizar el campo hidden del ID del cliente
-    $(SALES_CONFIG.selectors.customerId).val(customerId).trigger('change');
+function updateCustomerUI(data) {
+    $('.customer-name').text(data.name || 'No hay dato');
+    $('.customer-email').text(data.email || 'No hay dato');
+    $('.customer-phone').text(data.phone || 'No hay dato');
+    $('.customer-tax-id').text(data.tax_id || 'No hay dato');
+    $('.customer-credit-available').text(data.credit_available || 'No hay dato');
 }
 
+// =========================================
+// LOCALSTORAGE: Guardar cliente seleccionado
+// =========================================
+
 /**
- * GUARDA LOS DATOS DEL CLIENTE EN LOCALSTORAGE
- * @param {number} customerId // Id del cliente
- * @param {object} customerData // Datos del cliente
+ * Persiste los datos del cliente en localStorage.
+ *
+ * @param {number} customerId - ID del cliente
+ * @param {Object} response   - Respuesta completa del servidor
  */
-function saveCustomerToStorage(customerId, customerData) {
+function saveCustomerToStorage(customerId, response) {
     const customer = {
         customerId: customerId,
-        full_name: customerData.full_name,
-        email: customerData.email,
-        phone: formatPhoneNumber(customerData.phone),
-        rfc: customerData.rfc,
-        credit_available: customerData.credit_available,
-        credit_limit: customerData.credit_limit,
-        credit_days: customerData.credit_days,
-        credit_due_date: customerData.credit_due_date,
+        name: response.name,
+        tax_id: response.tax_id,
+        email: response.email,
+        phone: formatPhoneNumber(response.phone),
+        credit_available: response.credit_available,
+        credit_limit: response.credit_limit,
+        default_credit_days: response.default_credit_days ? response.default_credit_days : 30,
+        credit_due_date: response.credit_due_date,
+
     };
-
-    localStorage.setItem(SALES_CONFIG.storage.customerKey, JSON.stringify(customer));
+    localStorage.setItem(CONFIG.storage.customerKey, JSON.stringify(customer));
 }
 
 // =========================================
-// EVENTOS
+// DATATABLE: Cargar lista de clientes en modal
 // =========================================
-function bindCustomerEvents() {
 
-    /**
-     * EVENTO PARA MANEJAR EL ID DEL CLIENTE SELECIONADO EL AUTOCOMPLETADO
-     */
-    $(SALES_CONFIG.selectors.customerId).on('change', function () {
-        const customerId = $(this).val();
-        if (customerId && customerId !== '0') {
-            getCustomerData(customerId);
-        } else {
-            cleanCustomerDisplay();
-        }
-    });
+/**
+ * Destruye e inicializa la tabla de clientes dentro del modal de búsqueda.
+ * Incluye el input de búsqueda personalizado.
+ */
+export function loadListCustomers() {
 
-    /**
-     * EVENTO PARA ABRIR EL MODAL DE LISTA DE CLIENTES
-     */
-    $('#btn-search-customers').on('click', function () {
-        $(SALES_CONFIG.selectors.modalCustomers).modal('show');
-        loadCustomersList();
-    });
-
-    /**
-    * EVENTO PARA CERRAR EL MODAL DE LISTA DE CLIENTES
-    */
-    $('#btn-close-list-customer').on('click', function () {
-        $(SALES_CONFIG.selectors.modalCustomers).modal('hide');
-    });
-
-    /**
-     * EVENTO PARA SELECCIONAR CLIENTE DE LA TABLA POR DOBLE CLIC
-     */
-    $('#tableCustomers tbody').on('dblclick', 'tr', function () {
-        if (customersTable) {
-            const data = customersTable.row(this).data();
-            if (data && data.id) {
-                getCustomerData(data.id);
-                $(SALES_CONFIG.selectors.modalCustomers).modal('hide');
-            }
-        }
-    });
-
-    /**
-     * EVENTO PARA ABRIR EL MODAL DE AGREGAR CLIENTE
-     */
-    $('#btn-add-customer').on('click', function () {
-        $(SALES_CONFIG.selectors.customerId).val(0);
-        $(SALES_CONFIG.selectors.modalAddCustomers).modal('show');
-    });
-
-
-    /**
-     * EVENTO PARA GUARDAR EL NUEVO CLIENTE
-     */
-    $(SALES_CONFIG.selectors.modalAddCustomers).on('shown.bs.modal', function () {
-
-        bindCustomerFormSubmit({
-            table: null, // Siempre null aquí, se maneja en onSuccess
-            onSuccess: (response) => {
-                getCustomerData(response.customer.id);
-                $(SALES_CONFIG.selectors.modalAddCustomers).modal('hide');
-
-                // Si existe la tabla, recargar los datos
-                if (customersTable && $.fn.DataTable.isDataTable('#tableCustomers')) {
-                    customersTable.ajax.reload(null, false);
-                }
-            }
-        });
-    });
-
-    /**
-     * EVENTO PARA LIMPIAR EL MODAL DE NUEVO CLIENTE
-     */
-    $(SALES_CONFIG.selectors.modalAddCustomers).on('hidden.bs.modal', function () {
-        // Limpiar el formulario al cerrar el modal
-        const $form = $(this).find('form');
-        $form[0].reset();
-        $form.find('#customerId').val(0);
-    });
-
-    // CERRAR MODAL DE NUEVO CLIENTE
-    closeCustomerModal();
-}
-
-// =========================================
-// FUNCIONES AUXILIARES
-// =========================================
-async function searchCustomers(query) {
-    return $.ajax({
-        url: `${SALES_CONFIG.api.base}/autoCompleteCustomers/${query}`,
-        type: 'GET',
-        dataType: 'json'
-    });
-}
-
-function initStoredCustomer() {
-    const customerStored = localStorage.getItem(SALES_CONFIG.storage.customerKey);
-    if (customerStored) {
-        try {
-            const data = JSON.parse(customerStored);
-            updateCustomerUI(data);
-            $(SALES_CONFIG.selectors.customerId).val(data.customerId || 0);
-            console.log('✅ Cliente restaurado desde storage:', data.name);
-        } catch (error) {
-            console.error('Error al parsear cliente guardado:', error);
-            localStorage.removeItem(SALES_CONFIG.storage.customerKey);
-        }
+    if ($.fn.DataTable.isDataTable('#tableCustomers')) {
+        customersTable = $('#tableCustomers').DataTable();
+        customersTable.columns.adjust().draw();
+        return;
     }
-}
 
-async function loadCustomersList() {
-    try {
-        if ($.fn.DataTable.isDataTable('#tableCustomers')) {
-            $('#tableCustomers').DataTable().destroy();
-            $('#tableCustomers tbody').empty();
-        }
-
-        // Crear nueva tabla
-        customersTable = $('#tableCustomers').DataTable({
-            ajax: {
-                url: `${SALES_CONFIG.api.customers}/data`,
-                type: 'GET'
+    customersTable = $('#tableCustomers').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '/customers/data',
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'name', name: 'name' },
+            {
+                data: 'tax_id',
+                name: 'tax_id',
+                orderable: false,
+                searchable: false
             },
-            columns: [
-                {
-                    data: 'id',
-                    name: 'id'
-                },
-                {
-                    data: 'full_name',
-                    name: 'full_name',
-                },
-                {
-                    data: 'rfc',
-                    name: 'rfc'
-                },
-                {
-                    data: null,
-                    name: 'phone',
-                    render: function (data, type, row) {
-                        return formatPhoneNumber(data.phone);
+            {
+                data: 'phone',
+                name: 'phone',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    // Si está vacío o null
+                    if (!data) return '';
+
+                    // Quitar todo lo que no sea número
+                    const cleaned = data.replace(/\D/g, '');
+
+                    // Aplicar el formato
+                    if (cleaned.length === 10) {
+                        return `(${cleaned.substr(0, 3)}) ${cleaned.substr(3, 3)}-${cleaned.substr(6, 4)}`;
                     }
-                },
-                {
-                    data: 'email',
-                    name: 'email'
-                },
-                {
-                    data: null,
-                    name: 'credit_available',
-                    orderable: false,
-                    searchable: false,
-                    render: function (data, type, row) {
-                        return data.credit_available - data.credit;
-                    }
+
+                    // Si no tiene 10 dígitos, devuélvelo tal cual
+                    return data;
                 }
-            ],
-            language: idiomaEspanol,
-            pageLength: 10,
-            responsive: true,
-            processing: true,
-            serverSide: true,
-            scrollY: 450,
-            deferRender: true,
-            scroller: true,
-            searching: true,
-            info: false,
-            dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
-        });
+            },
+            {
+                data: 'email',
+                name: 'email',
+                orderable: false,
+            },
+            {
+                data: 'credit_available',
+                name: 'credit_available',
+                orderable: false,
+                searchable: false,
+            },
+            {
+                data: 'credit_limit',
+                name: 'credit_limit',
+                orderable: false
+            },
 
-        // Agregar funcionalidad al input personalizado de búsqueda
-        $('#search-customer-input').off('keyup.customerSearch').on('keyup.customerSearch', function () {
-            const searchValue = $(this).val();
-            customersTable.search(searchValue).draw();
-        });
+        ],
+        scrollY: 450,
+        deferRender: true,
+        scroller: true,
+        language: getDataTableLanguage(),
+        searching: true,
+        info: false,
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
 
-        // Limpiar el input cuando se abra el modal
-        $(SALES_CONFIG.selectors.modalCustomers).on('shown.bs.modal', function () {
-            $('#search-customer-input').val('').trigger('keyup');
-        });
+        initComplete: function () {
+            this.api().columns.adjust().draw();
+            _bindCustomerTableEvents(customersTable);
+        }
+    });
 
-    } catch (error) {
-        console.error('Error al cargar lista de clientes:', error);
-        showAlert('error', 'Error', 'No se pudo cargar la lista de clientes');
-    }
+    // Input de búsqueda personalizado
+    $('#search-customer-input')
+        .off('keyup.customerSearch')
+        .on('keyup.customerSearch', function () {
+            customersTable.search($(this).val()).draw();
+        });
 }
 
-function formatPhoneNumber(phone) {
-    if (!phone || phone.length !== 10) return phone;
-    return `(${phone.substring(0, 3)})-${phone.substring(3, 6)}-${phone.substring(6)}`;
+/**
+ * Registra todos los eventos relacionados con clientes.
+ * Se llaman una sola vez desde initCustomerModule().
+ */
+function bindCustomerEvents() {
+    // Cuando cambia el valor del input hidden #customer_id
+    $('#customer_id').on('change', function () {
+        const customerId = $(this).val();
+        if (customerId && customerId != 0) {
+            getCustomerData(customerId);
+        }
+    });
+
+    // Abrir modal de búsqueda de clientes
+    $('#btn-search-customers').on('click', () => $('#modal-customers').modal('show'));
+
+    // Seleccionar cliente con doble clic en la tabla del modal
+    $('#tableCustomers tbody').on('dblclick', 'tr', function () {
+        if (!customersTable) return;
+        const data = customersTable.row(this).data();
+        if (data && data.id) {
+            getCustomerData(data.id);
+            $('#modal-customers').modal('hide');
+        }
+    });
+
+    // Cerrar modal de lista de clientes
+    $('#btn-close-list-customer').on('click', () => $('#modal-customers').modal('hide'));
+
+    // Abrir modal para agregar nuevo cliente
+    $('#btn-add-customer').on('click', () => $('#customerModal').modal('show'));
+
+    // Limpiar input de búsqueda al abrir el modal
+    $('#modal-customers').on('shown.bs.modal', function () {
+        $('#search-customer-input').val('').trigger('keyup');
+        loadListCustomers();
+    });
+    $('#modal-customers').on('hidden.bs.modal', function () {
+        if (customersTable) {
+            customersTable.search('').draw(false);
+        }
+    });
 }
 
-function cleanCustomerDisplay() {
-    $('.customer-name').text('Cliente General');
-    $('.customer-email, .customer-phone, .customer-address, .customer-rfc').text('');
+/**
+ * Vincula el dblclick al tbody usando la instancia activa del DataTable.
+ * Se llama desde initComplete para garantizar que las filas existen.
+ * Usa namespace .off().on() para no acumular listeners entre aperturas.
+ *
+ * @param {DataTable} tableInstance - Instancia activa
+ */
+function _bindCustomerTableEvents(tableInstance) {
+    $('#tableCustomers tbody')
+        .off('dblclick.customerSelect')
+        .on('dblclick.customerSelect', 'tr', function () {
+            // Usar la instancia recibida como parámetro, no la variable del módulo
+            const data = tableInstance.row(this).data();
+
+            if (!data) {
+                console.warn('No se pudieron obtener los datos de la fila seleccionada');
+                return;
+            }
+
+            getCustomerData(data.id);
+            $('#modal-customers').modal('hide');
+        });
 }
 
 // =========================================
 // FUNCIONES PÚBLICAS EXPORTADAS
 // =========================================
+
+/**
+ * Limpia todos los campos visuales y del DOM relacionados al cliente.
+ * Se exporta para que purchaseMain.js la llame al cancelar/limpiar compra.
+ */
 export function cleanCustomerData() {
-    $(SALES_CONFIG.selectors.customerId).val(0);
-    $(SALES_CONFIG.selectors.autoCompleteCustomer).val('');
-    cleanCustomerDisplay();
-    localStorage.removeItem(SALES_CONFIG.storage.customerKey);
-    console.log('✅ Datos de cliente limpiados');
+    $('#customer_id').val(0);
+    $('#auto_complete_customer').val('');
+    $('.customer-name').html('Publico en general');
+    $('.customer-email').html('');
+    $('.customer-phone').html('');
+    $('.customer-tax-id').html('');
+    $('.default_credit_days').val(0);
+    $('.credit-limit').val(0);
+    $('.customer-credit-available').val(0);
+    $('.credit-due-date').val(0);
+    localStorage.removeItem(CONFIG.storage.customerKey);
 }
 
+/**
+ * Retorna el ID del cliente actualmente seleccionado.
+ * Se exporta para que otros módulos (ej. paymentModule, waitingModule) lo usen.
+ *
+ * @returns {string} ID del cliente o '1' si no hay ninguno
+ */
 export function getCurrentCustomerId() {
-    return $(SALES_CONFIG.selectors.customerId).val();
+    return $('#customer_id').val() || '1';
 }
 
+/**
+ * Valida que haya un cliente seleccionado antes de continuar.
+ * Muestra alerta si no hay cliente.
+ *
+ * @returns {boolean}
+ */
+export function validateCustomer() {
+    const customerId = getCurrentCustomerId();
+    if (!validateCustomerSelected(customerId)) {
+        showAlert('warning', 'Alerta', CONFIG.messages.noCustomer);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Retorna los datos del cliente almacenados en localStorage.
+ * @returns {Object|null} Datos del cliente o null si no hay datos válidos
+ */
 export function getCurrentCustomerData() {
-    const customerStored = localStorage.getItem(SALES_CONFIG.storage.customerKey);
-    return customerStored ? JSON.parse(customerStored) : null;
+    const stored = localStorage.getItem(CONFIG.storage.customerKey);
+    if (!stored) return null;
+
+    try {
+        return JSON.parse(stored);
+    } catch (error) {
+        console.error('Error al parsear cliente guardado:', error);
+        return null;
+    }
 }
-
-
-// =========================================
-// CONSTANTES: Configuración idioma DataTable
-// =========================================
-const idiomaEspanol = {
-    loadingRecords: "Cargando...",
-    paginate: {
-        first: "Primero",
-        last: "Último",
-        next: "Siguiente",
-        previous: "Anterior"
-    },
-    processing: "Procesando...",
-    search: "Buscar:",
-    lengthMenu: "Mostrar _MENU_ registros",
-    emptyTable: "No hay datos disponibles",
-    info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
-};
-
-// Exportar funciones para uso en otros módulos
-export {
-    updateCustomerUI,
-    selectCustomer,
-    saveCustomerToStorage,
-    formatPhoneNumber
-};
