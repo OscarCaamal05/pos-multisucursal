@@ -131,7 +131,7 @@ function setupCustomerAutoComplete() {
  */
 function searchCustomers(query) {
     return $.ajax({
-        url: `temp_sale_detail/autoCompleteCustomers/${query}`,
+        url: `temp_sales_detail/autoCompleteCustomers/${query}`,
         type: 'GET',
         dataType: 'json',
     });
@@ -149,7 +149,7 @@ function searchCustomers(query) {
  */
 export function getCustomerData(customerId) {
     $.ajax({
-        url: `/temp_sale_detail/${customerId}`,
+        url: `/temp_sales_detail/${customerId}`,
         method: 'GET',
         success: function (response) {
             console.log(response);

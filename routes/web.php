@@ -94,8 +94,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_sales_detail/autoCompleteCustomers/{query}', [TempSaleDetailController::class, 'autoCompleteCustomers']);
     Route::get('/temp_sales_detail/autoCompleteProducts/{query}', [TempSaleDetailController::class, 'autoCompleteProducts']);
     Route::post('/temp_sales_detail/addProductToSalesDetails', [TempSaleDetailController::class, 'addProductToSalesDetails']);
+    Route::post('/temp_sales_detail/updateDiscount/', [TempSaleDetailController::class, 'updateDiscount']);
     Route::get('/temp_sales_detail/cancelSale/{temp_id}', [TempSaleDetailController::class, 'cancelSale']);
     Route::get('/temp_sales_detail/totals/{temp_sale_id}', [TempSaleDetailController::class, 'getTotals']);
+    Route::post('/temp_sales_detail/removeProductFromTempSale', [TempSaleDetailController::class, 'removeProductFromTempSale']);
+    Route::post('/temp_sales_detail/editProductName', [TempSaleDetailController::class, 'editProductName']);
+    Route::post('/temp_sales_detail/editProductQuantity', [TempSaleDetailController::class, 'editProductQuantity']);
+    Route::post('/temp_sales_detail/editProductDiscount', [TempSaleDetailController::class, 'editProductDiscount']);
+    Route::get('/temp_sales_detail/findByBarcode/{barcode}', [TempSaleDetailController::class, 'findByBarcode']);
 
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);

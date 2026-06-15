@@ -35,32 +35,6 @@
 </div>
 
 <!------------------------------------------------------------------------------------------------------------
-    Modal para detalles de los productos a comprar 
--------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="modal-product-details" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-product-details-Label">Detalles del producto</h5>
-            </div>
-            <form id="productDetails">
-                @csrf
-                <input type="hidden" name="temp_id" id="temp_id" value="0">
-                <input type="hidden" name="product_id" id="product_id" value="0">
-                <input type="hidden" name="temp_sale_id" id="temp_sale_id" value="{{ $temp->id_temp_sale ?? 0 }}">
-                <div class="modal-body">
-                    @include('temp_purchase.form-fields-product-details')
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="btn-cancelar-product-details">Cerrar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-add-product-details">Aceptar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!------------------------------------------------------------------------------------------------------------
     Modal para mostrar las compras en espera
 -------------------------------------------------------------------------------------------------------------->
 <div class="modal zoomIn" id="modal-purchase-waiting" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
@@ -135,7 +109,6 @@
                                 <th scope="col" class="text-center">Precio venta</th>
                                 <th scope="col" class="text-center">Exist.</th>
                                 <th scope="col" class="text-center">Unit venta</th>
-                                <th scope="col" class="text-center"></th>
                             </tr>
                         </thead>
 
@@ -155,56 +128,53 @@
 <!------------------------------------------------------------------------------------------------------------
     Modal para agregar articulos al almacén
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="add-modal-product" data-bs-backdrop="false" tabindex="-1" aria-hidden="true">
+<div class="modal fade zoomIn" id="productsModal" tabindex="-1" data-bs-backdrop="false" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="productsModalLabel">Agregar Producto</h5>
                 <button class="btn-close py-0" type="button" aria-label="Close" id="btn-close-modal-product"></button>
             </div>
+            <div class="modal-content border-0 mt-3">
+
+                <ul class="nav nav-tabs nav-tabs-custom nav-success p-2 pb-0 bg-light" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#generalDetails" role="tab"
+                            aria-selected="true">
+                            General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#additionalDetails" role="tab"
+                            aria-selected="false">
+                            Adicionales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#imageDetails" role="tab"
+                            aria-selected="false">
+                            Imagen
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <form id="productForm"
                 data-store-url="{{ route('products.store') }}"
                 data-update-url-base="/products/">
+                @csrf
+                <input type="hidden" name="productId" id="productId" value="0">
                 <div class="modal-body">
-                    @csrf
-                    <input type="hidden" name="productId" id="productId" value="0">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="nav nav-pills flex-column nav-pills-tab custom-verti-nav-pills text-center" role="tablist" aria-orientation="vertical">
-                                <a class="nav-link active show" id="custom-v-pills-general-tab" data-bs-toggle="pill" href="#custom-v-pills-general" role="tab" aria-controls="custom-v-pills-general"
-                                    aria-selected="true">
-                                    <i class="ri-home-4-line d-block fs-20 mb-1"></i>
-                                    General</a>
-                                <a class="nav-link" id="custom-v-pills-additional-tab" data-bs-toggle="pill" href="#custom-v-pills-additional" role="tab" aria-controls="custom-v-pills-additional"
-                                    aria-selected="false">
-                                    <i class="ri-file-add-line  d-block fs-20 mb-1"></i>
-                                    Adicional</a>
-                                <a class="nav-link" id="custom-v-pills-price-suppliers-tab" data-bs-toggle="pill" href="#custom-v-pills-price-suppliers" role="tab" aria-controls="custom-v-pills-price-suppliers"
-                                    aria-selected="false">
-                                    <i class="ri-user-2-line d-block fs-20 mb-1"></i>
-                                    Precio Por Proveedor</a>
-                                <a class="nav-link" id="custom-v-pills-image-tab" data-bs-toggle="pill" href="#custom-v-pills-image" role="tab" aria-controls="custom-v-pills-image"
-                                    aria-selected="false">
-                                    <i class="ri-image-add-fill d-block fs-20 mb-1"></i>
-                                    Imagen</a>
-                            </div>
-                        </div> <!-- end col-->
-                        <div class="col-lg-10">
-                            <div class="tab-content text-muted mt-3 mt-lg-0">
-                                <div class="tab-pane fade active show" id="custom-v-pills-general" role="tabpanel" aria-labelledby="custom-v-pills-general-tab">
-                                    @include('products.form-fields-general')
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-additional" role="tabpanel" aria-labelledby="custom-v-pills-additional-tab">
-                                    @include('products.form-fields-additional')
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-price-suppliers" role="tabpanel" aria-labelledby="custom-v-pills-price-suppliers-tab">
-                                </div><!--end tab-pane-->
-                                <div class="tab-pane fade" id="custom-v-pills-image" role="tabpanel" aria-labelledby="custom-v-pills-image-tab">
-                                    @include('products.form-fields-image')
-                                </div><!--end tab-pane-->
-                            </div>
-                        </div> <!-- end col-->
-                    </div> <!-- end row-->
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="generalDetails" role="tabpanel">
+                            @include('products.form-fields-general')
+                        </div>
+                        <div class="tab-pane" id="additionalDetails" role="tabpanel">
+                            @include('products.form-fields-additional')
+                        </div>
+                        <div class="tab-pane" id="imageDetails" role="tabpanel">
+                            @include('products.form-fields-image')
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar-product">Cancelar</button>
@@ -344,6 +314,98 @@
         </div>
     </div>
 </div>
+
+<!------------------------------------------------------------------------------------------------------------
+    Modal para editar el nombre del producto en la venta
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="modal-edit-product-name" data-bs-backdrop="true" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-edit-product-name-label">Editar Nombre</h5>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="pb-2 mb-3 text-center">
+                        <h4 class="text-body m-1 product-name-label"></h4>
+                    </div>
+                    <input type="text" class="form-control" id="product-new-name" name="product-new_name" value="">
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" id="btn-save-edit-product-name">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!------------------------------------------------------------------------------------------------------------
+    Modal para editar la cantidad del producto en la venta
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="modal-edit-product-quantity" data-bs-backdrop="true" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-edit-product-quantity-label">Nueva Cantidad</h5>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="pb-2 mb-3 text-center">
+                        <h4 class="text-body m-1 product-name-label"></h4>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <div class="input-step justify-content-between" style="height: 50px; width: 150px;">
+                            <button type="button" class="minus fw-semibold fs-4">–</button>
+                            <input type="text" style="text-align: center;" class="fs-3 fw-semibold product-quantity" value="">
+                            <button type="button" class="plus fw-semibold fs-4">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" id="btn-save-product-quantity">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!------------------------------------------------------------------------------------------------------------
+    Modal para editar el descuento del producto en la venta
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="modal-edit-product-discount" data-bs-backdrop="true" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-edit-product-discount-label">Agregar Descuento</h5>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+
+                    <div class="pb-2 mb-3 text-center">
+                        <h4 class="text-body m-1 product-name-label"></h4>
+                    </div>
+
+                    <div class="d-flex flex-column align-items-center mb-3">
+                        <label for="product-discount-percentage" class="form-label fw-semibold mb-1">Descuento (%)</label>
+                        <input type="text" class="form-control form-control-lg text-center product-discount w-50 fs-3 fw-semibold" id="product-discount-percentage" name="product-discount-percentage" value="">
+                    </div>
+                    <div class="d-flex flex-column align-items-center">
+                        <label for="product-discount-number" class="form-label fw-semibold mb-1">Descuento ($)</label>
+                        <input type="text" class="form-control form-control-lg text-center product-discount w-50 fs-3 fw-semibold" id="product-discount-number" name="product-discount-number" value="">
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" id="btn-save-product-discount">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!------------------------------------------------------------------------------------------------------------
     Vista principal para realizar una compra
 -------------------------------------------------------------------------------------------------------------->
@@ -352,7 +414,7 @@
         <!-- Card de los input de la parte superior de los datos generales de compra-->
         <div class="card">
             <!-- INPUT OCULTOS PARA REALIZAR FUNCIONES ESPECIFICAS DE VENTAS-->
-            <input type="hidden" name="temp_id" id="temp_id" value="0">
+            <input type="hidden" name="temp_detail_id" id="temp_detail_id" value="0">
             <input type="hidden" name="product_id" id="product_id" value="0">
             <input type="hidden" name="temp_sale_id" id="temp_sale_id" value="{{ $temp->id_temp_sale ?? 0 }}">
             <div class="card-body">
@@ -433,18 +495,18 @@
                         </div>
                         <span class="text-muted" style="font-size: 12px;">Editar (F1)</span>
                     </button>
-                    <!--<button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                    <button class="btn btn-link waves-effect p-1" id="btn-edit-product-quantity">
                         <div class=" d-flex justify-content-center">
                             <img src="{{URL::asset('build/images/svg-pos/020-caja-de-carton-1.svg')}}" alt="" class="avatar-xs" />
                         </div>
-                        <span class="text-muted" style="font-size: 12px;">Cantidad (F1)</span>
+                        <span class="text-muted" style="font-size: 12px;">Cantidad (F2)</span>
                     </button>
-                    <button class="btn btn-link waves-effect p-1" id="btnNuevaCantidad">
+                    <button class="btn btn-link waves-effect p-1" id="btn-edit-product-discount">
                         <div class=" d-flex justify-content-center">
                             <img src="{{URL::asset('build/images/svg-pos/035-descuento.svg')}}" alt="" class="avatar-xs" />
                         </div>
                         <span class="text-muted" style="font-size: 12px;">Descuento (F3)</span>
-                    </button>-->
+                    </button>
                 </div>
                 <div class="card mb-2">
                     <button class="btn btn-link waves-effect p-1" id="btn-set-waiting">
@@ -474,7 +536,6 @@
                                     <th scope="col" style="display: none">product_id</th>
                                     <th scope="col" class="text-center">Descripcion</th>
                                     <th scope="col" class="text-center">Cantidad</th>
-                                    <th scope="col" class="text-center">Factor</th>
                                     <th scope="col" class="text-center">precio unit.</th>
                                     <th scope="col" class="text-center">Descuento</th>
                                     <th scope="col" class="text-center">Total</th>
@@ -631,12 +692,12 @@
 
         <!--Botones para procesar la compra-->
         <div class="d-flex">
-            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold" id="btn-process-purchase">
+            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold" id="btn-process-sale">
                 <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Pagar
             </button>
         </div>
         <div class="d-flex">
-            <button class="btn btn-soft-danger mt-2 w-100 fs-4 fw-semibold" id="btn-cancel-purchase">
+            <button class="btn btn-soft-danger mt-2 w-100 fs-4 fw-semibold" id="btn-cancel-sale">
                 <i class="mdi mdi-archive-remove-outline align-middle me-1"></i> Cancelar
             </button>
         </div>
@@ -660,6 +721,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{{ URL::asset('build/libs/@tarekraafat/autocomplete.js/autoComplete.min.js') }}"></script>
 <script src="{{ URL::asset('build/libs/cleave.js/cleave.min.js') }}"></script>
+<script src="{{ URL::asset('build/js/pages/form-input-spin.init.js') }}"></script>
 <!-- AlpineJS para manejar el modal -->
 <script src="{{ URL::asset('build/js/alpine.min.js') }}"></script>
 
