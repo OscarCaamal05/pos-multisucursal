@@ -152,7 +152,6 @@ export function getCustomerData(customerId) {
         url: `/temp_sales_detail/${customerId}`,
         method: 'GET',
         success: function (response) {
-            console.log(response);
             const phoneFormatted = formatPhoneNumber(response.phone);
             updateCustomerUI({
                 name: response.name,
@@ -386,7 +385,7 @@ function _bindCustomerTableEvents(tableInstance) {
  * Se exporta para que purchaseMain.js la llame al cancelar/limpiar compra.
  */
 export function cleanCustomerData() {
-    $('#customer_id').val(0);
+    $('#customer_id').val(1);
     $('#auto_complete_customer').val('');
     $('.customer-name').html('Publico en general');
     $('.customer-email').html('');

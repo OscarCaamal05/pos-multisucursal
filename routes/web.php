@@ -88,7 +88,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
 
-    Route::resource('temp_sale', TempSaleController::class)->names('temp_sale');
+    Route::resource('temp_sale', TempSaleController::class)->only(['index'])->names('temp_sale');
+    Route::post('/temp_sales_detail/getSaleOnHold', [TempSaleDetailController::class, 'getSaleOnHold']);
+    Route::get('/temp_sales_detail/getPendingSales', [TempSaleDetailController::class, 'getPendingSales']);
     Route::get('/temp_sales_detail/{customer}', [TempSaleDetailController::class, 'getDataCustomer']);
     Route::get('/temp_sale/totals/{temp_sale_id}', [TempSaleController::class, 'getTotals']);
     Route::get('/temp_sales_detail/autoCompleteCustomers/{query}', [TempSaleDetailController::class, 'autoCompleteCustomers']);
@@ -102,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/temp_sales_detail/editProductQuantity', [TempSaleDetailController::class, 'editProductQuantity']);
     Route::post('/temp_sales_detail/editProductDiscount', [TempSaleDetailController::class, 'editProductDiscount']);
     Route::get('/temp_sales_detail/findByBarcode/{barcode}', [TempSaleDetailController::class, 'findByBarcode']);
+    Route::post('/temp_sales_detail/sendToWaiting', [TempSaleDetailController::class, 'sendToWaiting']);
 
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);

@@ -12,6 +12,7 @@ use App\Services\TotalsCalculatorService;
 use App\Services\InventoryService;
 use App\Services\Sales\SalesDiscountService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class TempSaleDetailController extends Controller
 {
@@ -290,6 +291,10 @@ class TempSaleDetailController extends Controller
         ]);
     }
 
+    /*------------------------------------------------------------
+     * METODOS PARA GESTIONAR LA VENTA EN GENERAL
+     ---------------------------------------------------------------*/
+
     /**
      * METODO PARA OBTENER LOS DATOS DEL CLIENTE EN LA VENTA TEMPORAL
      */
@@ -314,6 +319,10 @@ class TempSaleDetailController extends Controller
 
         ]);
     }
+
+    /**
+     * METODO PARA CANCELAR LA VENTA TEMPORAL
+     */
     public function cancelSale($temp_id)
     {
         try {
@@ -342,6 +351,10 @@ class TempSaleDetailController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * METODO PARA ACTUALIZAR EL DESCUENTO DE LA VENTA TEMPORAL
+     */
     public function updateDiscount(Request $request)
     {
         try {
@@ -354,4 +367,139 @@ class TempSaleDetailController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al actualizar el descuento.'], 500);
         }
     }
+
+    /*------------------------------------------------------------
+     * METODOS PARA GESTIONAR LAS VENTAS EN ESPERA
+     ---------------------------------------------------------------*/
+
+    /**
+     * METODO PARA ENVIAR LA VENTA A ESPERA
+     */
+    public function sendToWaiting(Request $request)
+    {
+        try {
+            // Validar que la venta temporal tenga productos antes de enviarla a espera
+            $hasDetails = TempSaleDetail::where('temp_sale_id', $request->temp_id)->exists();
+            if (!$hasDetails) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'No hay productos registrados en esta venta.'
+                ], 400);
+            }
+
+            $tempSale = TempSale::where('id_temp_sale', $request->temp_id)->first();
+            $tempSale->customer_id = $request->customer_id; // Asignar el cliente seleccionado a la venta temporal
+            $tempSale->status = 'en_espera';
+            $tempSale->save();
+
+            // Crear nueva venta temporal directamente (sin buscar existente)
+            $userId = auth()->id();
+            $newTemp = TempSale::create([
+                'user_id' => $userId,
+                'status' => 'abierta',
+                'session_token' => session()->getId(),
+                'customer_id' => null,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Venta enviada a espera.',
+                'data' => [
+                    'new_temp_sale_id' => $newTemp->id_temp_sale,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al enviar la venta a espera.'], 500);
+        }
+    }
+
+    /**
+     * METODO PARA OBTENER LAS VENTAS EN ESPERA PARA MOSTRARLAS EN EL DATATABLE
+     */
+    public function getSaleOnHold(Request $request)
+    {
+        $tempId = $request->temp_id;
+        $tempActualId = $request->temp_actual_id;
+
+        // Validar los parametros enviados por la funcion ajax
+        if (!$tempId || !$tempActualId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Parámetros requeridos faltantes.'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Verificar que la venta a retomar existe y está en espera
+            $tempRetomar = TempSale::where('id_temp_sale', $tempId)
+                ->where('status', 'en_espera')
+                ->first();
+
+            if (!$tempRetomar) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'La venta seleccionada no está disponible.'
+                ], 404);
+            }
+
+            // Verificar que la venta actual existe
+            $tempActual = TempSale::where('id_temp_sale', $tempActualId)->first();
+
+            if (!$tempActual) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Venta actual no encontrada.'
+                ], 404);
+            }
+
+            // Validar si la venta actual tiene detalles
+            $hasDetails = TempSaleDetail::where('temp_sale_id', $tempActualId)->exists();
+
+            if (!$hasDetails) {
+                // Si no hay detalles, eliminar la venta actual
+                $tempActual->delete();
+            } else {
+                // Si hay detalles, cambiar estado a 'en_espera'
+                $tempActual->status = 'en_espera';
+                $tempActual->customer_id = $request->customer_id;
+                $tempActual->save();
+            }
+
+            // Cambiar el estado de la venta que se quiere retomar a 'abierta'
+            $tempRetomar->status = 'abierta';
+            $tempRetomar->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'temp_sale_id' => $tempRetomar->id_temp_sale,
+                    'customer_id' => $tempRetomar->customer_id
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getSaleOnHold: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * METODO PARA MOSTRAR LAS VENTAS EN ESPERA EN EL DATATABLE
+     */
+    public function getPendingSales()
+    {
+        try {
+            $query = TempSale::getPendingSales();
+            return DataTables::of($query)->make(true);
+        } catch (\Exception $e) {
+            \Log::error('Error in getPendingSales: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function show() {}
 }

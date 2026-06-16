@@ -3,6 +3,7 @@ import { makeNumericInput } from '../../utils/numericInputs';
 import { initCustomerModule, getCustomerData, cleanCustomerData } from './customerModule';
 import { initProductModule } from './productModule';
 import { initDetailModule, loadTotals } from './detailModule';
+import { initWaitingModule } from './waitingModule';
 
 // =========================================
 // CONFIGURACIÓN GENERAL DEL MÓDULO PRINCIPAL
@@ -51,6 +52,7 @@ function _initModules() {
     initCustomerModule();
     initDetailModule();
     initProductModule();
+    initWaitingModule();
 }
 
 /**

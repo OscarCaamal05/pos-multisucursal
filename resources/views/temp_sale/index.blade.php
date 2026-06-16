@@ -35,23 +35,23 @@
 </div>
 
 <!------------------------------------------------------------------------------------------------------------
-    Modal para mostrar las compras en espera
+    Modal para mostrar las ventas en espera
 -------------------------------------------------------------------------------------------------------------->
-<div class="modal zoomIn" id="modal-purchase-waiting" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
+<div class="modal zoomIn" id="modal-sales-waiting" tabindex="-1" data-bs-backdrop="true" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modal-product-details-Label">Compras en espera</h5>
+                <h5 class="modal-title" id="modal-product-details-Label">Ventas en espera</h5>
             </div>
             <div class="modal-body">
                 <div class="table-responsive table-card">
-                    <table class="table table-nowrap align-middle mb-0" id="tablePurchaseWaiting">
+                    <table class="table table-nowrap align-middle mb-0" id="waiting-sales-table">
                         <thead class="table-light text-muted">
                             <tr>
                                 <th scope="col" style="display: none">ID</th>
-                                <th scope="col" style="display: none">upplier_id</th>
+                                <th scope="col" style="display: none">customer_id</th>
                                 <th scope="col" class="text-center">Fecha</th>
-                                <th scope="col" class="text-center">Proveedor</th>
+                                <th scope="col" class="text-center">Cliente</th>
                                 <th scope="col" class="text-center">Total</th>
                             </tr>
                         </thead>
@@ -509,13 +509,13 @@
                     </button>
                 </div>
                 <div class="card mb-2">
-                    <button class="btn btn-link waves-effect p-1" id="btn-set-waiting">
+                    <button class="btn btn-link waves-effect p-1" id="btn-send-waiting">
                         <div class=" d-flex justify-content-center">
                             <img src="{{URL::asset('build/images/svg-pos/034-reloj-de-arena.svg')}}" alt="" class="avatar-xs" />
                         </div>
                         <span class="text-muted" style="font-size: 12px;">Espera</span>
                     </button>
-                    <button class="btn btn-link waves-effect p-1" id="btn-purchase-waiting">
+                    <button class="btn btn-link waves-effect p-1" id="btn-sale-pending">
                         <div class=" d-flex justify-content-center">
                             <img src="{{URL::asset('build/images/svg-pos/reloj-de-arena.svg')}}" alt="" class="avatar-xs" />
                         </div>
