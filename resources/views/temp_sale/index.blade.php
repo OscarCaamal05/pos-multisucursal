@@ -18,18 +18,60 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-end" id="modal-product-details-Label">Compra</h5>
+                <h5 class="modal-title text-end" id="modal-product-details-Label">Finalizar Venta</h5>
             </div>
             <form id="paymentDetails">
                 @csrf
                 <div class="modal-body">
-                    @include('temp_purchase.payment-fields-form')
+                    @include('temp_sale.payment-fields-form')
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-close-modal-payment">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btn-finalize-purchase">Procesar</button>
+                    <button type="button" class="btn btn-primary" id="btn-process-payment">Procesar</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!--=================================================================================================
+// MODAL PARA MOSTRAR EL CAMBIO DE LA VENTA
+===================================================================================================-->
+
+<div class="modal zoomIn" id="modal-change" role="dialog" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title" id="staticBackdropLabel">Cambio</h5>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="border-bottom">
+                    <!--Card para mostrar el total de pago-->
+                    <div class="card-body d-flex justify-content-center align-items-center">
+                        <div class="col-auto ">
+                            <div class="d-flex justify-content-center mb-3">
+                                <img src="{{URL::asset('build/images/svg-pos/025-intercambiar.svg')}}" alt="" class="avatar-lg" />
+                            </div>
+                            <div class="row">
+                                <span class="info-change-sale align-items-center fs-1 fw-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--Boton para hacer el proceso de la venta-->
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-success btn-label waves-effect waves-light procesar" id="btn-confirm-change">
+                    <i class="ri-checkbox-circle-line label-icon align-middle fs-16 me-2"></i> Aceptar
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -407,6 +449,40 @@
 </div>
 
 <!------------------------------------------------------------------------------------------------------------
+    Modal para editar el precio del producto en la venta
+-------------------------------------------------------------------------------------------------------------->
+<div class="modal zoomIn" id="modal-edit-product-price" data-bs-backdrop="true" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-edit-product-price-label">Editar Precio</h5>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+
+                    <div class="pb-2 mb-3 text-center">
+                        <h4 class="text-body m-1 product-name-label"></h4>
+                    </div>
+                    <div class="row align-items-center justify-content-center">
+                        <div class="col-md-6">
+                            <div class="d-flex ">
+                                <select class="form-select" size="3" multiple aria-label="multiple select example" id="select-product-price">
+                                    
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" id="btn-save-product-price">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!------------------------------------------------------------------------------------------------------------
     Vista principal para realizar una compra
 -------------------------------------------------------------------------------------------------------------->
 <div class="row">
@@ -439,7 +515,7 @@
 
 
                         <div class="col-auto">
-                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y" id="sale-date" value="{{ date('d M, Y') }}">
+                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d M, Y" id="date-operation" value="{{ date('d M, Y') }}">
                         </div>
                         <div class="pb-2 text text-end-muted border-bottom border-light text-center"></div>
                     </div><!--end row-->
@@ -463,7 +539,9 @@
                                 <label class="form-label me-3" for="voucher-type">Comprobante</label>
                                 <select class="form-select" id="voucher-type">
                                     @foreach ($typesReceipts as $voucher)
-                                    <option value="{{ $voucher->id }}">
+                                    <option value="{{ $voucher->id }}"
+                                        data-prefix="{{ $voucher->series_prefix }}"
+                                        data-number="{{ $voucher->current_number }}">
                                         {{ $voucher->name }}
                                     </option>
                                     @endforeach
@@ -472,9 +550,16 @@
                         </div><!--end col-->
 
                         <div class="col-sm-2">
+                            <div class="input-group align-items-center">
+                                <label class="form-label me-3" for="series-prefix">Serie</label>
+                                <input type="text" class="form-control" id="series-prefix" readonly>
+                            </div>
+                        </div><!--end col-->
+
+                        <div class="col-sm-2">
                             <div class="input-group align-items-center auto-select">
-                                <label class="form-label me-3" for="invoice_number">Folio</label>
-                                <input type="text" class="form-control" id="invoice_number">
+                                <label class="form-label me-3" for="current-number">Folio</label>
+                                <input type="text" class="form-control" id="current-number" readonly>
                             </div>
                         </div><!--end col-->
                     </div><!--end row -->
@@ -506,6 +591,12 @@
                             <img src="{{URL::asset('build/images/svg-pos/035-descuento.svg')}}" alt="" class="avatar-xs" />
                         </div>
                         <span class="text-muted" style="font-size: 12px;">Descuento (F3)</span>
+                    </button>
+                    <button class="btn btn-link waves-effect p-1" id="btn-edit-product-price">
+                        <div class=" d-flex justify-content-center">
+                            <img src="{{URL::asset('build/images/svg-pos/017-etiqueta-de-venta.svg')}}" alt="" class="avatar-xs" />
+                        </div>
+                        <span class="text-muted" style="font-size: 12px;">Precios (F4)</span>
                     </button>
                 </div>
                 <div class="card mb-2">
@@ -626,7 +717,7 @@
                         <span>
                             <i class="ri-wallet-3-line me-2 align-middle text-muted fs-16"></i>
                             <span class="customer-credit-available">
-                                Crédito disponible: $0.00
+                                Crédito: $0.00
                             </span>
                         </span>
                     </div>
@@ -692,8 +783,8 @@
 
         <!--Botones para procesar la compra-->
         <div class="d-flex">
-            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold" id="btn-process-sale">
-                <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Pagar
+            <button class="btn btn-soft-success btn-lg w-100 fs-4 fw-semibold" id="btn-modal-payment">
+                <i class=" ri-shopping-cart-2-line align-middle me-1"></i> Cobrar (ESC)
             </button>
         </div>
         <div class="d-flex">
