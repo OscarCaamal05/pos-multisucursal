@@ -16,7 +16,7 @@ export function showAlert(icon, title, message) {
 // =========================================
 // FUNCIÓN: Muestra alerta de confirmación
 // =========================================
-export function showConfirmationAlert(title, message, confirmText, cancelText, callback = () => {}) {
+export function showConfirmationAlert(title, message, confirmText, cancelText, callback = () => { }) {
     Swal.fire({
         title: title,
         text: message,
@@ -31,6 +31,26 @@ export function showConfirmationAlert(title, message, confirmText, cancelText, c
         buttonsStyling: false
     }).then((result) => {
         callback(result.isConfirmed);
+    });
+}
+
+// =========================================
+// FUNCIÓN: Alerta toast
+// =========================================
+export function showToast(icon, title, position='top-end', timer=1500) {
+    Swal.mixin({
+        toast: true,
+        position: position,
+        showConfirmButton: false,
+        timer: timer,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    }).fire({
+        icon: icon,
+        title: title,
     });
 }
 

@@ -22,16 +22,16 @@ class TempSale extends Model
     {
         return DB::table('temp_sales as t')
             ->join('customers as c', 't.customer_id', '=', 'c.id')
-            ->join('temp_sales_details as td', 't.id_temp_sale', '=', 'td.temp_sale_id')
+            ->join('temp_sale_details as td', 't.id_temp_sale', '=', 'td.temp_sale_id')
             ->select(
-                't.id_temp_sales',
+                't.id_temp_sale',
                 't.customer_id',
                 'c.name as customer_name',
-                't.created_at as date_created',
+                't.updated_at as date_created',
                 DB::raw('SUM(td.total) - t.discount as total_amount')
             )
             ->where('t.status', 'en_espera')
-            ->groupBy('t.id_temp_sale', 't.customer_id', 'c.name', 't.created_at');
+            ->groupBy('t.id_temp_sale', 't.customer_id', 'c.name', 't.updated_at');
     }
 
     public function details()

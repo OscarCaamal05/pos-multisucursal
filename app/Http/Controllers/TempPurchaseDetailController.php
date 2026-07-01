@@ -112,9 +112,6 @@ class TempPurchaseDetailController extends Controller
     {
 
         try {
-            \Log::info('Inicio de actualización de detalle de compra:', [
-                'request_data' => $request->all()
-            ]);
 
             $request->validate([
                 'temp_purchase_id' => 'required',
@@ -801,7 +798,6 @@ class TempPurchaseDetailController extends Controller
         // Buscar el detalle por id_temp
         $detail = TempPurchaseDetail::find($id);
         if (!$detail) {
-            \Log::error('Detalle temporal no encontrado:', ['id_temp' => $id]);
             return response()->json(['error' => 'No encontrado'], 404);
         }
 
@@ -845,12 +841,6 @@ class TempPurchaseDetailController extends Controller
             'has_temp_data' => true
         ];
 
-        \Log::info('Datos del detalle recuperados:', [
-            'id_temp' => $detail->id_temp,
-            'temp_purchase_id' => $detail->temp_purchase_id,
-            'combined_data' => $combinedData
-        ]);
-
         return response()->json([
             'success' => true,
             'detail' => $combinedData
@@ -863,8 +853,8 @@ class TempPurchaseDetailController extends Controller
         $iva = 16; // Cambiar cuando ya este la tabla configuración
 
         // Aplicar el descuento global al subtotal si existe 
-        $dicount_applied = round($discount, 2);
-        $sub_total_discount = round($sub_total - $dicount_applied, 2);
+        $discount_applied = round($discount, 2);
+        $sub_total_discount = round($sub_total - $discount_applied, 2);
 
         // Calcular el impuesto sobre el subtotal con descuento
         $tax = round($sub_total_discount * ($iva / 100), 2);
@@ -873,7 +863,7 @@ class TempPurchaseDetailController extends Controller
 
         return [
             'sub_total' => $sub_total,
-            'discount' => $dicount_applied,
+            'discount' => $discount_applied,
             'sub_total_discount' => $sub_total_discount,
             'tax' => $tax,
             'total_siva' => $total_siva,

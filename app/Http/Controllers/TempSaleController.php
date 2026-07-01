@@ -48,4 +48,27 @@ class TempSaleController extends Controller
 
         return view('temp_sale.index', compact('temp', 'typesDocuments', 'typesReceipts', 'departments', 'categories', 'units', 'taxes'));
     }
+
+    /**
+     * Crear un id de venta temporal o recupera uno existente.
+     */
+    public function getOrCreateTempSale()
+    {
+        $userId = auth()->id();
+        $temp = TempSale::where('user_id', $userId)
+            ->where('status', 'abierta')
+            ->first();
+
+        if (!$temp) {
+            $temp = TempSale::create([
+                'user_id' => $userId,
+                'status' => 'abierta',
+                'customer_id' => null,
+                'discount' => 0,
+                'session_token' => session()->getId(),
+            ]);
+        }
+
+        return response()->json(['temp' => $temp]);
+    }
 }

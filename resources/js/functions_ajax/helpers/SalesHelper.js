@@ -43,6 +43,21 @@ export const SALES_CONFIG = {
     }
 };
 
+/**
+ * Renderiza los botones de acciones (editar, eliminar)
+ * @param {any} data - ID del elemento
+ * @returns {string} HTML renderizado
+ */
+export function renderActionsColumn(data) {
+    return `
+        <div class="hstack gap-3 fs-15">
+            <a href="javascript:void(0);" class="link-danger btn-delete-detail" data-id="${data}">
+                <i class="ri-delete-bin-5-line"></i>
+            </a>
+        </div>
+    `;
+}
+
 // =========================================
 // FUNCIONES DE VALIDACIÓN
 // =========================================

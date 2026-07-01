@@ -29,7 +29,7 @@ Route::get('/categories/data', [CategoryController::class, 'getCategories'])->na
 Route::get('/departments/data', [DepartmentsController::class, 'getDepartments'])->name('departments.data');
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
 Route::get('/temp_purchases_detail/data', [TempPurchaseDetailController::class, 'getProductDetails'])->name('temp_purchases_detail.data');
-Route::get('/temp_sale_detail/data', [TempSaleDetailController::class, 'getProductDetails'])->name('temp_sale_detail.data');
+Route::get('/temp_sales_detail/data', [TempSaleDetailController::class, 'getProductDetails'])->name('temp_sales_detail.data');
 Route::get('/temp_purchases_detail/getPendingPurchases', [TempPurchaseDetailController::class, 'getPendingPurchases']);
 
 // RUTAS DE PRODUCTOS (ANTES DEL RESOURCE)
@@ -88,12 +88,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
 
-    Route::resource('temp_sale', TempSaleController::class)->names('temp_sale');
-    Route::get('/temp_sale_detail/{customer}', [TempSaleDetailController::class, 'getDataCustomer']);
+    Route::resource('temp_sale', TempSaleController::class)->only(['index'])->names('temp_sale');
+    Route::post('/temp_sales_detail/getSaleOnHold', [TempSaleDetailController::class, 'getSaleOnHold']);
+    Route::get('/temp_sales_detail/getPendingSales', [TempSaleDetailController::class, 'getPendingSales']);
+    Route::get('/temp_sales_detail/{customer}', [TempSaleDetailController::class, 'getDataCustomer'])->where('customer', '[0-9]+');
     Route::get('/temp_sale/totals/{temp_sale_id}', [TempSaleController::class, 'getTotals']);
-    Route::get('/temp_sale_detail/autoCompleteCustomers/{query}', [TempSaleDetailController::class, 'autoCompleteCustomers']);
-    Route::get('/temp_sale_detail/autoCompleteProducts/{query}', [TempSaleDetailController::class, 'autoCompleteProducts']);
-    Route::post('/temp_sale_detail/addProductToSalesDetails', [TempSaleDetailController::class, 'addProductToSalesDetails']);
+    Route::get('/temp_sales_detail/autoCompleteCustomers/{query}', [TempSaleDetailController::class, 'autoCompleteCustomers']);
+    Route::get('/temp_sales_detail/autoCompleteProducts/{query}', [TempSaleDetailController::class, 'autoCompleteProducts']);
+    Route::post('/temp_sales_detail/addProductToSalesDetails', [TempSaleDetailController::class, 'addProductToSalesDetails']);
+    Route::post('/temp_sales_detail/updateDiscount/', [TempSaleDetailController::class, 'updateDiscount']);
+    Route::get('/temp_sales_detail/cancelSale/{temp_id}', [TempSaleDetailController::class, 'cancelSale']);
+    Route::get('/temp_sales_detail/totals/{temp_sale_id}', [TempSaleDetailController::class, 'getTotals']);
+    Route::post('/temp_sales_detail/removeProductFromTempSale', [TempSaleDetailController::class, 'removeProductFromTempSale']);
+    Route::post('/temp_sales_detail/editProductName', [TempSaleDetailController::class, 'editProductName']);
+    Route::post('/temp_sales_detail/editProductQuantity', [TempSaleDetailController::class, 'editProductQuantity']);
+    Route::post('/temp_sales_detail/editProductDiscount', [TempSaleDetailController::class, 'editProductDiscount']);
+    Route::get('/temp_sales_detail/findByBarcode/{barcode}', [TempSaleDetailController::class, 'findByBarcode']);
+    Route::post('/temp_sales_detail/sendToWaiting', [TempSaleDetailController::class, 'sendToWaiting']);
+    Route::post('/temp_sales_detail/processPayment', [TempSaleDetailController::class, 'processPayment']);
+    Route::get('/temp_sales_detail/checkProductPrice/{product_id}', [TempSaleDetailController::class, 'checkProductPrice']);
+    Route::post('/temp_sales_detail/updatePrice', [TempSaleDetailController::class, 'updatePrice']);
+    Route::get('sales/{saleId}/receipt/{voucherId}/preview', [TempSaleDetailController::class, 'preview']);
 
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);
