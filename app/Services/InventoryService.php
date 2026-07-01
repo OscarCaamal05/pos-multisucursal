@@ -8,24 +8,28 @@ use Illuminate\Support\Facades\DB;
 class InventoryService
 {
 
-    public function updateProductStock(int $productId, float $quantity): void
+    public function updateProductStock(int $productId, float $quantity, string $operation = 'add'): void
     {
         $inventory = BranchInventories::where('product_id', $productId)->first();
         if ($inventory) {
-            $inventory->quantity = $quantity;
+            if ($operation === 'add') {
+                $inventory->increment('quantity', $quantity);
+            } elseif ($operation === 'subtract') {
+                $inventory->decrement('quantity', $quantity);
+            }
             $inventory->save();
         }
     }
 
-    public function registerInventoryMovement(int $productId, float $quantity, float $unitPurchasePrice, float $unitSalePrice, float $totalCost, string $movementType, string $movementReason): void
+    public function registerInventoryMovement(int $productId, float $quantity, float $unitPurchasePrice, float $unitSalePrice, float $totalCost, string $movementType, string $movementReason, int $branchId = 1, int $referenceId): void
     {
         DB::table('kardex')->insert([
             'product_id'          => $productId,
-            'branch_id'           => 1,  // cambiar por branch_id dinámico si es necesario
+            'branch_id'           => $branchId,  // cambiar por branch_id dinámico si es necesario
             'movement_type'       => $movementType , // o 'salida' según corresponda
             'movement_reason'     => $movementReason, // o 'Compra' según corresponda
             'reference_type'      => null,
-            'reference_id'        => null,
+            'reference_id'        => $referenceId,
             'quantity'            => $quantity,
             'unit_purchase_price' => $unitPurchasePrice,
             'unit_sale_price'     => $unitSalePrice,
