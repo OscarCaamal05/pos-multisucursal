@@ -147,6 +147,11 @@ class TempSaleDetailController extends Controller
                 'status' => 'success',
                 'temp_sale_id' => $tempSaleId,
                 'stock_warning' => $stockWarning,
+                'data_product' => [
+                    'id_temp_sale_detail' => $tempSaleDetail->id_temp_sale_detail,
+                    'product_name' => $productDetails->name,
+                    'unit_name' => $productDetails->sale_unit_name,
+                ]
             ], $totals));
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
@@ -614,9 +619,19 @@ class TempSaleDetailController extends Controller
 
     public function preview(int $saleId, int $voucherId)
     {
-        $data = $this->receiptPdfService->getSaleDataForView($saleId);
+        try {
+            $data = $this->receiptPdfService->getSaleDataForView($saleId);
 
-        return view('receipts.ticket', $data); // Renderiza directo, sin mPDF
+            $view = $this->receiptPdfService->resolveView($voucherId);
+
+            return view($view, $data);
+        } catch (\Throwable $e) {
+            \Log::error('Error al generar preview: ' . $e->getMessage());
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No se pudo generar el comprobante.'
+            ], 500);
+        }
     }
 
     public function printVoucher(int $saleId, int $voucherId)

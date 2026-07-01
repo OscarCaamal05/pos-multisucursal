@@ -105,7 +105,7 @@ function _executeSalePayment(method) {
 
             const saleId = response.sale_id;
             const voucherId = parseInt($('#voucher-type').val()); // El comprobante seleccionado
-
+            console.log('saleId', saleId, 'voucherId', voucherId);
             if (response.data?.new_temp_sale_id) {
                 $(sel.tempId).val(response.data.new_temp_sale_id);
             }

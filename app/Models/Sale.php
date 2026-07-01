@@ -49,6 +49,6 @@ class Sale extends Model
     // Relación con el tipo de comprobante
     public function voucher(): BelongsTo
     {
-        return $this->belongsTo(TypesReceipt::class, 'voucher_id');
+        return $this->belongsTo(TypesReceipts ::class, 'voucher_id');
     }
 }

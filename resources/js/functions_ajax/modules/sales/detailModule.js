@@ -917,5 +917,19 @@ function _listenProductEvents() {
 
         // 3. Limpiar el campo de búsqueda de productos y poner foco para agilizar la venta
         $('#auto_complete_product').val('').trigger('focus');
+
+        // 4. Limpiar la fila seleccionada para evitar errores al editar
+        selectedRowDetail = null;
+        
+        // 5. VALIDAR si el producto es de venta por KG
+        if (totals?.data_product?.unit_name === 'KG') {
+            selectedRowDetail = {
+                id_temp_sale_detail: totals.data_product.id_temp_sale_detail,
+                temp_sale_id: totals.temp_sale_id,
+                product_name: totals.data_product.product_name,
+                quantity: totals.data_product.quantity ?? 1
+            };
+            openEditQuantityModal(selectedRowDetail);
+        }
     });
 }

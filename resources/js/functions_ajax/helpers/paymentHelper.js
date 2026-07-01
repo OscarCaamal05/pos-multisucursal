@@ -264,7 +264,7 @@ export function sumPaymentMethods(config) {
     let total = 0;
 
     $(config.selectors.paymentInputs).each(function () {
-        const value = parseFloat($(this).val()) || '0.00';
+        const value = parseFloat($(this).val()) || 0;
         total += value;
     });
     return parseFloat(total.toFixed(2));
