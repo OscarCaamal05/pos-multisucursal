@@ -3,15 +3,15 @@
     <div class="col-5">
 
         <div class="mb-3">
-            <label for="product_name">Descripción</label>
+            <label for="name">Descripción</label>
             <div class="form-icon">
                 <input type="text"
-                    class="form-control form-control-icon @error('product_name') is-invalid @enderror"
-                    name="product_name"
-                    id="product_name"
-                    value="{{ old('product_name') }}">
+                    class="form-control form-control-icon @error('name') is-invalid @enderror"
+                    name="name"
+                    id="name"
+                    value="{{ old('name') }}">
                 <i class="ri-contacts-line"></i>
-                @error('product_name')
+                @error('name')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -58,18 +58,18 @@
     <div class="col-3">
 
         <div class="mb-3">
-            <label for="product_category_id">Categoria</label>
+            <label for="category_id">Categoria</label>
             <select
-                name="product_category_id"
-                id="product_category_id"
-                class="products_categories form-select @error('product_category_id') is-invalid @enderror">
+                name="category_id"
+                id="category_id"
+                class="products_categories form-select @error('category_id') is-invalid @enderror">
                 @foreach ($categories as $category)
                 <option value="{{ $category->id }}" data-department-id="{{ $category->department_id }}">
-                    {{ $category->category_name }}
+                    {{ $category->name }}
                 </option>
                 @endforeach
             </select>
-            @error('product_category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            @error('category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
 
     </div>
@@ -81,17 +81,17 @@
     <div class="col-3">
 
         <div class="mb-3">
-            <label for="product_department_id">Departamento</label>
-            <select name="product_department_id"
-                id="product_department_id"
-                class="products_departments form-select @error('product_department_id') is-invalid @enderror">
+            <label for="department_id">Departamento</label>
+            <select name="department_id"
+                id="department_id"
+                class="products_departments form-select @error('department_id') is-invalid @enderror">
                 @foreach ($departments as $department)
                 <option value="{{ $department->id }}">
-                    {{ $department->department_name }}
+                    {{ $department->name }}
                 </option>
                 @endforeach
             </select>
-            @error('product_department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
 
     </div>
@@ -153,20 +153,23 @@
 
     <div class="row d-flex justify-content-center align-items-center">
 
-        <div class="d-flex justify-content-center align-items-center col-auto px-3 mb-2">
+        <div class="col-sm-2">
+            <!-- Overflow -->
+            <div class="overflow-hidden p-3 mb-0 bg-light" style="height: 70px;">
+                @foreach ($taxes as $tax)
+                <div class="form-check checkbox checkbox-secondary mb-0">
 
-            <div class="form-check checkbox checkbox-secondary mb-0">
-                <!--CHECK PARA CALCULAR EL IVA PRODUCTO-->
-                <input class="form-check-input"
-                    id="iva"
-                    name="iva"
-                    type="checkbox"
-                    value="1"
-                    data-iva="16">
-                <label class="form-check-label" for="chk_iva">I.V.A.</label>
+                    <!--CHECK PARA LOS IMPUESTOS APLICADOS AL PRODUCTO-->
+                    <input class="form-check-input"
+                        id="taxes"
+                        name="taxes[]"
+                        value="{{ $tax->id}}"
+                        type="checkbox" data-tax-value="{{ $tax->rate }}">
+                    <label class="form-check-label tax-name">{{ $tax->name }}</label>
 
+                </div>
+                @endforeach
             </div>
-
         </div>
 
         <div class="col-sm-2 mb-2">
@@ -197,11 +200,11 @@
 
                 <!--CHECK PARA EL PRECIO NETO DEL PRODUCTO-->
                 <input class="form-check-input"
-                    id="neto"
-                    name="neto"
+                    id="is_net_price"
+                    name="is_net_price"
                     value="1"
                     type="checkbox" checked>
-                <label class="form-check-label" for="neto">Neto</label>
+                <label class="form-check-label" for="is_net_price">Neto</label>
 
             </div>
         </div>
@@ -242,24 +245,6 @@
             <div class="">
                 <label id="" class="purchase_unit_text form-label text-muted">X Pza</label>
             </div>
-        </div>
-
-    </div>
-
-    <div class="col-sm-2">
-
-        <div class="mb-3">
-            <label for="stock">Existencia</label>
-
-            <input type="number"
-                class="form-control text-end only-numbers @error('stock') is-invalid @enderror"
-                name="stock"
-                id="stock"
-                min=0
-                value="{{ old('stock', '0') }}">
-            @error('stock')
-            <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
         </div>
 
     </div>

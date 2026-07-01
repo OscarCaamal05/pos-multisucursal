@@ -2,7 +2,9 @@
 // IMPORTACION DE FUNCIONES GENERICAS PARA LAS ALERTAS
 // =========================================
 import { showAlert, showConfirmationAlert } from './utils/alerts';
+import { makeNumericInput } from './utils/numericInputs';
 import { bindSupplierFormSubmit, initCreditTermsAndDate, showSupplierModal, closeSupplierModal, formatCleave } from './helpers/supplierHelper';
+import { className } from 'gridjs';
 
 // =========================================
 // VARIABLES GLOBALES
@@ -37,9 +39,20 @@ $(document).ready(function () {
     $('#credit_available').on('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
+    
+    closeSupplierModal();
 
-    initCreditTermsAndDate("#credit_terms", "#credit_due_date", 30);
+    initCreditTermsAndDate("#payment_days_granted", "#credit_due_date", 30);
 
+    // Convertir los campos numéricos a inputs numéricos con formato adecuado
+    makeNumericInput('#credit_available', {type: 'decimal', decimals: 2});
+    makeNumericInput('#supplier_interest_rate', {type: 'decimal', decimals: 2});
+    makeNumericInput('#supplier_late_fee', {type: 'decimal', decimals: 2});
+    makeNumericInput('#grace_period_days', {type: 'integer'});
+    makeNumericInput('#payment_day_of_month', {type: 'integer'});
+    makeNumericInput('#early_payment_discount', {type: 'decimal', decimals: 2});
+    makeNumericInput('#early_payment_days', {type: 'integer'});
+    makeNumericInput('#credit_limit_granted', {type: 'decimal', decimals: 2});
 })
 
 function bindEvents() {
@@ -47,7 +60,6 @@ function bindEvents() {
     bindEditEvents();
     bindToggleStatusEvents();
     formatCleave();
-    closeSupplierModal();
 }
 
 function initializeDataTable() {
@@ -60,16 +72,18 @@ function initializeDataTable() {
             { data: 'representative', name: 'representative' },
             { data: 'company_name', name: 'company_name' },
             {
-                data: 'rfc',
-                name: 'rfc',
+                data: 'tax_id',
+                name: 'tax_id',
                 orderable: false,
-                searchable: false
+                searchable: false,
+                className: 'text-center',
             },
             {
                 data: 'phone',
                 name: 'phone',
                 orderable: false,
                 searchable: false,
+                className: 'text-center',
                 render: function (data, type, row) {
                     // Si está vacío o null
                     if (!data) return '';
@@ -89,6 +103,7 @@ function initializeDataTable() {
             {
                 data: 'email',
                 name: 'email',
+                className: 'text-center',
                 orderable: false,
             },
             {
@@ -103,24 +118,10 @@ function initializeDataTable() {
                 name: 'credit_available',
                 orderable: false,
                 searchable: false,
+                className: 'text-center',
                 render: function (data, type, row) {
-                    return data.credit_available - data.credit;
+                    return data.credit_limit_granted - data.credit_balance;
                 }
-            },
-            {
-                data: 'credit',
-                name: 'credit',
-                visible: false
-            },
-            {
-                data: 'credit_due_date',
-                name: 'credit_due_date',
-                visible: false
-            },
-            {
-                data: 'credit_terms',
-                name: 'credit_terms',
-                visible: false
             },
             {
                 data: 'status',
@@ -204,7 +205,37 @@ function bindEditEvents() {
             'Cancelar',
             (confirmed) => {
                 if (confirmed) {
-                    showSupplierModal(rowData);
+                    showSupplierModal({ id: rowData.id })
+                        .then((response) => {
+                            if (response.status === 'success') {
+                                // Valores generales
+                                $('#representative').val(response.data.representative);
+                                $('#company_name').val(response.data.company_name);
+                                $('#rfc').val(response.data.tax_id);
+                                $('#phone').val(response.data.phone);
+                                $('#email').val(response.data.email);
+                                $('#credit_limit_granted').val(response.data.credit_limit_granted);
+                                $('#address').val(response.data.address);
+
+                                // Datos adicionales del crédito
+                                $('#payment_days_granted').val(response.data.payment_days_granted);
+                                $('#credit_due_date').val(response.data.credit_due_date);
+                                $('#payment_day_of_month').val(response.data.payment_day_of_month);
+                                $('#supplier_interest_rate').val(response.data.supplier_interest_rate);
+                                $('#supplier_late_fee').val(response.data.supplier_late_fee);
+                                $('#grace_period_days').val(response.data.grace_period_days);
+                                $('#early_payment_discount').val(response.data.early_payment_discount);
+                                $('#early_payment_days').val(response.data.early_payment_days);
+                                $('#choices-payment-frequency-input').val(response.data.payment_frequency).trigger('change');
+                            }
+                        })
+                        .catch(() => {
+                            showAlert(
+                                'error',
+                                'Error',
+                                'No se pudieron cargar los datos del registro.'
+                            );
+                        });
                 }
             }
         );

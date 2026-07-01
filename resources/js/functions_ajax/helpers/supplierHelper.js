@@ -148,7 +148,7 @@ export function initCreditTermsAndDate(daysSelector, dateSelector, defaultDays =
 
     // Remover event listeners anteriores para evitar duplicados
     $daysInput.off("input.creditTerms");
-    
+
     // Escuchar cambios en input días -> actualizar fecha
     $daysInput.on("input.creditTerms", function () {
         const days = parseInt($(this).val());
@@ -173,13 +173,10 @@ export function closeSupplierModal() {
     $(document).on('click', '#btn-cancelar-supplier, #btn-close-modal-supplier', function (e) {
         e.preventDefault();
 
-        const hasData = $('#representative').val().trim() !== '' ||
-            $('#company_name').val().trim() !== '' ||
-            $('#rfc').val().trim() !== '' ||
-            $('#phone').val().trim() !== '' ||
-            $('#email').val().trim() !== '' ||
-            $('#credit_available').val().trim() !== '' ||
-            $('#address').val().trim() !== '';
+        const hasData = $('#supplierForm').find(':input').filter(function () {
+            const tag = this.tagName.toLowerCase();
+            return tag !== 'select' && $(this).val().trim() !== '' && !$(this).is(':disabled');
+        }).length > 0;
 
         if (hasData) {
             showConfirmationAlert(
@@ -213,24 +210,23 @@ export function closeSupplierModal() {
  */
 export function showSupplierModal(data = null) {
     resetSupplierForm();
-
     if (data) {
+
         $('.modal-title').text('Editar Proveedor');
-        $('#representative').val(data.representative);
-        $('#company_name').val(data.company_name);
-        $('#rfc').val(data.rfc);
-        $('#phone').val(data.phone);
-        $('#email').val(data.email);
-        $('#credit_available').val(data.credit_available);
-        $('#address').val(data.address);
-        $('#credit_terms').val(data.credit_terms);
-        $('#credit_due_date').val(data.credit_due_date);
         $('#supplierId').val(data.id);
+        $('#supplierModal').modal('show');
+
+        return $.ajax({
+            url: `/suppliers/${data.id}/edit`,
+            method: 'GET',
+            dataType: 'json'
+        });
     } else {
         $('.modal-title').text('Agregar Proveedor');
+        $('#supplierModal').modal('show');
+        return Promise.resolve(null);
     }
     formatCleave();
-    $('#supplierModal').modal('show');
 }
 
 // =========================================

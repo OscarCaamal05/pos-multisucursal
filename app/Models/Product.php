@@ -10,14 +10,19 @@ use function PHPSTORM_META\map;
 class Product extends Model
 {
     protected $fillable = [
-        'product_name',
+        'name',
         'barcode',
-        'product_description',
-        'iva',
-        'neto',
-        'is_fractional',
+        'description',
+        'allow_fractional_sale',
+        'allow_decimal_quantity',
         'is_service',
+        'is_net_price',
         'conversion_factor',
+        'requires_batch_control',
+        'requires_serial_number',
+        'shelf_life_days',
+        'alert_days_before_expiration',
+        'expiry_date',
         'purchase_price',
         'sale_price_1',
         'price_1_min_qty',
@@ -26,85 +31,160 @@ class Product extends Model
         'sale_price_3',
         'price_3_min_qty',
         'unit_price',
-        'stock',
-        'stock_min',
-        'stock_max',
         'image',
-        'status',
-        'product_category_id',
-        'product_department_id',
+        'is_active',
+        'category_id',
+        'department_id',
         'sale_unit_id',
         'purchase_unit_id',
     ];
 
+    protected $casts = [
+        'allow_fractional_sale' => 'boolean',
+        'allow_decimal_quantity' => 'boolean',
+        'requires_batch_control' => 'boolean',
+        'requires_serial_number' => 'boolean',
+        'is_service' => 'boolean',
+        'is_active' => 'boolean',
+    ];
+
+    // =========================================
+    // ACCESSOR: URL completa de la imagen
+    // =========================================
+
+    /**
+     * Obtiene la URL completa de la imagen del producto
+     *
+     * @return string|null
+     */
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene el nombre del archivo de la imagen
+     *
+     * @return string|null
+     */
+    public function getImageNameAttribute()
+    {
+        if ($this->image) {
+            return basename($this->image);
+        }
+        return null;
+    }
+
+    // =========================================
+    // MÉTODOS ESTÁTICOS
+    // =========================================
+
     public static function getProductsData()
     {
         return DB::table('products as p')
-            ->join('categories as c', 'p.product_category_id', '=', 'c.id')
-            ->join('departments as d', 'p.product_department_id', '=', 'd.id')
+            ->join('categories as c', 'p.category_id', '=', 'c.id')
+            ->join('departments as d', 'p.department_id', '=', 'd.id')
             ->join('units as u', 'p.sale_unit_id', '=', 'u.id')
             ->select(
                 'p.id',
-                'p.product_name',
+                'p.name',
                 'p.barcode',
-                'c.category_name',
-                'd.department_name',
-                'p.stock',
+                'c.name as category_name',
+                'd.name as department_name',
+                DB::raw('COALESCE(bi.quantity, 0) as stock'),  // Stock desde branch_inventories
                 'p.sale_price_1',
                 'u.name as sale_unit_name',
-                'p.status',
-            );
+                'p.is_active',
+            )
+            ->leftJoin('branch_inventories as bi', function ($join) {
+                $join->on('p.id', '=', 'bi.product_id')
+                    ->where('bi.branch_id', '=', 1);
+            });
     }
 
     public static function getWithDetails()
     {
         return DB::table('products as p')
-            ->join('categories as c', 'p.product_category_id', '=', 'c.id')
-            ->join('departments as d', 'p.product_department_id', '=', 'd.id')
-            ->join('units as up', 'p.purchase_unit_id', '=', 'up.id')
-            ->join('units as us', 'p.sale_unit_id', '=', 'us.id')
+            ->join('categories as c', 'p.category_id', '=', 'c.id')
+            ->join('departments as d', 'p.department_id', '=', 'd.id')
+            ->join('units as u_sale', 'p.sale_unit_id', '=', 'u_sale.id')
+            ->join('units as u_purchase', 'p.purchase_unit_id', '=', 'u_purchase.id')
+            ->leftJoin('branch_inventories as bi', function ($join) {
+                $join->on('p.id', '=', 'bi.product_id')
+                    ->where('bi.branch_id', '=', 1);
+            })
+            ->leftJoin('product_taxes as pt', 'p.id', '=', 'pt.product_id')
             ->select(
+                'p.*',
+                'c.name as category_name',
+                'c.id as category_id',
+                'd.name as department_name',
+                'd.id as department_id',
+                DB::raw('COALESCE(bi.quantity, 0) as stock'),
+                DB::raw('COALESCE(bi.stock_min, 0) as stock_min'),
+                DB::raw('COALESCE(bi.stock_max, 0) as stock_max'),
+                'u_sale.id as sale_unit_id',
+                'u_sale.name as sale_unit_name',
+                'u_purchase.id as purchase_unit_id',
+                'u_purchase.name as purchase_unit_name',
+                DB::raw('GROUP_CONCAT(pt.tax_id) as tax_ids')
+            )
+            ->groupBy(
                 'p.id',
-                'p.product_name',
+                'p.name',
                 'p.barcode',
-                'p.iva',
-                'p.neto',
-                'p.is_fractional',
+                'p.description',
+                'p.allow_fractional_sale',
+                'p.allow_decimal_quantity',
                 'p.is_service',
+                'p.is_net_price',
                 'p.conversion_factor',
-                'p.product_description',
-                'p.stock',
-                'p.stock_min',
-                'p.stock_max',
-                'p.image',
-                'p.unit_price',
+                'p.requires_batch_control',
+                'p.requires_serial_number',
+                'p.shelf_life_days',
+                'p.alert_days_before_expiration',
+                'p.purchase_price',
+                'p.sale_price_1',
                 'p.price_1_min_qty',
                 'p.sale_price_2',
                 'p.price_2_min_qty',
                 'p.sale_price_3',
                 'p.price_3_min_qty',
-                'c.id as category_id',
-                'c.category_name',
-                'd.id as department_id',
-                'd.department_name',
-                'up.id as purchase_unit_id',
-                'up.name as purchase_unit_name',
-                'us.id as sale_unit_id',
-                'us.name as sale_unit_name',
-                'p.purchase_price',
-                'p.sale_price_1',
-                'p.status'
+                'p.unit_price',
+                'p.image',
+                'p.expiry_date',
+                'p.is_active',
+                'p.category_id',
+                'p.department_id',
+                'p.sale_unit_id',
+                'p.purchase_unit_id',
+                'p.created_at',
+                'p.updated_at',
+                'c.name',
+                'c.id',
+                'd.name',
+                'd.id',
+                'bi.quantity',
+                'bi.stock_min',
+                'bi.stock_max',
+                'u_sale.id',
+                'u_sale.name',
+                'u_purchase.id',
+                'u_purchase.name'
             );
     }
 
     public function category()
     {
-        return $this->belongsTo(Category::class, 'product_category_id');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     public function department()
     {
-        return $this->belongsTo(Department::class, 'product_department_id');
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function purchaseUnit()
@@ -115,5 +195,17 @@ class Product extends Model
     public function saleUnit()
     {
         return $this->belongsTo(Unit::class, 'sale_unit_id');
+    }
+
+    public function taxes()
+    {
+        return $this->belongsToMany(Taxes::class, 'product_taxes', 'product_id', 'tax_id')
+            ->withPivot('rate_override', 'is_active')
+            ->withTimestamps();
+    }
+
+    public function branchInventories()
+    {
+        return $this->hasMany(BranchInventories::class);
     }
 }

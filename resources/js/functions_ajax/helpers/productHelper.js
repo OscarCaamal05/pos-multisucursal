@@ -1,4 +1,5 @@
 import { showAlert, clearValidationErrors, handleValidationError, showConfirmationAlert } from '../utils/alerts';
+import { getFilePondFile, clearFilePondFiles } from '../utils/filePondManager';
 /**
  * Asigna el submit de un formulario de departamento con opciones personalizadas.
  *
@@ -25,16 +26,30 @@ export function bindProductFormSubmit({
         const disabledFields = $(this).find(':input:disabled').removeAttr('disabled');
         const formObject = {};
 
-        // Para depurar los datos del formulario
-        /*$(this).serializeArray().forEach(({ name, value }) => {
-            formObject[name] = value;
-        });
-        console.log(formObject)*/
+        // =========================================
+        // CREAR FORMDATA PARA SOPORTAR ARCHIVOS
+        // =========================================
+        const formData = new FormData(this);
+
+        // Agregar el método PUT si es edición (Laravel no lo reconoce en FormData)
+        if (isEdit) {
+            formData.append('_method', 'PUT');
+        }
+
+        // Obtener la imagen de FilePond si existe (compatible con múltiples módulos)
+        const productImage = getProductImage();
+        if (productImage) {
+            formData.append('image', productImage);
+        } else if ($('#remove_image').val() === '1') {
+            formData.append('remove_image', '1');
+        }
 
         $.ajax({
             url: isEdit ? `/products/${productId}` : $form.data('storeUrl'),
-            method: isEdit ? 'PUT' : 'POST',
-            data: $form.serialize(),
+            method: 'POST', // Siempre POST con FormData
+            data: formData,
+            processData: false,  // NO procesar los datos
+            contentType: false,  // NO establecer contentType (automático)
             success: function (response) {
                 // Cierra el modal
                 $(modalSelector).modal('hide');
@@ -64,6 +79,27 @@ export function bindProductFormSubmit({
             }
         });
     });
+}
+
+// =========================================
+// FUNCIÓN: Obtener archivo de FilePond
+// =========================================
+function getProductImage() {
+    // Intentar obtener de las instancias conocidas
+    const instances = [
+        'product-purchase',  // Desde módulo de compras
+        'product-main',      // Desde módulo de productos
+        'product-sale'       // Desde módulo de ventas (futuro)
+    ];
+
+    for (const instanceId of instances) {
+        const file = getFilePondFile(instanceId);
+        if (file) {
+            return file;
+        }
+    }
+
+    return null;
 }
 
 // =========================================
@@ -126,7 +162,7 @@ export function showProductsModal(data = null) {
             dataType: 'json'
         });
     } else {
-        $('#productsModalLabel').text('Agregar departamento');
+        $('#productsModalLabel').text('Agregar Producto');
         $('#productsModal').modal('show');
         return Promise.resolve(null);
     }
@@ -147,6 +183,15 @@ export function resetProductForm() {
     $('#product_category_id').val(1).trigger('change');
     $('#purchase_unit_id').val(1).trigger('change');
     $('#sale_unit_id').val(1).trigger('change');
+
+    // Resetear bandera de eliminación de imagen
+    $('#remove_image').val('0');
+    
+    // Limpiar todas las instancias de FilePond
+    const instances = ['product-purchase', 'product-main', 'product-sale'];
+    instances.forEach(instanceId => {
+        clearFilePondFiles(instanceId);
+    });
+    
     clearValidationErrors();
-    $('#productsModalLabel').text('Agregar Producto');
 }

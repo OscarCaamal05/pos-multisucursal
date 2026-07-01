@@ -85,13 +85,19 @@ function initializeDataTable() {
     categoriesTable = $('#categoriesTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/categories/data',
+        ajax: {
+            url: '/categories/data',
+            data: function (d) {
+                d.department_id = $('#id-department-filter').val();
+                d.status = $('#id-status-filter').val();
+            }
+        },
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'category_name', name: 'category_name' },
+            { data: 'name', name: 'name' },
             {
-                data: 'category_description',
-                name: 'category_description',
+                data: 'description',
+                name: 'description',
                 orderable: false,
                 searchable: false
             },
@@ -123,9 +129,25 @@ function initializeDataTable() {
         deferRender: true,
         scroller: true,
         language: idiomaEspanol,
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4 text-center d-flex justify-content-center"p><"col-sm-4 text-end"i>><"clear">',
+    });
+
+    // Búsqueda por input de texto
+    $('#search-category-input').off('keyup.categorySearch').on('keyup.categorySearch', function () {
+        const searchValue = $(this).val();
+        categoriesTable.search(searchValue).draw();
+    });
+
+    // Filtro por departamento
+    $('#id-department-filter').on('change', function () {
+        categoriesTable.ajax.reload();
+    });
+
+    // Filtro por status
+    $('#id-status-filter').on('change', function () {
+        categoriesTable.ajax.reload();
     });
 }
-
 /**
  * Renderiza la columna de estado con el switch de activación.
  */
@@ -324,6 +346,6 @@ const idiomaEspanol = {
     processing: "Procesando...",
     search: "Buscar:",
     lengthMenu: "Mostrar _MENU_ registros",
-    emptyTable: "No hay datos disponibles",
-    info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
+    emptyTable: "No hay datos disponibles", 
+    info: "Del _START_ al _END_ de _TOTAL_ registros"
 };

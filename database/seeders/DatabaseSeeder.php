@@ -15,6 +15,17 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        $this->call([
+            // Seeder para crear el usuario por defecto "admin".
+            AdminUserSeeder::class,
+            TypesDocumentsSeeder::class,
+            TypeReceiptSeeder::class,
+            DepartmentDefaultSeeder::class,
+            CategoryDefaultSeeder::class,
+            CustomerDefaultSeeder::class,
+            DefaultUnitsSeeder::class,
+            DefaultTaxesSeeder::class,
+        ]);
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',

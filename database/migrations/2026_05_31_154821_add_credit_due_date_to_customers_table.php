@@ -12,11 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            // Fecha límite de pago del crédito actual
-            $table->date('credit_due_date')->nullable()->after('credit_available');
-
-            // Días de plazo para pago (por defecto 30 días)
-            $table->integer('credit_terms')->default(30)->after('credit_due_date');
+            $table->date('credit_due_date')->nullable()->after('default_credit_days');
         });
     }
 
@@ -26,10 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->dropColumn([
-                'credit_due_date',
-                'credit_terms'
-            ]);
+            $table->dropColumn('credit_due_date');
         });
     }
 };

@@ -1,86 +1,89 @@
-import { showAlert, clearValidationErrors, handleValidationError } from '../../utils/alerts';
+import { showAlert, clearValidationErrors, handleValidationError, showToast } from '../../utils/alerts';
+import { getDataTableLanguage } from '../../utils/datatableLanguage';
 import { calculateUnitPrice, calculateMarginFromSalePrice } from '../../functionAjaxProducts';
-import { SALES_CONFIG, productsTable } from './saleMain';
+import { showConfirmationAlert } from '../../utils/alerts';
+import { showProductsModal, closeProductModal, bindProductFormSubmit } from '../../helpers/productHelper';
+import { validateInputChecked } from '../../functionAjaxProducts';
 import { closeDepartmentModal, bindDepartmentFormSubmit, selectDepartmet } from '../../helpers/departmentHelper';
 import { closeCategoryModal, bindCategoryFormSubmit, selectCategoryAndDept } from '../../helpers/categoryHelper';
-import { closeProductModal, bindProductFormSubmit } from '../../helpers/productHelper';
+import { getTableDetails } from './detailModule';
 import {
-    bindEditProduct,
-} from '../../helpers/PurchasesHelper';
-
+    SALES_CONFIG as CONFIG,
+} from '../../helpers/SalesHelper';
 // =========================================
-// CONFIGURACIÓN ESPECÍFICA DEL MÓDULO
+// CONFIGURACIÓN DEL MÓDULO
 // =========================================
-const PRODUCT_MODULE_CONFIG = {
+const PRODUCT_CONFIG = {
     selectors: {
-        autoCompleteProduct: '#auto_complete_product',
+        autoComplete: '#auto_complete_product',
         productId: '#product_id',
-        modalProductDetails: '#modal-product-details',
         modalProductsList: '#modal-products',
-        modalAddProduct: '#add-modal-product',
+        modalAddProduct: '#productsModal',
         tableProducts: '#tableProducts',
-        formProductDetails: '#productDetails',
         searchInput: '#searchArticleInput',
+        btnSearch: '#btn-search-product',
+        btnClose: '#btn-close-product',
+        btnAddArticle: '#btn-add-article',
+        btnEditProduct: '.btn-edit-product',
+        // Modal detalle
+        modalDetails: '#modal-product-details',
+        formDetails: '#productDetails',
         tempId: '#temp_id',
         quantity: '#quantity',
-        cost: '#cost',
-        discountNumber: '#discount-number',
-        discountPercentage: '#discount-percentage',
-        newFactor: '#new-factor'
     },
     classes: {
-        noResult: 'autoComplete_result',
-        priceSale: '.price-sale',
-        marginClass: '.margin-',
-        autoSelect: '.auto-select'
+        factor: '.factor',
+        autoSelect: '.auto-select',
+    },
+    api: {
+        autocomplete: 'temp_purchases_detail/autoCompleteProducts',
+        findByBarcode: 'temp_sales_detail/findByBarcode',
+        addProduct: '/temp_sales_detail/addProductToSalesDetails',
+        products: '/products/data',
     }
 };
 
 // =========================================
-// VARIABLES LOCALES DEL MÓDULO
+// VARIABLES LOCALES (privadas al módulo)
 // =========================================
-let autoCompleteProducts = null;
-let productTable = null;
-let tableDetails = null;
-let lastProcessedProductId = null; // Almacena el ID del último producto procesado
-let isProcessing = false; // Bandera para evitar múltiples solicitudes simultáneas al elegir un producto en el autocompletado
+let productsTable = null;   // instancia DataTable del modal de listado
+let isProcessing = false;  // flag anti-doble disparo en autocomplete/dblclick
 
 // =========================================
-// INICIALIZACIÓN DEL MÓDULO
+// INICIALIZACIÓN
 // =========================================
+
+/**
+ * Punto de entrada del módulo. Llamar desde salesMain.js
+ */
 export function initProductModule() {
     try {
-        // Evitar inicialización múltiple
-        if (tableDetails !== null) {
-            console.log('⚠️ Módulo de productos ya inicializado');
-            return;
-        }
-
         setupProductAutoComplete();
-        //loadTableDetails();
-        bindProductEvents();
-        /*
-        bindCalculationEvents();
-        bindFormEvents();*/
-        console.log('✅ Módulo de productos inicializado');
+        bindProductEvents();     // escucha evento del detailModule
     } catch (error) {
         console.error('❌ Error al inicializar módulo de productos:', error);
     }
 }
 
 // =========================================
-// AUTOCOMPLETADO DE PRODUCTOS
+// AUTOCOMPLETADO
 // =========================================
+
+/**
+ * Inicializa el autocompletado de productos.
+ * La instancia se mantiene interna — no se exporta porque autoComplete.js
+ * requiere el contexto del DOM al momento de crearse.
+ */
 function setupProductAutoComplete() {
-    const products = new autoComplete({
-        selector: PRODUCT_MODULE_CONFIG.selectors.autoCompleteProduct,
+    const instance = new autoComplete({
+        selector: PRODUCT_CONFIG.selectors.autoComplete,
         data: {
             src: async (query) => {
                 try {
-                    const response = await searchProducts(query);
+                    const response = await searchProductsQuery(query);
                     return response.data;
                 } catch (error) {
-                    console.error('Error en búsqueda de productos:', error);
+                    console.error('Error en autocompletado de productos:', error);
                     return [];
                 }
             },
@@ -88,27 +91,21 @@ function setupProductAutoComplete() {
             cache: false
         },
         resultsList: {
-            element: function (list, data) {
+            element: (list, data) => {
                 if (!data.results.length) {
-                    const message = document.createElement("div");
-                    message.setAttribute("class", PRODUCT_MODULE_CONFIG.classes.noResult);
-                    message.innerHTML = `<span>No se encontraron productos para "${data.query}"</span>`;
-                    list.prepend(message);
+                    const msg = document.createElement('div');
+                    msg.setAttribute('class', CONFIG.cssClasses.noResult);
+                    msg.innerHTML = `<span>No se encontraron productos para "${data.query}"</span>`;
+                    list.prepend(msg);
                 }
             },
             noResults: true
         },
-        resultItem: {
-            highlight: true
-        },
+        resultItem: { highlight: true },
         events: {
             input: {
-                selection: function (event) {
-
-                    // Prevenir múltiples solicitudes
-                    if (isProcessing) {
-                        return
-                    }
+                selection: (event) => {
+                    if (isProcessing) return;
                     isProcessing = true;
 
                     try {
@@ -117,363 +114,263 @@ function setupProductAutoComplete() {
                             ? selection.value
                             : (selection.value?.value || '');
 
-                        products.input.value = selectedText;
-                        products.input.select();
-                        addProductDetail(selection.value.id);
-                    } catch (error) {
-                        console.error('❌ Error al procesar selección de producto:', error);
+                        instance.input.value = selectedText;
+                        instance.input.select();
+
+                        // Limpiar el input después de seleccionar para permitir otro producto
+                        $(PRODUCT_CONFIG.selectors.productId).val(selection.value.id).trigger('change');
+                    } catch (err) {
+                        console.error('Error al procesar selección de producto:', err);
                     } finally {
-                        // Resetear el flag después de un delay
-                        setTimeout(() => {
-                            isProcessing = false;
-                            //console.log('🔄 Procesamiento completado');
-                        }, 1000); // 1 segundo de delay
-                    }
-
-                    //$(PRODUCT_MODULE_CONFIG.selectors.productId).val(selection.value.id).trigger('change');
-                }
-            }
-        }
-    });
-}
-
-// =========================================
-// EVENTOS DEL MÓDULO
-// =========================================
-
-function bindProductEvents() {
-    /*
-    $(PRODUCT_MODULE_CONFIG.selectors.productId).on('change', function () {
-        const productId = $(this).val();
-        addProductDetail(productId);
-    });*/
-
-    /**
-     * Abrir el modal para buscar producto en la tabla de productos
-     */
-    $('#btn-search-product').on('click', function () {
-        $(PRODUCT_MODULE_CONFIG.selectors.modalProductsList).modal('show');
-        loadProductsList();
-    });
-
-    /**
-     * Elegir un producto de la tabla del listado
-     */
-    $('#tableProducts tbody').on('dblclick', 'tr', function (e) {
-        e.preventDefault();
-
-        if (isProcessing) {
-            return;
-        }
-        const data = productTable.row(this).data();
-
-        if (data && data.id) {
-            // Verificar si es el mismo producto que se procesó recientemente
-            if (lastProcessedProductId === data.id) {
-                console.log('🚫 Mismo producto recién procesado, ignorando');
-                return;
-            }
-
-            // Establecer flags de control
-            isProcessing = true;
-            lastProcessedProductId = data.id;
-
-            try {
-                // Ocultar modal inmediatamente
-                $(PRODUCT_MODULE_CONFIG.selectors.modalProductsList).modal('hide');
-
-                // Procesar después de que se cierre el modal
-                setTimeout(() => {
-                    addProductDetail(data.id);
-                }, 200); // Delay para asegurar que el modal se cierre
-
-            } catch (error) {
-                console.error('❌ Error al procesar doble clic:', error);
-            }
-        }
-    });
-
-    /**
-     * Agregar nuevos productos al inventario desde la tabla de productos
-     */
-    $('#btn-add-article').on('click', function () {
-        $(PRODUCT_MODULE_CONFIG.selectors.modalAddProduct).modal('show');
-        $(PRODUCT_MODULE_CONFIG.selectors.modalAddProduct).on('shown.bs.modal', function () {
-
-        });
-    });
-
-    bindProductFormSubmit({
-        table: productsTable,
-        onSuccess: (response) => {
-            if (response.status === 'create') {
-                addProductDetail(response.product.id);
-                $(PRODUCT_MODULE_CONFIG.selectors.modalAddProduct).modal('hide');
-            }
-        }
-    });
-
-    // ========================================================================================================
-    // * FUNCIONES PARA EL FORM PARA AGREGAR DEPARTAMENTOS *
-    // ========================================================================================================
-    bindDepartmentFormSubmit({
-        onSuccess: (response) => {
-            //Auto completa el select del modal de categorias cuando el registro se crea desde la vista de categoria
-            if (response.status === 'create' && response.department) {
-                selectDepartmet(response.department, '.departments');
-            }
-        }
-    });
-
-    // ========================================================================================================
-    // * FUNCIONES PARA EL FORM PARA AGREGAR CATEGORÍAS *
-    // ========================================================================================================
-    bindCategoryFormSubmit({
-        onSuccess: (response) => {
-            // Se crea una nueva categoria y agrega al <select> y se autoselecciona
-            if (response.status === 'create' && response.category) {
-                selectCategoryAndDept(response.category, '.products_categories', '.products_departments')
-            }
-        }
-    });
-
-    /**
-     * Eventos para cerrar los modales
-     */
-    $('#btn-close-product').on('click', () => closeModal(PRODUCT_MODULE_CONFIG.selectors.modalProductsList));
-    closeCategoryModal();
-    closeDepartmentModal();
-    closeProductModal();
-    $(PRODUCT_MODULE_CONFIG.selectors.modalAddProduct).on('shown.bs.modal', function () {
-        initializeSelect2Elements();
-    });
-    $(PRODUCT_MODULE_CONFIG.selectors.modalAddProduct).on('hidden.bs.modal', function () {
-        $('.select2-container').remove();
-    });
-}
-
-// =========================================
-// NUEVA FUNCIÓN: Inicializar elementos Select2
-// =========================================
-function initializeSelect2Elements() {
-    try {
-        // Destruir Select2 existentes para evitar conflictos
-        $('.select2-container').remove();
-
-        // Inicializar Select2 para categorías
-        if ($('.products_categories').length) {
-            $('.products_categories').select2({
-                dropdownParent: $('#add-modal-product'),
-            });
-        }
-
-        // Inicializar Select2 para departamentos
-        if ($('.products_departments').length) {
-            $('.products_departments').select2({
-                dropdownParent: $('#add-modal-product'),
-            });
-        }
-
-        // Inicializar Select2 para unidades
-        if ($('.purchase_unit, .sale_unit').length) {
-            $('.purchase_unit, .sale_unit').select2({
-                dropdownParent: $('#add-modal-product'),
-            });
-        }
-
-        console.log('✅ Elementos Select2 inicializados');
-
-    } catch (error) {
-        console.error('❌ Error al inicializar Select2:', error);
-    }
-}
-
-// ============================================================
-// GESTIÓN DE PRODUCTOS
-// ============================================================
-
-/**
- * Envia el ID del producto seleccionado para agregarlo al detalle de la venta
- * 
- * @param {number} productId - id del producto seleccionado
- */
-export function addProductDetail(productId) {
-    try {
-        $.ajax({
-            url: `${SALES_CONFIG.api.base}/addProductToSalesDetails`,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                product_id: productId,
-                temp_sale_id: $('#temp_sale_id').val(),
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function (response) {
-                console.log(response);
-                if (response.success) {
-                    // Recargar la tabla si existe
-                    if (tableDetails && $.fn.DataTable.isDataTable('#tableTempSale')) {
-                        tableDetails.ajax.reload(null, false);
+                        setTimeout(() => { isProcessing = false; }, 800);
                     }
                 }
-            },
-            error: function (xhr, status, error) {
-                console.error('❌ Error al agregar producto:', error);
-                showAlert('error', 'Error', 'No se pudo agregar el producto');
             }
-        });
-    } catch (error) {
-        console.error('❌ Error al agregar producto al detalle de venta:', error);
-    }
+        }
+    });
 }
 
-// =========================================
-// FUNCIONES AUXILIARES
-// =========================================
-
 /**
- * Envia la cadena introducida en el campo de búsqueda de productos
- * 
- * @param {string} query - Cadena de búsqueda introducida por el usuario
+ * AJAX del autocompletado.
+ * @param {string} query
  */
-async function searchProducts(query) {
+function searchProductsQuery(query) {
     return $.ajax({
-        url: `${SALES_CONFIG.api.base}/autoCompleteProducts/${query}`,
+        url: `${PRODUCT_CONFIG.api.autocomplete}/${query}`,
         type: 'GET',
         dataType: 'json'
     });
 }
 
 /**
- * Cierra un modal específico
- * @param {string} modalId - ID del modal a cerrar
+ * Busca un producto por código de barras (lectura directa) y lo agrega a la venta.
+ * @param {string} barcode
  */
-export function closeModal(modalId) {
-    $(modalId).modal('hide');
+function searchAndAddByBarcode(barcode) {
+    $.ajax({
+        url: `${PRODUCT_CONFIG.api.findByBarcode}/${barcode}`,
+        type: 'GET',
+        dataType: 'json',
+        success: (response) => {
+            if (response.success) {
+                addProductTempSale(response.id);
+            } else {
+                showAlert('error', response.message || 'Producto no encontrado');
+            }
+        }
+    });
 }
 
-// =================================================================================
-// FUNCIÓN: Carga los datos de los productos en la tabla dentro del modal para busqueda
-// profunda
-// =================================================================================
-function loadProductsList() {
-    if ($.fn.DataTable.isDataTable('#tableProducts')) {
-        $('#tableProducts').DataTable().destroy();
-        $('#tableProducts tbody').empty();
+// =========================================
+// TABLA MODAL DE LISTADO DE PRODUCTOS
+// =========================================
+
+/**
+ * Inicializa (o reinicia) el DataTable dentro del modal de búsqueda de productos.
+ */
+export function loadListProducts() {
+    // Destruir instancia anterior si existe
+    if ($.fn.DataTable.isDataTable(PRODUCT_CONFIG.selectors.tableProducts)) {
+        productsTable = $(PRODUCT_CONFIG.selectors.tableProducts).DataTable();
+        productsTable.columns.adjust().draw();
+        return;
     }
 
-    productTable = $('#tableProducts').DataTable({
+    productsTable = $(PRODUCT_CONFIG.selectors.tableProducts).DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/products/data',
+        ajax: PRODUCT_CONFIG.api.products,
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'product_name', name: 'product_name' },
-            {
-                data: 'barcode',
-                name: 'barcode',
-                orderable: false,
-                searchable: false
-            },
-            {
-                data: 'category_name',
-                name: 'category_name',
-                className: 'text-center',
-            },
-            {
-                data: 'department_name',
-                name: 'department_name',
-                className: 'text-center',
-            },
-            {
-                data: 'sale_price_1',
-                name: 'sale_price_1',
-                orderable: false,
-                searchable: false,
-                className: 'text-end',
-            },
-            {
-                data: 'stock',
-                name: 'stock',
-                orderable: false,
-                searchable: false,
-                className: 'text-end',
-            },
-            {
-                data: 'sale_unit_name',
-                name: 'sale_unit_name',
-                searchable: false,
-                className: 'text-center',
-            },
-            {
-                data: 'id',
-                name: 'actions',
-                orderable: false,
-                searchable: false,
-                render: renderActionsColumnProduct,
-            },
+            { data: 'name', name: 'name' },
+            { data: 'barcode', name: 'barcode', orderable: false, searchable: false },
+            { data: 'category_name', name: 'category_name', className: 'text-center' },
+            { data: 'department_name', name: 'department_name', className: 'text-center' },
+            { data: 'sale_price_1', name: 'sale_price_1', orderable: false, searchable: false, className: 'text-end' },
+            { data: 'stock', name: 'stock', orderable: false, searchable: false, className: 'text-end' },
+            { data: 'sale_unit_name', name: 'sale_unit_name', searchable: false, className: 'text-center' },
         ],
         scrollY: 500,
         deferRender: true,
         scroller: true,
-        language: idiomaEspanol,
+        language: getDataTableLanguage({
+            emptyTable: "Sin productos disponibles"
+        }),
         searching: true,
         info: false,
-        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">',
+        dom: 'rt<"bottom row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>><"clear">'
     });
 
-    // Vincular eventos de edición ahora que la tabla está inicializada
-    bindEditProduct(productTable);
+    // Búsqueda personalizada con namespace para evitar acumulación
+    $(PRODUCT_CONFIG.selectors.searchInput)
+        .off('keyup.productSearch')
+        .on('keyup.productSearch', function () {
+            productsTable.search($(this).val()).draw();
+        });
 
-    // Agregar funcionalidad al input personalizado de búsqueda
-    $('#searchArticleInput').off('keyup.articleSearch').on('keyup.articleSearch', function () {
-        const searchValue = $(this).val();
-        productTable.search(searchValue).draw();
+    // Limpiar buscador al abrir el modal
+    $(PRODUCT_CONFIG.selectors.modalProductsList)
+        .off('shown.bs.modal.productSearch')
+        .on('shown.bs.modal.productSearch', function () {
+            $(PRODUCT_CONFIG.selectors.searchInput).val('').trigger('keyup');
+        });
+}
+
+// =========================================
+// EVENTOS DE INTERACCIÓN
+// =========================================
+
+function bindProductEvents() {
+    const sel = PRODUCT_CONFIG.selectors;
+
+    // --- DETECCIÓN DE LECTOR DE CÓDIGO DE BARRAS ---
+    let barcodeBuffer = '';
+    let lastKeyTime = 0;
+    const SCANNER_THRESHOLD_MS = 50; // ms entre pulsaciones para considerar lectura
+    const MIN_BARCODE_LENGTH = 3; // longitud mínima para considerar código de barras
+
+    $(sel.autoComplete).on('keydown', function (e) {
+        const now = Date.now();
+        const timeDiff = now - lastKeyTime;
+        lastKeyTime = now;
+
+        if (e.key === 'Enter') {
+            const scanned = barcodeBuffer.trim();
+            barcodeBuffer = '';
+
+            // Solo actuar si llegó rápido y tiene longitud válida
+            if (scanned.length >= MIN_BARCODE_LENGTH) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                setTimeout(() => {
+                    searchAndAddByBarcode(scanned);
+                    $(sel.autoComplete).val(''); // limpiar el input
+                }, 200);
+            }
+            return;
+        }
+
+        // Acumular caracteres si llegan rápido (escáner) o si el buffer ya tiene contenido
+        if (timeDiff < SCANNER_THRESHOLD_MS || barcodeBuffer.length > 0) {
+            if (e.key.length === 1) { // solo caracteres imprimibles
+                barcodeBuffer += e.key;
+            }
+        } else {
+            barcodeBuffer = e.key.length === 1 ? e.key : '';
+        }
     });
 
-    // Limpiar el input cuando se abra el modal
-    $('#modal-products').on('shown.bs.modal', function () {
-        $('#searchArticleInput').val('').trigger('keyup');
+    $(sel.productId).on('change', function () {
+        const productId = $(this).val();
+        if (productId) {
+            addProductTempSale(productId);
+        }
+    });
+
+    // Botón buscar producto → abrir modal listado
+    $(sel.btnSearch).on('click', () => $(sel.modalProductsList).modal('show'));
+
+    // Doble click en tabla listado → seleccionar producto
+    $(`${PRODUCT_CONFIG.selectors.tableProducts} tbody`).on('dblclick', 'tr', function () {
+        if (!productsTable) return;
+
+        if (isProcessing) return;
+        isProcessing = true;
+
+        const data = productsTable.row(this).data();
+        if (data?.id) {
+            $(sel.productId).val(data.id).trigger('change');
+            $(sel.modalProductsList).modal('hide');
+        }
+
+        setTimeout(() => { isProcessing = false; }, 800);
+    });
+
+    // Cerrar modal listado productos
+    $(sel.btnClose).on('click', () => $(sel.modalProductsList).modal('hide'));
+
+    // Botón agregar nuevo artículo
+    $(sel.btnAddArticle).on('click', () => $(sel.modalAddProduct).modal('show'));
+
+    // Auto-select en focus
+    $(document).on('focus', PRODUCT_CONFIG.classes.autoSelect, function () {
+        const $this = $(this);
+        $this.trigger('select');
+        $this.one('mouseup.selectText', (e) => e.preventDefault());
+    });
+
+    // Focus automático en cantidad al abrir el modal detalle
+    $(sel.modalDetails).on('shown.bs.modal', () => {
+        $(sel.quantity).trigger('focus').trigger('select');
+    });
+
+    // Formulario de nuevo producto (modal agregar artículo)
+    bindProductFormSubmit({
+        table: null,
+        onSuccess: (response) => {
+            if (response.status === 'create') {
+                $(sel.productId).val(response.product.id).trigger('change');
+                $(sel.modalAddProduct).modal('hide');
+            }
+        }
+    });
+
+    // Formularios de departamento y categoría (anidados en el modal de producto)
+    bindDepartmentFormSubmit({
+        onSuccess: (response) => {
+            if (response.status === 'create' && response.department) {
+                selectDepartment(response.department, '.departments');
+            }
+        }
+    });
+
+    bindCategoryFormSubmit({
+        onSuccess: (response) => {
+            if (response.status === 'create' && response.category) {
+                selectCategoryAndDept(response.category, '.products_categories', '.products_departments');
+            }
+        }
+    });
+
+    $(sel.modalProductsList).on('shown.bs.modal', function () {
+        loadListProducts();
+    });
+
+    // Cierre de modales anidados
+    closeProductModal();
+    closeDepartmentModal();
+    closeCategoryModal();
+}
+
+function addProductTempSale(productId) {
+    const tempSaleId = $('#temp_sale_id').val();
+    $.ajax({
+        url: PRODUCT_CONFIG.api.addProduct,
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+            product_id: productId,
+            temp_sale_id: tempSaleId
+        },
+        dataType: 'json',
+        success: (response) => {
+            // Notificar a detailModule para que recargue totales y tabla
+            $(document).trigger('sale:productSaved', [response]);
+            // Si hay advertencia de stock, mostrarla sin bloquear
+            if (response.stock_warning) {
+                showToast('warning', response.stock_warning.message, 'top-end', 1800);
+            }
+        },
     });
 }
 
-// ============================================================
-// FUNCIONE PARA RENDERIZAR LA COLUMNA DE ACCIONES EN LA TABLA DE PRODUCTOS
-// ============================================================
+// =========================================
+// HELPERS PRIVADOS
+// =========================================
 
-/**
- * Renderiza los botones de acciones (editar)
- * @param {any} data - ID del elemento
- * @returns {string} HTML renderizado
- */
-function renderActionsColumnProduct(data) {
-    return `
-        <div class="hstack gap-3 fs-15">
-            <a href="javascript:void(0);" class="link-warning btn-edit-product" data-id="${data}">
-                <i class="ri-edit-2-line"></i>
-            </a>
-        </div>
-    `;
+function closeModal(modalId) {
+    $(modalId).modal('hide');
 }
-
-// ============================================================
-// FUNCIONE PARA TRADUCIR LOS TEXTOS DE LA TABLA DE PRODUCTOS
-// ============================================================
-const idiomaEspanol = {
-    loadingRecords: "Cargando...",
-    paginate: {
-        first: "Primero",
-        last: "Último",
-        next: "Siguiente",
-        previous: "Anterior"
-    },
-    processing: "Procesando...",
-    search: "Buscar:",
-    lengthMenu: "Mostrar _MENU_ registros",
-    emptyTable: "No hay datos disponibles",
-    info: "Mostrando registros del _START_ al _END_ de _TOTAL_ registros"
-};
-
-// ============================================================
-// FUNCIONE PARA TRADUCIR LOS TEXTOS DE LA TABLA DE PRODUCTOS
-// ============================================================

@@ -1,6 +1,10 @@
 import { showAlert, handleValidationError, showConfirmationAlert } from '../utils/alerts';
 import { showProductsModal } from './productHelper';
 import { validateInputChecked, calculateUnitPrice, calculateMarginFromSalePrice } from '../functionAjaxProducts';
+
+let filePondInitialized = false;
+let pendingProductImage = null;
+let imageLoadTimeout = null; // Para cancelar el setTimeout si se cierra el modal
 // =========================================
 // CONFIGURACIÓN CENTRALIZADA PARA COMPRAS
 // =========================================
@@ -267,13 +271,15 @@ export function formatPhoneNumber(phone) {
 }
 
 // FUNCION PARA EDITAR PRODUCTOS
-export function bindEditProduct(tableInstance) {
+/*export function bindEditProduct(tableInstance) {
+
+    $('#tableProducts tbody').off('click.editProduct', '.btn-edit-product');
+    
     $('#tableProducts tbody').on('click', '.btn-edit-product', function () {
         const $button = $(this);
-        
-        // Método 1: Usando la instancia del DataTable (RECOMENDADO)
+
         const rowData = tableInstance.row($button.closest('tr')).data();
-        
+
         // Verificar que tenemos datos
         if (!rowData) {
             showAlert('error', 'Error', 'No se pudieron obtener los datos de la fila');
@@ -290,41 +296,91 @@ export function bindEditProduct(tableInstance) {
                     showProductsModal({ id: rowData.id })
                         .then((response) => {
                             if (response.status === 'success') {
-                                $('#product_name').val(response.data.product_name);
+                                // Valores para inputs de texto en general
+                                $('#name').val(response.data.name);
                                 $('#barcode').val(response.data.barcode);
-                                $('.products_departments').val(response.data.department_id).trigger('change');
-                                $('.products_categories').val(response.data.category_id).trigger('change');
-                                $('.purchase_unit').val(response.data.purchase_unit_id).trigger('change');
-                                $('.sale_unit').val(response.data.sale_unit_id).trigger('change');
                                 $('#conversion_factor').val(response.data.conversion_factor);
-                                $('#purchase_price').val(response.data.purchase_price);
+                                $('#purchase_price').val(response.data.purchase_price).data('base-price', response.data.purchase_price);
                                 $('#price_iva').val(response.data.purchase_price);
-                                $('#stock').val(response.data.stock);
-                                $('#stock_min').val(response.data.stock_min);
-                                $('#stock_max').val(response.data.stock_max);
                                 $('#sale_price_1').val(response.data.sale_price_1);
                                 $('#price_1_min_qty').val(response.data.price_1_min_qty);
                                 $('#sale_price_2').val(response.data.sale_price_2);
                                 $('#price_2_min_qty').val(response.data.price_2_min_qty);
                                 $('#sale_price_3').val(response.data.sale_price_3);
                                 $('#price_3_min_qty').val(response.data.price_3_min_qty);
-                                $('#product_description').val(response.data.product_description);
-                                $('#is_fractional').prop('checked', response.data.is_fractional === 1);
-                                $('#iva').prop('checked', response.data.iva === 1);
-                                $('#neto').prop('checked', response.data.neto === 1);
-                                $('#is_service').prop('checked', response.data.is_service === 1);
 
-                                validateInputChecked(response.data.iva === 1, response.data.neto === 1);
-
+                                // Calcular el precio unitario basado en el precio de compra y el factor de conversión
                                 calculateUnitPrice(response.data.purchase_price, response.data.conversion_factor);
-                                const unitPrice = parseFloat(response.data.unit_price);
+                                const unitPrice = parseFloat(response.data.unit_price); // asegurarte de que sea número
                                 $('#unit_price').val(unitPrice.toFixed(2));
 
+                                // Funcion para mostrar los precios con sus respectivos margene
                                 [1, 2, 3].forEach(index => {
                                     const salePrice = parseFloat(response.data[`sale_price_${index}`]);
+
                                     const margin = calculateMarginFromSalePrice(unitPrice, salePrice);
-                                    $(`#margen_${index}`).val(margin);
+                                    $(`#margen_${index}`).val(margin); // solo mostrar el margen
                                 });
+
+                                // Cuando recibas los datos del producto para editar:
+                                const taxIds = response.data.tax_ids ? response.data.tax_ids.split(',') : [];
+                                // Marca los checkboxes correspondientes
+                                $('input[name="taxes[]"]').each(function () {
+                                    const taxId = $(this).val();
+                                    if (taxIds.includes(taxId)) {
+                                        $(this).prop('checked', true);
+                                    }
+                                });
+
+                                // Validar los checkboxes de IVA y Neto para mostrar los precios correctamente
+                                validateInputChecked();
+
+                                // Valores para inputs de texto en adicional
+                                $('#description').val(response.data.description);
+                                $('#stock_min').val(response.data.stock_min);
+                                $('#stock_max').val(response.data.stock_max);
+                                $('#expiry-date').flatpickr().setDate(response.data.expiry_date);
+                                $('#shelf_life_days').val(response.data.shelf_life_days);
+                                $('#alert_days_before_expiration').val(response.data.alert_days_before_expiration);
+
+                                // Valores para los select
+                                $('.products_departments').val(response.data.department_id).trigger('change');
+                                $('.products_categories').val(response.data.category_id).trigger('change');
+                                $('.purchase_unit').val(response.data.purchase_unit_id).trigger('change');
+                                $('.sale_unit').val(response.data.sale_unit_id).trigger('change');
+
+                                // Valores para los checkboxes
+                                $('#is_fractional').prop('checked', response.data.is_fractional === 1);
+                                $('#is_net_price').prop('checked', response.data.is_net_price === 1);
+                                $('#is_service').prop('checked', response.data.is_service === 1);
+                                $().prop('checked', response.data.taxes ? response.data.taxes.map(tax => tax.id) : []);
+                                $('#allow_fractional_sale').prop('checked', response.data.allow_fractional_sale === 1);
+                                $('#allow_decimal_quantity').prop('checked', response.data.allow_decimal_quantity === 1);
+                                $('#requires_batch_control').prop('checked', response.data.requires_batch_control === 1);
+                                $('#requires_serial_number').prop('checked', response.data.requires_serial_number === 1);
+
+                                // =========================================
+                                // CARGAR IMAGEN EXISTENTE EN FILEPOND
+                                // =========================================
+                                if (response.data.image_url || response.data.image) {
+                                    const imagePath = response.data.image_url || response.data.image;
+
+                                    // Guardar en variable JavaScript
+                                    pendingProductImage = imagePath;
+
+                                    // Si ya está inicializado (tab activo), cargar inmediatamente
+                                    if (filePondInitialized) {
+                                        loadFilePondImage('product-main', imagePath);
+                                        pendingProductImage = null; // Limpiar inmediatamente
+                                    }
+                                } else {
+                                    // Limpiar si no hay imagen
+                                    pendingProductImage = null;
+                                    if (filePondInitialized) {
+                                        clearFilePondFiles('product-main');
+                                    }
+                                    $('#remove_image').val('0');
+                                }
 
                             } else {
                                 showAlert('error', 'Error', response.message);
@@ -337,4 +393,4 @@ export function bindEditProduct(tableInstance) {
             }
         );
     });
-}
+}*/

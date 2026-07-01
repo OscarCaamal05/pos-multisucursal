@@ -13,38 +13,57 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('product_name', 100);
+
+            // Información básica
+            $table->string('name', 100);
             $table->string('barcode', 50)->nullable()->unique();
-            $table->text('product_description')->nullable();
-            $table->boolean('iva')->default(false)->comment('Si aplica iva')->nullable();
-            $table->boolean('neto')->default(true)->comment('Si el precio es neto')->nullable();
-            $table->boolean('is_fractional')->default(false)->comment('Permite venta por fracción')->nullable();
-            $table->boolean('is_service')->default(false)->comment('Si es un servicio')->nullable();
-            $table->decimal('conversion_factor', 10, 2)->nullable()->comment('Ej. 1 caja = 12 piezas');
+            $table->text('description')->nullable();
+
+            // Configuración de venta
+            $table->boolean('allow_fractional_sale')->default(false);
+            $table->boolean('allow_decimal_quantity')->default(false);
+            $table->boolean('is_service')->default(false);
+            $table->boolean('is_net_price')->default(true)->comment('Si el precio es neto');
+            $table->decimal('conversion_factor', 10, 2)->nullable()->comment('Factor de conversión unidad compra/venta');
+
+            // Control de lotes y vencimientos
+            $table->boolean('requires_batch_control')->default(false)
+                ->comment('Requiere control de lotes y fechas de vencimiento');
+
+            $table->boolean('requires_serial_number')->default(false)
+                ->comment('Requiere número de serie individual');
+
+            $table->integer('shelf_life_days')->nullable()
+                ->comment('Vida útil en días desde fabricación');
+
+            $table->integer('alert_days_before_expiration')->default(30)
+                ->comment('Días de anticipación para alertar vencimiento');
+
+            // Precios
             $table->decimal('purchase_price', 10, 2)->default(0);
             $table->decimal('sale_price_1', 10, 2)->default(0);
             $table->unsignedInteger('price_1_min_qty')->default(1)->comment('Cantidad mínima para precio 1');
             $table->decimal('sale_price_2', 10, 2)->nullable()->default(0);
-            $table->unsignedInteger('price_2_min_qty')->nullable()->comment('Cantidad mínima para precio 2');
+            $table->unsignedInteger('price_2_min_qty')->nullable()->comment('Cantidad mínima para precio 2')->default(0);
             $table->decimal('sale_price_3', 10, 2)->nullable()->default(0);
             $table->unsignedInteger('price_3_min_qty')->nullable()->comment('Cantidad mínima para precio 3')->default(0);
             $table->decimal('unit_price', 10, 2)->nullable()->default(0);
-            $table->decimal('stock', 10, 2)->nullable()->default(0);
-            $table->decimal('stock_min', 10, 2)->default(0)->nullable();
-            $table->decimal('stock_max', 10, 2)->default(0)->nullable();
+
             $table->string('image', 255)->nullable()->comment('Ruta o nombre del archivo de la imagen');
-            $table->tinyInteger('status')->default(1)->comment('1=Activo,0=Inactivo');
-            $table->unsignedBigInteger('product_category_id')->nullable();
-            $table->unsignedBigInteger('product_department_id')->nullable();
-            $table->unsignedBigInteger('sale_unit_id')->nullable();
-            $table->unsignedBigInteger('purchase_unit_id')->nullable();
-            $table->timestamps();
+
+            $table->boolean('is_active')->default(true);
 
             // Llaves foráneas
-            $table->foreign('product_category_id')->references('id')->on('categories')->nullOnDelete();
-            $table->foreign('product_department_id')->references('id')->on('departments')->nullOnDelete();
-            $table->foreign('sale_unit_id')->references('id')->on('units')->nullOnDelete();
-            $table->foreign('purchase_unit_id')->references('id')->on('units')->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
+            $table->foreignId('sale_unit_id')->nullable()->constrained('units')->nullOnDelete();
+            $table->foreignId('purchase_unit_id')->nullable()->constrained('units')->nullOnDelete();
+
+            $table->timestamps();
+
+            // Índices
+            $table->index('barcode');
+            $table->index(['category_id', 'is_active']);
         });
     }
 

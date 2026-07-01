@@ -20,9 +20,16 @@ class CategoryController extends Controller
         return view('categories.index', compact('departments'));
     }
 
-    public function getCategories()
+    public function getCategories(Request $request)
     {
         $query = Category::withDepartmentData();
+
+        // Filtrar por departamento si se proporciona
+        if ($request->has('department_id') && $request->department_id !== 'all-department' && $request->department_id !== '') {
+            $query->where('c.department_id', $request->department_id);
+        } else if ($request->has('status') && $request->status !== 'all-status' && $request->status !== '') {
+            $query->where('c.status', $request->status);
+        }
 
         return DataTables::of($query)->make(true);
     }
@@ -47,10 +54,10 @@ class CategoryController extends Controller
             'status' => 'create',
             'category' => [
                 'id' => $category->id,
-                'category_name' => $category->category_name,
+                'category_name' => $category->name,
                 'department' => $category->department ? [
                     'id' => $category->department->id,
-                    'department_name' => $category->department->department_name,
+                    'department_name' => $category->department->name,
                 ] : null,
             ]
         ]);

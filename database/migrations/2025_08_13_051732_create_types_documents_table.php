@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->tinyInteger('status')->default(1)->after('email_verified_at');
+        Schema::create('types_documents', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 50);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('status');
-        });
+        Schema::dropIfExists('types_documents');
     }
 };

@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('purchases', function (Blueprint $table) {
-            $table->decimal('discount', 10, 2)->default(0.00)->after('subtotal');
+        Schema::table('products', function (Blueprint $table) {
+            $table->date('expiry_date')->nullable()->after('alert_days_before_expiration');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('purchases', function (Blueprint $table) {
-            $table->dropColumn('discount');
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn('expiry_date');
         });
     }
 };

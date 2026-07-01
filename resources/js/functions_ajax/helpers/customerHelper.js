@@ -42,8 +42,8 @@ export function bindCustomerFormSubmit({
                 default:
                     cleanData[field.name] = rawValue.trim();
             }
-        }); 
-        
+        });
+
         $.ajax({
             url: isEdit ? `/customers/${customerId}` : $form.data('storeUrl'),
             method: isEdit ? 'PUT' : 'POST',
@@ -130,12 +130,10 @@ export function closeCustomerModal() {
     $(document).on('click', '#btn-close-modal-customer, #btn-cancelar-customer', function (e) {
         e.preventDefault();
 
-        const hasData = $('#full_name').val().trim() !== '' ||
-            $('#rfc').val().trim() !== '' ||
-            $('#phone').val().trim() !== '' ||
-            $('#email').val().trim() !== '' ||
-            $('#credit_available').val().trim() !== '' ||
-            $('#address').val().trim() !== '';
+        const hasData = $('#customerModal').find(':input').filter(function () {
+            const tag = this.tagName.toLowerCase();
+            return tag !== 'select' && $(this).val().trim() !== '' && !$(this).is(':disabled');
+        }).length > 0;
 
         if (hasData) {
             showConfirmationAlert(
@@ -166,18 +164,19 @@ export function showCustomerModal(data = null) {
     resetCustomerForm();
 
     if (data) {
-        $('.modal-title').text('Editar Customer');
-        $('#full_name').val(data.full_name);
-        $('#rfc').val(data.rfc);
-        $('#phone').val(data.phone);
-        $('#email').val(data.email);
-        $('#credit_available').val(data.credit_available);
-        $('#address').val(data.address);
-        $('#credit_terms').val(data.credit_terms);
-        $('#credit_due_date').val(data.credit_due_date);
+        $('.modal-title').text('Editar Cliente');
         $('#customerId').val(data.id);
+        $('#customerModal').modal('show');
+
+        return $.ajax({
+            url: `/customers/${data.id}/edit`,
+            method: 'GET',
+            dataType: 'json'
+        });
     } else {
-        $('.modal-title').text('Agregar Categoria');
+        $('.modal-title').text('Agregar Cliente');
+        $('#customerModal').modal('show');
+        return Promise.resolve(null);
     }
     formatCleave();
     $('#customerModal').modal('show');
@@ -194,13 +193,16 @@ export function resetCustomerForm() {
 }
 
 export function formatCleave() {
-    if (document.querySelector("#phone")) {
-        var cleaveBlocks = new Cleave('#phone', {
+    const phoneEl = document.querySelector('#phone');
+    if (phoneEl) {
+        if (phoneEl.cleave) {
+            phoneEl.cleave.destroy();
+        }
+        phoneEl.cleave = new Cleave('#phone', {
             delimiters: ['(', ')', '-'],
             blocks: [0, 3, 3, 4],
             numericOnly: true
         });
     }
-
 }
 
