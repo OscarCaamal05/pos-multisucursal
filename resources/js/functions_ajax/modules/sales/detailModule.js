@@ -12,12 +12,14 @@ const DETAIL_CONFIG = {
         table: '#tableTempSale',
         form: '#productDetails',
         tempSaleId: '#temp_sale_id',
+        tempDetailId: '#temp_detail_id',
         tempId: '#temp_id',
         quantity: '#quantity',
         generalDiscount: '#general-discount-number',
         modalDetails: '#modal-product-details',
         btnEditName: '#btn-edit-product',
         btnEditQuantity: '#btn-edit-product-quantity',
+        btnEditPrice: '#btn-edit-product-price',
         btnEditDiscount: '#btn-edit-product-discount',
         btnCancel: '#btn-cancel-sale',
         btnCancelModal: '#btn-cancelar-product-details',
@@ -36,6 +38,8 @@ const DETAIL_CONFIG = {
         editProductName: '/temp_sales_detail/editProductName',
         editProductQuantity: '/temp_sales_detail/editProductQuantity',
         editProductDiscount: '/temp_sales_detail/editProductDiscount',
+        updatePrice: '/temp_sales_detail/updatePrice',
+        checkProductPrice: '/temp_sales_detail/checkProductPrice',
     },
     messages: {
         selectRow: 'Seleccione una fila para continuar',
@@ -67,6 +71,7 @@ export function initDetailModule() {
         bindKeyBoardEnter();
         _listenProductEvents();
         bindCalculationEvents();
+        syncReceiptFields();
         console.log('✅ Módulo de detalle de venta inicializado');
     } catch (error) {
         console.error('❌ Error al inicializar módulo de detalle de venta:', error);
@@ -177,6 +182,7 @@ function bindDeleteEvents() {
             success: function (response) {
                 tableDetails.ajax.reload(null, false);
                 showTotals(response);
+                selectedRowDetail = null;
             },
             error: function () {
                 showAlert('error', 'Error', DETAIL_CONFIG.messages.deleteError);
@@ -212,6 +218,7 @@ function bindDetailEvents() {
     const dblclickHandlers = {
         3: (data) => openEditNameModal(data), // Columna description (product_name)
         4: (data) => openEditQuantityModal(data), // Columna quantity (product_quantity)
+        5: (data) => openEditPriceModal(data), // Columna price (product_price)
         6: (data) => openEditDiscountModal(data), // Columna discount
     }
 
@@ -298,6 +305,55 @@ function bindDetailEvents() {
     });
 
     // -----------------------------------------------------------------
+    // Doble click en fila → abrir modal para cambiar el precio de venta del producto
+    // -----------------------------------------------------------------
+    $(`${DETAIL_CONFIG.selectors.table} tbody`).on('dblclick', 'td', function () {
+        const columnIndex = tableDetails.cell(this).index().column;
+        // Indice 5 = columna price
+        const handler = dblclickHandlers[columnIndex];
+        if (!handler) return;
+
+        const data = tableDetails.row($(this).closest('tr')).data();
+        if (data) handler(data);
+    });
+
+    // -----------------------------------------------------------------
+    // Botón para cambiar el precio → valida que haya una fila seleccionada
+    // -----------------------------------------------------------------
+    $(DETAIL_CONFIG.selectors.btnEditPrice).on('click', () => {
+        selectedRowDetail ? openEditPriceModal(selectedRowDetail) : showAlert('warning', 'Espera', DETAIL_CONFIG.messages.selectRow);
+    });
+
+
+    // -----------------------------------------------------------------
+    // APLICAR EL PRECIO SELECCIONADO
+    // -----------------------------------------------------------------
+    $('#btn-save-product-price').on('click', function () {
+        const detailId = $(DETAIL_CONFIG.selectors.tempDetailId).val();
+        const newPrice = parseFloat($('#select-product-price').val());
+
+        if (!newPrice || newPrice <= 0) {
+            showAlert('warning', 'Alerta', 'Selecciona un precio válido.');
+            return;
+        }
+        //Aquí llamas a tu función para actualizar el precio en TempSaleDetail
+        updateProductPrice(detailId, newPrice);
+    });
+
+    // -----------------------------------------------------------------
+    // EVENTOS DE LOS MODALES DE EDICIÓN DE PRECIO
+    // -----------------------------------------------------------------
+    $('#modal-edit-product-price').on('hidden.bs.modal', function () {
+        cleanEditModal();
+        // Limpiar select
+        $('#select-product-price').empty();
+
+        // Limpiar campos ocultos
+        $(DETAIL_CONFIG.selectors.tempDetailId).val('');
+        $(DETAIL_CONFIG.selectors.productId).val('');
+    });
+
+    // -----------------------------------------------------------------
     // Doble click en fila → abrir modal para agregar un descuento al producto
     // -----------------------------------------------------------------
     $(`${DETAIL_CONFIG.selectors.table} tbody`).on('dblclick', 'td', function () {
@@ -337,11 +393,11 @@ function bindDetailEvents() {
         $('#product-discount-number').val('');
     });
 
+
     // -----------------------------------------------------------------
     // Descuento general → aplica al perder foco (blur)
     // -----------------------------------------------------------------
     $(DETAIL_CONFIG.selectors.generalDiscount).on('blur', function () {
-        console.log('Descuento', $(this).val());
         applyDiscount($(this).val());
     });
 
@@ -373,6 +429,13 @@ function bindDetailEvents() {
             }
         );
     });
+
+    // -----------------------------------------------------------------
+    // CAMBIO DE SERIE Y FOLIO → Actualiza los campos de serie y folio al cambiar el comprobante
+    // -----------------------------------------------------------------
+    $('#voucher-type').on('change', function () {
+        syncReceiptFields();
+    });
 }
 
 // =========================================
@@ -403,6 +466,14 @@ function bindKeyBoardShortcuts() {
                 ? openEditDiscountModal(selectedRowDetail)
                 : showAlert('warning', 'Espera', DETAIL_CONFIG.messages.selectRow);
         }
+
+        // F4 → Editar precio del producto
+        if (e.key === 'F4') {
+            e.preventDefault();
+            selectedRowDetail
+                ? openEditPriceModal(selectedRowDetail)
+                : showAlert('warning', 'Espera', DETAIL_CONFIG.messages.selectRow);
+        }
     });
 }
 
@@ -430,6 +501,14 @@ function bindKeyBoardEnter() {
             $('#btn-save-product-discount').trigger('click');
         }
     });
+
+    // Enter en modal de precio
+    $('#modal-edit-product-price').on('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            $('#btn-save-product-price').trigger('click');
+        }
+    });
 }
 
 // =========================================
@@ -454,6 +533,40 @@ function openEditQuantityModal(data) {
     $('.product-name-label').html(data.product_name);
     $('.product-quantity').val(data.quantity);
     $('#modal-edit-product-quantity').modal('show');
+}
+
+/**
+ * Función para abrir el modal de edición del descuento del producto.
+ * @param {object} data datos de la fila seleccionada
+ */
+function openEditPriceModal(data) {
+    $('.product-name-label').html(data.product_name);
+    $('#modal-edit-product-price').modal('show');
+    $(DETAIL_CONFIG.selectors.tempDetailId).val(data.id_temp_sale_detail);
+    const $select = $('#select-product-price');
+
+    $select.html('<option disabled selected>Cargando precios...</option>');
+    $.ajax({
+        url: `${DETAIL_CONFIG.api.checkProductPrice}/${data.product_id}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            if (response.status === 'success') {
+                $select.empty();
+                response.prices.forEach(price => {
+                    $select.append(
+                        $('<option>', {
+                            value: price.value,
+                            'data-key': price.key,
+                            text: `${price.label} — $${parseFloat(price.value).toFixed(2)}`
+                        })
+                    );
+                });
+            } else {
+                $select.html('<option disabled selected>No se encontraron precios</option>');
+            }
+        }
+    });
 }
 
 /**
@@ -500,6 +613,7 @@ function editProductName(newName) {
                     cleanEditModal();
                     $('#modal-edit-product-name').modal('hide');
                     $('#auto_complete_product').val('').trigger('focus');
+                    selectedRowDetail = null;
                 } else {
                     showAlert('error', 'Error', response.message);
                 }
@@ -532,9 +646,43 @@ function setNewQuantity(newQuantity) {
                 cleanEditModal();
                 $('#modal-edit-product-quantity').modal('hide');
                 $('#auto_complete_product').val('').trigger('focus');
+                selectedRowDetail = null;
             } else {
                 showAlert('error', 'Error', response.message);
             }
+        }
+    });
+}
+
+function updateProductPrice(detailId, newPrice) {
+    $.ajax({
+        url: DETAIL_CONFIG.api.updatePrice,
+        method: 'POST',
+        data: {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            temp_sale_id: $(DETAIL_CONFIG.selectors.tempSaleId).val(),
+            id_temp_sale_detail: detailId,
+            new_price: newPrice,
+        },
+        dataType: 'json',
+
+        success: (response) => {
+            if (!response.success) {
+                showAlert('warning', 'Advertencia', response.message);
+                return;
+            }
+
+            $('#modal-edit-product-price').modal('hide');
+            showAlert('success', 'Éxito', 'Precio actualizado correctamente.');
+
+            // ✅ Notificar al módulo de detalle para recargar tabla y totales
+            $(document).trigger('sale:productSaved', [response]);
+
+            selectedRowDetail = null;
+        },
+
+        error: () => {
+            showAlert('error', 'Error', 'No se pudo actualizar el precio.');
         }
     });
 }
@@ -562,6 +710,7 @@ function setNewDiscount(newDiscount) {
                 cleanEditModal();
                 $('#modal-edit-product-discount').modal('hide');
                 $('#auto_complete_product').val('').trigger('focus');
+                selectedRowDetail = null;
             } else {
                 showAlert('error', 'Error', response.message);
             }
@@ -606,7 +755,6 @@ export function applyDiscount(discountApplied) {
             discount: discountApplied,
         },
         success: function (response) {
-            console.log(response);
             showTotals(response);
         },
         error: function () {
@@ -621,7 +769,7 @@ export function applyDiscount(discountApplied) {
  * @param {Object} totals - Objeto con sub_total, total_siva, tax, total, discount
  */
 export function showTotals(totals) {
-    const fmt = (value) => 
+    const fmt = (value) =>
         parseFloat(value).toLocaleString('es-MX', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -715,6 +863,15 @@ export function cleanInputSale() {
     }
 }
 
+// -----------------------------------------------------------------
+// CAMBIO DE SERIE Y FOLIO → Actualiza los campos de serie y folio al cambiar el comprobante
+// -----------------------------------------------------------------
+function syncReceiptFields() {
+    const selected = $('#voucher-type option:selected');
+
+    $('#series-prefix').val(selected.data('prefix') || '');
+    $('#current-number').val(selected.data('number') || '');
+}
 // =========================================
 // GETTERS PÚBLICOS
 // =========================================

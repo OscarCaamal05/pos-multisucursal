@@ -388,9 +388,9 @@ export function cleanCustomerData() {
     $('#customer_id').val(1);
     $('#auto_complete_customer').val('');
     $('.customer-name').html('Publico en general');
-    $('.customer-email').html('');
-    $('.customer-phone').html('');
-    $('.customer-tax-id').html('');
+    $('.customer-email').html('No hay dato');
+    $('.customer-phone').html('No hay dato');
+    $('.customer-tax-id').html('No hay dato');
     $('.default_credit_days').val(0);
     $('.credit-limit').val(0);
     $('.customer-credit-available').val(0);

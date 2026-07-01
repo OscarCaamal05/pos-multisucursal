@@ -1,4 +1,4 @@
-import { showAlert, clearValidationErrors, handleValidationError } from '../../utils/alerts';
+import { showAlert, clearValidationErrors, handleValidationError, showToast } from '../../utils/alerts';
 import { getDataTableLanguage } from '../../utils/datatableLanguage';
 import { calculateUnitPrice, calculateMarginFromSalePrice } from '../../functionAjaxProducts';
 import { showConfirmationAlert } from '../../utils/alerts';
@@ -244,10 +244,10 @@ function bindProductEvents() {
                 e.preventDefault();
                 e.stopImmediatePropagation();
 
-                setTimeout(() => {                
+                setTimeout(() => {
                     searchAndAddByBarcode(scanned);
                     $(sel.autoComplete).val(''); // limpiar el input
-                },200);
+                }, 200);
             }
             return;
         }
@@ -360,6 +360,10 @@ function addProductTempSale(productId) {
         success: (response) => {
             // Notificar a detailModule para que recargue totales y tabla
             $(document).trigger('sale:productSaved', [response]);
+            // Si hay advertencia de stock, mostrarla sin bloquear
+            if (response.stock_warning) {
+                showToast('warning', response.stock_warning.message, 'top-end', 1800);
+            }
         },
     });
 }
