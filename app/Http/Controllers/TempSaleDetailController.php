@@ -636,7 +636,7 @@ class TempSaleDetailController extends Controller
 
     public function printVoucher(int $saleId, int $voucherId)
     {
-        \Log::info("Generating voucher for sale ID: $saleId, voucher ID: $voucherId");
+        
         try {
 
             return $this->receiptPdfService->generate($saleId, $voucherId);

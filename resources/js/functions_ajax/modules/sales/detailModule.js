@@ -72,7 +72,6 @@ export function initDetailModule() {
         _listenProductEvents();
         bindCalculationEvents();
         syncReceiptFields();
-        console.log('✅ Módulo de detalle de venta inicializado');
     } catch (error) {
         console.error('❌ Error al inicializar módulo de detalle de venta:', error);
     }
@@ -920,7 +919,7 @@ function _listenProductEvents() {
 
         // 4. Limpiar la fila seleccionada para evitar errores al editar
         selectedRowDetail = null;
-        
+
         // 5. VALIDAR si el producto es de venta por KG
         if (totals?.data_product?.unit_name === 'KG') {
             selectedRowDetail = {

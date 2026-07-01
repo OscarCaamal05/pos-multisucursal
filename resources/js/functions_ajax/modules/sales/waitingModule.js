@@ -39,7 +39,6 @@ let waitingTable = null;  // instancia DataTable del modal de espera
 export function initWaitingModule() {
     try {
         bindWaitingEvents();
-        console.log('✅ Módulo de ventas en espera inicializado');
     } catch (error) {
         console.error('❌ Error al inicializar módulo de ventas en espera:', error);
     }

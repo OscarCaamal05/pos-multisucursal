@@ -52,7 +52,10 @@ export function initCustomerModule() {
  */
 function initStoredCustomer() {
     const stored = localStorage.getItem(CONFIG.storage.customerKey);
-    if (!stored) return;
+    if (!stored) {
+        getCustomerData(1); // Carga público general por defecto
+        return;
+    }
 
     try {
         const data = JSON.parse(stored);
@@ -61,6 +64,7 @@ function initStoredCustomer() {
     } catch (error) {
         console.error('Error al parsear cliente guardado:', error);
         localStorage.removeItem(CONFIG.storage.customerKey);
+        getCustomerData(1); // Fallback si el JSON está corrupto
     }
 }
 

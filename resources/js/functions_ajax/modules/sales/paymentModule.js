@@ -33,7 +33,6 @@ export function initPaymentModule() {
             processPayment: _processSaleByMethod,
             initCreditDate: initCreditTermsAndDate,
         });
-        console.log('✅ Módulo de pagos inicializado');
     } catch (error) {
         console.error('❌ Error al inicializar módulo de pagos:', error);
     }
@@ -70,7 +69,7 @@ function _prefillPaymentModal() {
     const creditLimit = parseFloat(customerData?.credit_limit) || 0;
     const creditAvailable = parseFloat(customerData?.credit_available) || 0;
     const creditDays = customerData?.grace_period_days || 30;
-    console.log(customerData);
+
     $(sel.paymentCash).val(total > 0 ? total.toFixed(2) : '0.00');
     $(sel.creditPaymentInput).val(total > 0 ? total.toFixed(2) : '0.00');
     $(sel.creditLimitInput).val(creditLimit.toFixed(2));
@@ -105,7 +104,7 @@ function _executeSalePayment(method) {
 
             const saleId = response.sale_id;
             const voucherId = parseInt($('#voucher-type').val()); // El comprobante seleccionado
-            console.log('saleId', saleId, 'voucherId', voucherId);
+
             if (response.data?.new_temp_sale_id) {
                 $(sel.tempId).val(response.data.new_temp_sale_id);
             }

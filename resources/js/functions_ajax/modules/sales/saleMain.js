@@ -41,7 +41,6 @@ $(document).ready(function () {
         _initNumericInputs();
         _loadInitialData();
         _initDatePicker();
-        console.log('✅ saleMain inicializado correctamente');
     } catch (error) {
         console.error('❌ Error crítico al inicializar ventas:', error);
     }
@@ -88,7 +87,6 @@ function _initModules() {
  */
 function _loadInitialData() {
     const tempSaleId = $(MAIN_CONFIG.selectors.tempSaleId).val();
-    console.log(tempSaleId);
     if (tempSaleId) {
         loadTotals(tempSaleId);
     }
