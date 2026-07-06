@@ -32,7 +32,6 @@ export function initBranchesModule() {
 
         // Obtener datos de la sucursal por defecto y llenar el formulario
         getDefaultDataBrench().then(response => {
-            console.log(response);
             _fillBranchFormWithData(response.branch_data);
         });
 

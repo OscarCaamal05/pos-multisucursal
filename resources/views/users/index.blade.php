@@ -46,32 +46,67 @@
             <form id="userForm" method="POST" action="{{ route('users.store') }}">
                 @csrf
                 <div class="modal-body">
-                    <!-- Campos -->
-                    <div class="mb-3">
-                        <label for="name">Usuario</label>
-                        <input type="text" class="form-control @error('name') is-invalid @enderror"
-                            name="name" id="name" value="{{ old('name') }}">
-                        @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="row">
+                        <!-- Campos -->
+                        <div class="mb-3">
+                            <label for="name">Usuario</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                name="name" id="name" value="{{ old('name') }}">
+                            @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email">Correo</label>
+                            <input type="email" class="form-control @error('email') is-invalid @enderror"
+                                name="email" id="email" value="{{ old('email') }}">
+                            @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password">Contraseña</label>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                name="password" id="password">
+                            @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password_confirmation">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" name="password_confirmation" id="password_confirmation">
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="email">Correo</label>
-                        <input type="email" class="form-control @error('email') is-invalid @enderror"
-                            name="email" id="email" value="{{ old('email') }}">
-                        @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+
+                            <div class="mb-3">
+                                <label for="branches" class="form-label">Sucursales</label>
+                                <select class="form-control" id="branches" data-choices data-choices-removeItem name="branches[]"
+                                    multiple>
+                                    @foreach($branches as $branch)
+                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="mb-3">
+                                <div class="form-check form-check-outline form-check-secondary mb-3">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="is_default"
+                                        value="1"
+                                        name="is_default">
+                                    <label class="form-check-label" for="is_default">
+                                        Sucursal por defecto
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="password">Contraseña</label>
-                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                            name="password" id="password">
-                        @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
 
-                    <div class="mb-3">
-                        <label for="password_confirmation">Confirmar Contraseña</label>
-                        <input type="password" class="form-control" name="password_confirmation" id="password_confirmation">
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="btn-cancelar">Cancelar</button>
@@ -104,6 +139,7 @@
                                 <th scope="col">ID</th>
                                 <th scope="col">Usuario</th>
                                 <th scope="col">Correo</th>
+                                <th scope="col">Sucursal</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col"></th>
                             </tr>
@@ -129,6 +165,7 @@
 
 <!-- AlpineJS para manejar el modal -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+<script src="{{ URL::asset('build/libs/prismjs/prism.js') }}"></script>
 
 <script src="{{ URL::asset('build/libs/multiselect/js/jquery.multi-select.js') }}"></script>
 <script src="{{ URL::asset('build/libs/multiselect/js/jquery.quicksearch.js') }}"></script>

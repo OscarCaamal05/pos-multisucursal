@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\Profil;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -68,6 +69,18 @@ class User extends Authenticatable
     public function profil()
     {
         return $this->hasOne(Profil::class);
+    }
+
+    /** 
+     * Get the branches associated with the user.
+     */
+    public static function getDataUsers()
+    {
+        return DB::table('users as u')
+            ->select('u.id', 'u.name', 'u.email', 'u.status', 'b.name as branch_name', 'bu.branch_id', 'bu.is_default')
+            ->leftJoin('branch_users as bu', 'u.id', '=', 'bu.user_id')
+            ->leftJoin('branches as b', 'bu.branch_id', '=', 'b.id')
+            ->get();
     }
 
     /**
