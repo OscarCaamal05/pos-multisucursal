@@ -58,7 +58,7 @@ class User extends Authenticatable
     {
         return Str::of($this->name)
             ->explode(' ')
-            ->map(fn (string $name) => Str::of($name)->substr(0, 1))
+            ->map(fn(string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
     }
 
@@ -68,5 +68,16 @@ class User extends Authenticatable
     public function profil()
     {
         return $this->hasOne(Profil::class);
+    }
+
+    /**
+     * Get the branches associated with the user.
+     */
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branches::class, 'branch_users', 'user_id', 'branch_id')
+            ->withPivot('is_default')
+            ->withTimestamps();
     }
 }
