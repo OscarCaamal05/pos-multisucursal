@@ -71,6 +71,12 @@ class User extends Authenticatable
         return $this->hasOne(Profil::class);
     }
 
+    public function defaultBranchId(): ?int
+    {
+        return $this->branches()
+            ->wherePivot('is_default', true)
+            ->value('branches.id');
+    }
     /** 
      * Get the branches associated with the user.
      */
