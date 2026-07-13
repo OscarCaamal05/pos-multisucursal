@@ -229,10 +229,9 @@
 
         {{-- ===== ENCABEZADO DEL NEGOCIO ===== --}}
         <div class="header">
-            {{-- Si tienes logo del negocio, descomenta --}}
-            {{-- <img src="{{ public_path('images/logo.png') }}" class="logo"> --}}
+            <img src="{{ URL::asset('storage/branches/logos/logo.png') }}" class="logo" height="60" alt="Logo del negocio">
 
-            <div class="business-name">{{ config('app.business_name', 'NOMBRE DEL NEGOCIO') }}</div>
+            <div class="business-name">{{ $business->name }}</div>
             <div class="business-info">
                 {{ $business->address ?? 'Dirección del negocio' }}<br>
                 Tel: {{ $business->phone ?? 'N/A' }}<br>

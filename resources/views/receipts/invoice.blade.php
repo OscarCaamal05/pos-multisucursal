@@ -379,8 +379,8 @@
     <div class="invoice-header">
         <div class="col-left">
             {{-- Descomenta si tienes logo: --}}
-            {{-- <img src="{{ public_path('images/logo.png') }}" class="business-logo"> --}}
-            <div class="business-name">{{ config('app.business_name', 'NOMBRE DEL NEGOCIO') }}</div>
+            <img src="{{ URL::asset('storage/branches/logos/logo.png') }}" class="logo" height="60" alt="Logo del negocio">
+            <div class="business-name">{{ $business->name }}</div>
             <div class="business-meta">
                 {{ $business->address ?? 'Tu dirección aquí' }}<br>
                 Tel: {{ $business->phone ?? 'Tu teléfono aquí' }}<br>
@@ -435,8 +435,8 @@
                 <strong>Vendedor:</strong> {{ $user->name ?? 'N/A' }}<br>
                 @if ($sale->is_fully_paid)
                     <strong>Vence:</strong> —
-                @elseif (isset($sale->credit_due_date))
-                    <strong>Vence:</strong> {{ \Carbon\Carbon::parse($sale->credit_due_date)->format('d/m/Y') }}
+                @elseif (isset($customer->credit_due_date))
+                    <strong>Vence:</strong> {{ \Carbon\Carbon::parse($customer->credit_due_date)->format('d/m/Y') }}
                 @endif
             </div>
         </div>

@@ -8,7 +8,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDetail;
-use App\Models\branches;
+use App\Models\User;
 use App\Http\Controllers\TempSaleController;
 use Illuminate\Support\Facades\DB;
 use App\Services\InventoryService;

@@ -4,6 +4,7 @@ namespace App\Services\Pdf;
 
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Models\branches;
 use App\Services\Pdf\Receipts\ReceiptInterface;
 use App\Services\Pdf\Receipts\TicketReceipt;
 use App\Services\Pdf\Receipts\InvoiceReceipt;
@@ -59,13 +60,17 @@ class ReceiptPdfService
 
     private function getSaleData(int $saleId): array
     {
-        $sale = Sale::with(['customer', 'details.product', 'user'])->findOrFail($saleId);
+        $sale = Sale::with(['customer', 'details.product', 'user', 'branch'])->findOrFail($saleId);
+
+        // Obtener los datos de la sucursal asociada a la venta
+        $branch = branches::find($sale->branch_id);
 
         // Agregar los métodos de pago
         $payments = DB::table('payment_methods')
             ->where('transaction_id', $saleId)
             ->where('transaction_type', 'sale')
             ->get();
+
 
         return [
             'sale'      => $sale,
@@ -74,10 +79,15 @@ class ReceiptPdfService
             'user'      => $sale->user,
             'payments'  => $payments, // ✅ Necesario para la sección de pagos
             'fecha'     => now()->format('d/m/Y H:i:s'),
-            'business'  => (object) [
-                'address' => 'Tu dirección aquí',
-                'phone'   => 'Tu teléfono aquí',
-                'tax_id'  => 'Tu RFC aquí',
+            'business' => (object) [
+                'name'    => $branch->name    ?? 'Tu negocio',
+                'address' => $branch->address ?? 'Tu dirección aquí',
+                'phone'   => $branch->phone   ?? 'Tu teléfono aquí',
+                'tax_id'  => $branch->tax_id  ?? 'Tu RFC aquí',
+                'logo' => $branch->logo_path && \Storage::disk('public')->exists($branch->logo_path)
+                    ? 'data:image/' . pathinfo($branch->logo_path, PATHINFO_EXTENSION) . ';base64,'
+                    . base64_encode(\Storage::disk('public')->get($branch->logo_path))
+                    : null,
             ],
         ];
     }
