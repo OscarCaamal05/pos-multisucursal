@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Branches;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
     public function index()
     {
-        return view('users.index');
+        $branches = Branches::all();
+        return view('users.index', compact('branches'));
     }
 
     public function store(Request $request)
@@ -23,13 +26,20 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|confirmed|min:6',
+            'branches' => 'required|array',
+            'is_default' => 'nullable|boolean',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
+
+        $user->branches()->syncWithPivotValues(
+            $request->branches,
+            ['is_default' => true]
+        );
 
         return response()->json(['success' => true]);
     }
@@ -38,7 +48,8 @@ class UserController extends Controller
 
     public function getUsers()
     {
-        return DataTables::of(User::select('id', 'name', 'email', 'status'))
+        $query = User::getDataUsers();
+        return DataTables::of($query)
             ->make(true);
     }
 

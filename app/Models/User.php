@@ -8,7 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\Profil;
+use App\Models\Branches;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -58,7 +60,7 @@ class User extends Authenticatable
     {
         return Str::of($this->name)
             ->explode(' ')
-            ->map(fn (string $name) => Str::of($name)->substr(0, 1))
+            ->map(fn(string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
     }
 
@@ -68,5 +70,35 @@ class User extends Authenticatable
     public function profil()
     {
         return $this->hasOne(Profil::class);
+    }
+
+    public function defaultBranchId(): ?int
+    {
+        return DB::table('branch_users')
+            ->where('user_id', $this->id)
+            ->where('is_default', 1)
+            ->value('branch_id');
+    }
+    /** 
+     * Get the branches associated with the user.
+     */
+    public static function getDataUsers()
+    {
+        return DB::table('users as u')
+            ->select('u.id', 'u.name', 'u.email', 'u.status', 'b.name as branch_name', 'bu.branch_id', 'bu.is_default')
+            ->leftJoin('branch_users as bu', 'u.id', '=', 'bu.user_id')
+            ->leftJoin('branches as b', 'bu.branch_id', '=', 'b.id')
+            ->get();
+    }
+
+    /**
+     * Get the branches associated with the user.
+     */
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branches::class, 'branch_users', 'user_id', 'branch_id')
+            ->withPivot('is_default')
+            ->withTimestamps();
     }
 }

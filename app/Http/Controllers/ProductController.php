@@ -114,10 +114,13 @@ class ProductController extends Controller
                 }
             }
 
+            // Obtener el branch_id del usuario autenticado
+            $branchId = auth()->user()->defaultBranchId() ?? 1; // Cambiar a 1 si no se encuentra un branch_id
+
             // Crear inventario inicial
             BranchInventories::create([
                 'product_id' => $product->id,
-                'branch_id' => 1, // auth()->user()->branch_id ?? 1
+                'branch_id' => $branchId,
                 'quantity' => 0,
                 'stock_min' => $request->input('stock_min', 0),
                 'stock_max' => $request->input('stock_max', 0),

@@ -12,6 +12,7 @@ use App\Http\Controllers\TempPurchaseDetailController;
 use App\Http\Controllers\TempPurchaseController;
 use App\Http\Controllers\TempSaleController;
 use App\Http\Controllers\TempSaleDetailController;
+use App\Http\Controllers\BranchesController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\UserController;
@@ -69,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)->names('customers');
     Route::resource('suppliers', SuppliersController::class)->names('suppliers');
 
+
     // EXCLUIR show del resource de productos
     Route::resource('products', ProductController::class)->except(['show'])->names('products');
 
@@ -109,6 +111,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_sales_detail/checkProductPrice/{product_id}', [TempSaleDetailController::class, 'checkProductPrice']);
     Route::post('/temp_sales_detail/updatePrice', [TempSaleDetailController::class, 'updatePrice']);
     Route::get('sales/{saleId}/receipt/{voucherId}/preview', [TempSaleDetailController::class, 'preview']);
+    Route::get('/branches/getBrachDefaultData', [BranchesController::class, 'getBrachDefaultData']);
+    Route::post('/branches/{id}/upload-logo', [BranchesController::class, 'uploadLogo']);
+    Route::resource('branches', BranchesController::class)->names('branches');
 
     Route::resource('roles', RolesController::class)->names('roles');
     Route::get('/roles/{id}', [RolesController::class, 'show']);

@@ -4,6 +4,7 @@ namespace App\Services\Pdf;
 
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Models\branches;
 use App\Services\Pdf\Receipts\ReceiptInterface;
 use App\Services\Pdf\Receipts\TicketReceipt;
 use App\Services\Pdf\Receipts\InvoiceReceipt;
@@ -59,13 +60,17 @@ class ReceiptPdfService
 
     private function getSaleData(int $saleId): array
     {
-        $sale = Sale::with(['customer', 'details.product', 'user'])->findOrFail($saleId);
+        $sale = Sale::with(['customer', 'details.product', 'user', 'branch'])->findOrFail($saleId);
+
+        // Obtener los datos de la sucursal asociada a la venta
+        $branch = branches::find($sale->branch_id);
 
         // Agregar los métodos de pago
         $payments = DB::table('payment_methods')
             ->where('transaction_id', $saleId)
             ->where('transaction_type', 'sale')
             ->get();
+
 
         return [
             'sale'      => $sale,
@@ -74,11 +79,31 @@ class ReceiptPdfService
             'user'      => $sale->user,
             'payments'  => $payments, // ✅ Necesario para la sección de pagos
             'fecha'     => now()->format('d/m/Y H:i:s'),
-            'business'  => (object) [
-                'address' => 'Tu dirección aquí',
-                'phone'   => 'Tu teléfono aquí',
-                'tax_id'  => 'Tu RFC aquí',
+            'business' => (object) [
+                'name'    => $branch->name    ?? 'Tu negocio',
+                'address' => $branch->address ?? 'Tu dirección aquí',
+                'phone'   => $branch->phone   ?? 'Tu teléfono aquí',
+                'tax_id'  => $branch->tax_id  ?? 'Tu RFC aquí',
+                'logo' => $this->resolveLogoBase64($branch->logo_path),
             ],
         ];
+    }
+
+    private function resolveLogoBase64(?string $logoPath): ?string
+    {
+        if (!$logoPath) {
+            return null;
+        }
+
+        $absolutePath = storage_path('app/public/' . $logoPath);
+
+        if (!file_exists($absolutePath)) {
+            return null;
+        }
+
+        $mime = mime_content_type($absolutePath);
+        $base64 = base64_encode(file_get_contents($absolutePath));
+
+        return "data:{$mime};base64,{$base64}";
     }
 }

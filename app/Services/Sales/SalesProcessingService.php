@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Models\User;
 use App\Http\Controllers\TempSaleController;
 use Illuminate\Support\Facades\DB;
 use App\Services\InventoryService;
@@ -61,11 +62,15 @@ class SalesProcessingService
 
         $totals = $this->totalsService->calculateTotals($tempDetails, $tempSale->discount ?? 0);
 
+        // Obtiene el branch_id de la tabla branches basado en el id vinculado con el usuario
+        $branchId = auth()->user()->defaultBranchId() ?? 1; // Cambiar a 1 si no se encuentra un branch_id
+
         $sale = Sale::create([
             'user_id'        => auth()->id(),
             'customer_id'    => $data['id_customer'],
             'voucher_id'     => $data['id_voucher'],
             'document_id'    => $data['id_document'],
+            'branch_id'      => $branchId,
             'sale_date'      => $date,
             'invoice_number' => $invoiceNumber,
             'amount_paid'    => $data['amount_paid'] ?? 0,
@@ -115,7 +120,7 @@ class SalesProcessingService
                 $tempDetail->total ?? 0,
                 'salida',
                 'venta',
-                1, // Cambiar por branch_id dinámico si es necesario
+                $branchId,
                 $sale->id
             );
         }
@@ -145,10 +150,11 @@ class SalesProcessingService
 
     private function registerPayment(int $saleId, string $method, array $data, float $totals): void
     {
+
         if ($method === 'payment-box') {
             foreach ($data['payment_details'] as $type => $amount) {
                 if ((float) $amount > 0) {
-                    DB::table('payment_methods')->insert([
+                    DB::table('payment_methods')->insert([ 
                         'transaction_id' => $saleId,
                         'transaction_type' => 'sale',
                         'payment_method' => $type,

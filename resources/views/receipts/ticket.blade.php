@@ -229,10 +229,11 @@
 
         {{-- ===== ENCABEZADO DEL NEGOCIO ===== --}}
         <div class="header">
-            {{-- Si tienes logo del negocio, descomenta --}}
-            {{-- <img src="{{ public_path('images/logo.png') }}" class="logo"> --}}
+            @if($business->logo)
+            <img src="{{ $business->logo }}" alt="Logo" style="max-height: 80px;">
+            @endif
 
-            <div class="business-name">{{ config('app.business_name', 'NOMBRE DEL NEGOCIO') }}</div>
+            <div class="business-name">{{ $business->name }}</div>
             <div class="business-info">
                 {{ $business->address ?? 'Dirección del negocio' }}<br>
                 Tel: {{ $business->phone ?? 'N/A' }}<br>
