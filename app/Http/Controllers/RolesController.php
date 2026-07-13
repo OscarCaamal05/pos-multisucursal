@@ -40,7 +40,7 @@ class RolesController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'unique:roles,name,' . $role->id
+                'unique:roles,name',  // ✅ Sin ID para creación
             ],
         ]);
 

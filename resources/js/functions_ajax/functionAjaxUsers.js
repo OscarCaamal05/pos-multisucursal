@@ -42,6 +42,7 @@ function initializeDataTable() {
             { data: 'id', name: 'id' },
             { data: 'name', name: 'name' },
             { data: 'email', name: 'email' },
+            { data: 'branch_name', name: 'branch_name' },
             {
                 data: 'status',
                 name: 'status',
@@ -117,7 +118,6 @@ function bindFormSubmit() {
         e.preventDefault();
         const $form = $(this);
 
-
         clearValidationErrors();
 
         $.ajax({
@@ -125,6 +125,7 @@ function bindFormSubmit() {
             method: 'POST',
             data: $form.serialize(),
             success: function (response) {
+                console.log(response);
                 $('#userModal').modal('hide');
                 userTable.ajax.reload();
                 showAlert(

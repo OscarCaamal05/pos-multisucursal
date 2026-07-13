@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Factura de Venta</title>
@@ -371,207 +372,213 @@
         }
     </style>
 </head>
+
 <body>
 
-<div class="invoice-wrapper">
-
-    {{-- ===== ENCABEZADO ===== --}}
-    <div class="invoice-header">
-        <div class="col-left">
-            {{-- Descomenta si tienes logo: --}}
-            {{-- <img src="{{ public_path('images/logo.png') }}" class="business-logo"> --}}
-            <div class="business-name">{{ config('app.business_name', 'NOMBRE DEL NEGOCIO') }}</div>
-            <div class="business-meta">
-                {{ $business->address ?? 'Tu dirección aquí' }}<br>
-                Tel: {{ $business->phone ?? 'Tu teléfono aquí' }}<br>
-                RFC: {{ $business->tax_id ?? 'Tu RFC aquí' }}<br>
-                {{ $business->email ?? '' }}
+    <div class="invoice-wrapper">
+        <div class="depurar">
+        </div>
+        {{-- ===== ENCABEZADO ===== --}}
+        <div class="invoice-header">
+            <div class="col-left">
+                @if($business->logo)
+                <img src="{{ $business->logo }}" alt="Logo" style="max-height: 80px;">
+                @endif
+                <div class="business-name">{{ $business->name }}</div>
+                <div class="business-meta">
+                    {{ $business->address ?? 'Tu dirección aquí' }}<br>
+                    Tel: {{ $business->phone ?? 'Tu teléfono aquí' }}<br>
+                    RFC: {{ $business->tax_id ?? 'Tu RFC aquí' }}<br>
+                    {{ $business->email ?? '' }}
+                </div>
             </div>
-        </div>
-        <div class="col-right">
-            {{-- El badge de status de pago en la esquina superior derecha --}}
-            @if ($sale->is_fully_paid)
-                <span class="badge badge-paid">✔ Pagado</span>
-            @elseif ($sale->status === 'credito')
-                <span class="badge badge-credit">● Crédito</span>
-            @else
-                <span class="badge badge-pending">⏳ Pendiente</span>
-            @endif
-        </div>
-    </div>
-
-    {{-- ===== CINTILLO CON TIPO Y NÚMERO ===== --}}
-    <div class="voucher-banner">
-        {{ strtoupper($sale->voucher->name ?? 'FACTURA DE VENTA') }}
-        <div class="voucher-number">{{ $sale->invoice_number }}</div>
-    </div>
-
-    {{-- ===== INFO CLIENTE + DETALLES DE LA VENTA ===== --}}
-    <div class="info-grid">
-        <div class="info-block">
-            <div class="info-label">Datos del Cliente</div>
-            <div class="info-row">
-                <strong>{{ $customer->name ?? 'Público General' }}</strong><br>
-                @if ($customer && $customer->tax_id)
-                    RFC: {{ $customer->tax_id }}<br>
-                @endif
-                @if ($customer && $customer->address)
-                    {{ $customer->address }}<br>
-                @endif
-                @if ($customer && $customer->email)
-                    {{ $customer->email }}<br>
-                @endif
-                @if ($customer && $customer->phone)
-                    Tel: {{ $customer->phone }}
-                @endif
-            </div>
-        </div>
-
-        <div class="info-block">
-            <div class="info-label">Detalles del Comprobante</div>
-            <div class="info-row">
-                <strong>Fecha:</strong> {{ \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y') }}<br>
-                <strong>Hora:</strong> {{ $fecha }}<br>
-                <strong>Vendedor:</strong> {{ $user->name ?? 'N/A' }}<br>
+            <div class="col-right">
+                {{-- El badge de status de pago en la esquina superior derecha --}}
                 @if ($sale->is_fully_paid)
-                    <strong>Vence:</strong> —
-                @elseif (isset($sale->credit_due_date))
-                    <strong>Vence:</strong> {{ \Carbon\Carbon::parse($sale->credit_due_date)->format('d/m/Y') }}
+                <span class="badge badge-paid">✔ Pagado</span>
+                @elseif ($sale->status === 'credito')
+                <span class="badge badge-credit">● Crédito</span>
+                @else
+                <span class="badge badge-pending">⏳ Pendiente</span>
                 @endif
             </div>
         </div>
-    </div>
 
-    {{-- ===== TABLA DE PRODUCTOS ===== --}}
-    <table class="products">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th class="text-center">Cant.</th>
-                <th class="text-right">P. Unitario</th>
-                <th class="text-right">Desc.</th>
-                <th class="text-right">IVA</th>
-                <th class="text-right">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($details as $index => $detail)
-            <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>
-                    {{ $detail->product_code ?? '—' }}
-                </td>
-                <td>
-                    <strong>{{ $detail->product_name }}</strong>
-                </td>
-                <td class="text-center">
-                    {{ rtrim(rtrim(number_format($detail->quantity, 2), '0'), '.') }}
-                </td>
-                <td class="text-right">${{ number_format($detail->unit_price, 2) }}</td>
-                <td class="text-right">
-                    @if ($detail->discount > 0)
-                        -${{ number_format($detail->discount, 2) }}
-                    @else
-                        —
+        {{-- ===== CINTILLO CON TIPO Y NÚMERO ===== --}}
+        <div class="voucher-banner">
+            {{ strtoupper($sale->voucher->name ?? 'FACTURA DE VENTA') }}
+            <div class="voucher-number">{{ $sale->invoice_number }}</div>
+        </div>
+
+        {{-- ===== INFO CLIENTE + DETALLES DE LA VENTA ===== --}}
+        <div class="info-grid">
+            <div class="info-block">
+                <div class="info-label">Datos del Cliente</div>
+                <div class="info-row">
+                    <strong>{{ $customer->name ?? 'Público General' }}</strong><br>
+                    @if ($customer && $customer->tax_id)
+                    RFC: {{ $customer->tax_id }}<br>
                     @endif
-                </td>
-                <td class="text-right">${{ number_format($detail->tax, 2) }}</td>
-                <td class="text-right">${{ number_format($detail->total, 2) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    {{-- ===== NOTAS + TOTALES ===== --}}
-    <div class="invoice-footer-grid">
-
-        {{-- COLUMNA IZQUIERDA: notas y métodos de pago --}}
-        <div class="footer-notes">
-
-            @if ($sale->notes)
-            <div class="notes-label">Notas</div>
-            <div class="notes-text">{{ $sale->notes }}</div>
-            @endif
-
-            <div class="payment-methods-label">Métodos de Pago</div>
-            @foreach ($payments as $payment)
-            <div class="payment-row">
-                <span>{{ ucfirst($payment->payment_method) }}</span>
-                <span>${{ number_format($payment->amount, 2) }}</span>
+                    @if ($customer && $customer->address)
+                    {{ $customer->address }}<br>
+                    @endif
+                    @if ($customer && $customer->email)
+                    {{ $customer->email }}<br>
+                    @endif
+                    @if ($customer && $customer->phone)
+                    Tel: {{ $customer->phone }}
+                    @endif
+                </div>
             </div>
-            @endforeach
 
-            @if ($sale->amount_paid > $sale->total_amount)
-            <div class="payment-row" style="color: #888;">
-                <span>Cambio entregado</span>
-                <span>${{ number_format($sale->amount_paid - $sale->total_amount, 2) }}</span>
+            <div class="info-block">
+                <div class="info-label">Detalles del Comprobante</div>
+                <div class="info-row">
+                    <strong>Fecha:</strong> {{ \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y') }}<br>
+                    <strong>Hora:</strong> {{ $fecha }}<br>
+                    <strong>Vendedor:</strong> {{ $user->name ?? 'N/A' }}<br>
+                    @if ($sale->is_fully_paid)
+                    <strong>Vence:</strong> —
+                    @elseif (isset($customer->credit_due_date))
+                    <strong>Vence:</strong> {{ \Carbon\Carbon::parse($customer->credit_due_date)->format('d/m/Y') }}
+                    @endif
+                </div>
             </div>
-            @endif
+        </div>
+
+        {{-- ===== TABLA DE PRODUCTOS ===== --}}
+        <table class="products">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-right">P. Unitario</th>
+                    <th class="text-right">Desc.</th>
+                    <th class="text-right">IVA</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($details as $index => $detail)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>
+                        {{ $detail->product_code ?? '—' }}
+                    </td>
+                    <td>
+                        <strong>{{ $detail->product_name }}</strong>
+                    </td>
+                    <td class="text-center">
+                        {{ rtrim(rtrim(number_format($detail->quantity, 2), '0'), '.') }}
+                    </td>
+                    <td class="text-right">${{ number_format($detail->unit_price, 2) }}</td>
+                    <td class="text-right">
+                        @if ($detail->discount > 0)
+                        -${{ number_format($detail->discount, 2) }}
+                        @else
+                        —
+                        @endif
+                    </td>
+                    <td class="text-right">${{ number_format($detail->tax, 2) }}</td>
+                    <td class="text-right">${{ number_format($detail->total, 2) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        {{-- ===== NOTAS + TOTALES ===== --}}
+        <div class="invoice-footer-grid">
+
+            {{-- COLUMNA IZQUIERDA: notas y métodos de pago --}}
+            <div class="footer-notes">
+
+                @if ($sale->notes)
+                <div class="notes-label">Notas</div>
+                <div class="notes-text">{{ $sale->notes }}</div>
+                @endif
+
+                <div class="payment-methods-label">Métodos de Pago</div>
+                @foreach ($payments as $payment)
+                <div class="payment-row">
+                    <span>{{ ucfirst($payment->payment_method) }}</span>
+                    <span>${{ number_format($payment->amount, 2) }}</span>
+                </div>
+                @endforeach
+
+                @if ($sale->amount_paid > $sale->total_amount)
+                <div class="payment-row" style="color: #888;">
+                    <span>Cambio entregado</span>
+                    <span>${{ number_format($sale->amount_paid - $sale->total_amount, 2) }}</span>
+                </div>
+                @endif
+
+            </div>
+
+            {{-- COLUMNA DERECHA: totales --}}
+            <div class="footer-totals">
+                <table class="totals">
+                    <tr>
+                        <td class="label-col">Subtotal (sin IVA)</td>
+                        <td>${{ number_format($sale->subtotal, 2) }}</td>
+                    </tr>
+
+                    @if ($sale->discount > 0)
+                    <tr>
+                        <td class="label-col">Descuento</td>
+                        <td>-${{ number_format($sale->discount, 2) }}</td>
+                    </tr>
+                    @endif
+
+                    @if ($sale->tax > 0)
+                    <tr>
+                        <td class="label-col">IVA (16%)</td>
+                        <td>${{ number_format($sale->tax, 2) }}</td>
+                    </tr>
+                    @endif
+
+                    <tr class="separator">
+                        <td colspan="2"></td>
+                    </tr>
+
+                    <tr class="total-final">
+                        <td>TOTAL</td>
+                        <td>${{ number_format($sale->total_amount, 2) }}</td>
+                    </tr>
+                </table>
+            </div>
 
         </div>
 
-        {{-- COLUMNA DERECHA: totales --}}
-        <div class="footer-totals">
-            <table class="totals">
-                <tr>
-                    <td class="label-col">Subtotal (sin IVA)</td>
-                    <td>${{ number_format($sale->subtotal, 2) }}</td>
-                </tr>
-
-                @if ($sale->discount > 0)
-                <tr>
-                    <td class="label-col">Descuento</td>
-                    <td>-${{ number_format($sale->discount, 2) }}</td>
-                </tr>
-                @endif
-
-                @if ($sale->tax > 0)
-                <tr>
-                    <td class="label-col">IVA (16%)</td>
-                    <td>${{ number_format($sale->tax, 2) }}</td>
-                </tr>
-                @endif
-
-                <tr class="separator"><td colspan="2"></td></tr>
-
-                <tr class="total-final">
-                    <td>TOTAL</td>
-                    <td>${{ number_format($sale->total_amount, 2) }}</td>
-                </tr>
-            </table>
+        {{-- ===== FOOTER DE LA PÁGINA ===== --}}
+        <div class="page-footer">
+            <strong>{{ config('app.business_name', 'NOMBRE DEL NEGOCIO') }}</strong> &nbsp;|&nbsp;
+            {{ $business->address ?? '' }} &nbsp;|&nbsp;
+            Tel: {{ $business->phone ?? '' }}<br>
+            Este documento es un comprobante de venta interno. Para efectos fiscales solicite su CFDI.
         </div>
 
     </div>
 
-    {{-- ===== FOOTER DE LA PÁGINA ===== --}}
-    <div class="page-footer">
-        <strong>{{ config('app.business_name', 'NOMBRE DEL NEGOCIO') }}</strong> &nbsp;|&nbsp;
-        {{ $business->address ?? '' }} &nbsp;|&nbsp;
-        Tel: {{ $business->phone ?? '' }}<br>
-        Este documento es un comprobante de venta interno. Para efectos fiscales solicite su CFDI.
+    {{-- ===== BOTÓN DE IMPRESIÓN (no se imprime) ===== --}}
+    <div class="print-action no-print">
+        <button onclick="window.print()">🖨️ Imprimir Factura</button>
     </div>
 
-</div>
+    {{-- ===== AUTO-IMPRIMIR AL CARGAR ===== --}}
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        };
 
-{{-- ===== BOTÓN DE IMPRESIÓN (no se imprime) ===== --}}
-<div class="print-action no-print">
-    <button onclick="window.print()">🖨️ Imprimir Factura</button>
-</div>
-
-{{-- ===== AUTO-IMPRIMIR AL CARGAR ===== --}}
-<script>
-    window.onload = function () {
-        setTimeout(function () {
-            window.print();
-        }, 300);
-    };
-
-    window.onafterprint = function () {
-        window.close();
-    };
-</script>
+        window.onafterprint = function() {
+            window.close();
+        };
+    </script>
 
 </body>
+
 </html>

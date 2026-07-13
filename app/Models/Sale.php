@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Models\Branches;
+
 class Sale extends Model
 {
     protected $table = 'sales';
@@ -16,6 +18,7 @@ class Sale extends Model
         'customer_id',
         'voucher_id',
         'document_id',
+        'branch_id',
         'sale_date',
         'invoice_number',
         'amount_paid',
@@ -50,5 +53,11 @@ class Sale extends Model
     public function voucher(): BelongsTo
     {
         return $this->belongsTo(TypesReceipts ::class, 'voucher_id');
+    }
+
+    // Relación con las ventas
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branches::class, 'branch_id');
     }
 }

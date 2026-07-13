@@ -30,7 +30,7 @@ function bindEvents() {
     bindDeleteEvents();
     bindEditEvents();
     bindFormSubmitRol();
-    bindToggleStatusEvents();
+    //bindToggleStatusEvents();
     bindAsigEvents();
 }
 

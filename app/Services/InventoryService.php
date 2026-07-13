@@ -21,7 +21,7 @@ class InventoryService
         }
     }
 
-    public function registerInventoryMovement(int $productId, float $quantity, float $unitPurchasePrice, float $unitSalePrice, float $totalCost, string $movementType, string $movementReason, int $branchId = 1, int $referenceId): void
+    public function registerInventoryMovement(int $productId, float $quantity, float $unitPurchasePrice, float $unitSalePrice, float $totalCost, string $movementType, string $movementReason, int $branchId, int $referenceId): void
     {
         DB::table('kardex')->insert([
             'product_id'          => $productId,
