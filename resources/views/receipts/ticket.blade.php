@@ -229,7 +229,9 @@
 
         {{-- ===== ENCABEZADO DEL NEGOCIO ===== --}}
         <div class="header">
-            <img src="{{ URL::asset('storage/branches/logos/logo.png') }}" class="logo" height="60" alt="Logo del negocio">
+            @if($business->logo)
+            <img src="{{ $business->logo }}" alt="Logo" style="max-height: 80px;">
+            @endif
 
             <div class="business-name">{{ $business->name }}</div>
             <div class="business-info">

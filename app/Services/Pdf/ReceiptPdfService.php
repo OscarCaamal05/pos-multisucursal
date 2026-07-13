@@ -84,11 +84,26 @@ class ReceiptPdfService
                 'address' => $branch->address ?? 'Tu dirección aquí',
                 'phone'   => $branch->phone   ?? 'Tu teléfono aquí',
                 'tax_id'  => $branch->tax_id  ?? 'Tu RFC aquí',
-                'logo' => $branch->logo_path && \Storage::disk('public')->exists($branch->logo_path)
-                    ? 'data:image/' . pathinfo($branch->logo_path, PATHINFO_EXTENSION) . ';base64,'
-                    . base64_encode(\Storage::disk('public')->get($branch->logo_path))
-                    : null,
+                'logo' => $this->resolveLogoBase64($branch->logo_path),
             ],
         ];
+    }
+
+    private function resolveLogoBase64(?string $logoPath): ?string
+    {
+        if (!$logoPath) {
+            return null;
+        }
+
+        $absolutePath = storage_path('app/public/' . $logoPath);
+
+        if (!file_exists($absolutePath)) {
+            return null;
+        }
+
+        $mime = mime_content_type($absolutePath);
+        $base64 = base64_encode(file_get_contents($absolutePath));
+
+        return "data:{$mime};base64,{$base64}";
     }
 }

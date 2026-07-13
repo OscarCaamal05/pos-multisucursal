@@ -37,7 +37,6 @@ export function initBranchesModule() {
 
         _bindLogoUpload();
 
-        console.log('✅ branchesGeneral inicializado correctamente');
     } catch (error) {
         console.error('❌ Error al inicializar branchesGeneral:', error);
     }
