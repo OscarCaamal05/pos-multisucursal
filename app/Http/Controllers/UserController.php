@@ -38,7 +38,7 @@ class UserController extends Controller
 
         $user->branches()->syncWithPivotValues(
             $request->branches,
-            ['is_default' => (bool) $request->input('is_default', false)]
+            ['is_default' => true]
         );
 
         return response()->json(['success' => true]);

@@ -71,7 +71,7 @@ function _fillBranchFormWithData(branchData) {
     $(BRENCH_CONFIG.selectors.websiteInput).val(branchData.website);
 
     if (branchData.logo_path) {
-        $('.user-profile-image').attr('src', `/storage/${branchData.logo_path}`);
+        $('.company-logo-image').attr('src', `/storage/${branchData.logo_path}`);
     }
 }
 
@@ -83,7 +83,7 @@ function _bindLogoUpload() {
         // 1. Preview inmediato sin esperar al servidor
         const reader = new FileReader();
         reader.onload = (e) => {
-            $('.user-profile-image').attr('src', e.target.result);
+            $('.company-logo-image').attr('src', e.target.result);
         };
         reader.readAsDataURL(file);
 
@@ -105,7 +105,7 @@ function _bindLogoUpload() {
             processData: false,
             contentType: false,
             success: function (response) {
-                $('.user-profile-image').attr('src', response.logo_url);
+                $('.company-logo-image').attr('src', response.logo_url);
             },
             error: function (xhr) {
                 console.error('❌ Error al subir logo:', xhr.responseJSON);

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\Profil;
+use App\Models\Branches;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\DB;
 
@@ -73,9 +74,10 @@ class User extends Authenticatable
 
     public function defaultBranchId(): ?int
     {
-        return $this->branches()
-            ->wherePivot('is_default', true)
-            ->value('branches.id');
+        return DB::table('branch_users')
+            ->where('user_id', $this->id)
+            ->where('is_default', 1)
+            ->value('branch_id');
     }
     /** 
      * Get the branches associated with the user.
