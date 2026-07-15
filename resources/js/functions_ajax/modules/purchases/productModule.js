@@ -70,8 +70,7 @@ export function initProductModule() {
         setupProductAutoComplete();
         bindCalculationEvents();
         bindProductEvents();
-        listenDetailEvents();         // escucha evento del detailModule
-        console.log('✅ Módulo de productos (compras) inicializado');
+        listenDetailEvents();
     } catch (error) {
         console.error('❌ Error al inicializar módulo de productos:', error);
     }

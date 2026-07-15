@@ -63,7 +63,6 @@ const PAYMENT_CONFIG = {
 export function initPaymentModule() {
     try {
         bindPaymentEvents();
-        console.log('✅ Módulo de pagos inicializado');
     } catch (error) {
         console.error('❌ Error al inicializar módulo de pagos:', error);
     }
@@ -310,7 +309,7 @@ function _sendPurchase(method, details) {
             temp_id: $(sel.tempPurchaseId).val(),
         },
         success: (response) => {
-            if (response.success) {
+            if (response.status === 'success') {
                 showAlert('success', 'Éxito', response.message || 'Compra procesada correctamente.');
 
                 // Actualizar el temp_purchase_id para la siguiente compra

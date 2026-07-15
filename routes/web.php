@@ -75,9 +75,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class)->except(['show'])->names('products');
 
     Route::resource('temp_purchase', TempPurchaseController::class)->names('temp_purchase');
-    Route::resource('temp_purchases_detail', TempPurchaseDetailController::class)->names('temp_purchases_detail');
+    Route::resource('temp_purchases_detail', TempPurchaseDetailController::class)->except(['show'])->names('temp_purchases_detail');
 
-    Route::get('/temp_purchases_detail/{supplier}/show', [TempPurchaseDetailController::class, 'show']);
+    Route::get('/temp_purchases_detail/{supplier}', [TempPurchaseDetailController::class, 'getDataSupplier']);
     Route::post('/temp_purchases_detail/add', [TempPurchaseDetailController::class, 'addProduct']);
     Route::get('/temp_purchases_detail/totals/{temp_purchase_id}', [TempPurchaseDetailController::class, 'getTotals']);
     Route::get('/temp_purchases_detail/getDataProductTemp/{id}', [TempPurchaseDetailController::class, 'getTempDetail']);
