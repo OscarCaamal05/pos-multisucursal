@@ -49,7 +49,6 @@ $(document).ready(function () {
         _initSupplierForm();
         _initModules();
         _loadInitialData();
-        console.log('✅ purchaseMain inicializado correctamente');
     } catch (error) {
         console.error('❌ Error crítico al inicializar compras:', error);
     }

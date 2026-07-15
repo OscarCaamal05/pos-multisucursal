@@ -149,10 +149,9 @@ function searchSuppliers(query) {
  */
 export function getSupplierData(supplierId) {
     $.ajax({
-        url: `/temp_purchases_detail/${supplierId}/show`,
+        url: `/temp_purchases_detail/${supplierId}`,
         method: 'GET',
         success: function (response) {
-            console.log(response);
             const phoneFormatted = formatPhoneNumber(response.phone);
             updateSupplierUI({
                 representative: response.representative,

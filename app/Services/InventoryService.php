@@ -13,11 +13,14 @@ class InventoryService
         $inventory = BranchInventories::where('product_id', $productId)->first();
         if ($inventory) {
             if ($operation === 'add') {
-                $inventory->increment('quantity', $quantity);
+                // Si el stock actual es negativo, partir desde 0 antes de sumar
+                $base = max(0, $inventory->quantity);
+                $inventory->quantity = $base + $quantity;
+                $inventory->save();
             } elseif ($operation === 'subtract') {
-                $inventory->decrement('quantity', $quantity);
+                $inventory->quantity = max(0, $inventory->quantity - $quantity);
+                $inventory->save();
             }
-            $inventory->save();
         }
     }
 
@@ -26,7 +29,7 @@ class InventoryService
         DB::table('kardex')->insert([
             'product_id'          => $productId,
             'branch_id'           => $branchId,  // cambiar por branch_id dinámico si es necesario
-            'movement_type'       => $movementType , // o 'salida' según corresponda
+            'movement_type'       => $movementType, // o 'salida' según corresponda
             'movement_reason'     => $movementReason, // o 'Compra' según corresponda
             'reference_type'      => null,
             'reference_id'        => $referenceId,
