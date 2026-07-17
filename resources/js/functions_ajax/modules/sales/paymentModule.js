@@ -154,6 +154,11 @@ function _processSaleByMethod(method) {
         return;
     }
 
+    if (totalPaid < total && method === PAYMENT_CONFIG.methods.CREDIT) {
+        showAlert('warning', 'Alerta', 'El monto pagado es menor al total de la venta a crédito.');
+        return;
+    }
+
     if (totalPaid > total) {
         const change = (totalPaid - total).toFixed(2);
         $('.info-change-sale').text(`$ ${change}`);
