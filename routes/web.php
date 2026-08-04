@@ -13,6 +13,8 @@ use App\Http\Controllers\TempPurchaseController;
 use App\Http\Controllers\TempSaleController;
 use App\Http\Controllers\TempSaleDetailController;
 use App\Http\Controllers\BranchesController;
+use App\Http\Controllers\SalesDetailsController;
+use App\Http\Controllers\Sales\SaleReportController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\UserController;
@@ -31,6 +33,7 @@ Route::get('/departments/data', [DepartmentsController::class, 'getDepartments']
 Route::get('/permission/data', [PermissionController::class, 'getPermission'])->name('permission.data');
 Route::get('/temp_purchases_detail/data', [TempPurchaseDetailController::class, 'getProductDetails'])->name('temp_purchases_detail.data');
 Route::get('/temp_sales_detail/data', [TempSaleDetailController::class, 'getProductDetails'])->name('temp_sales_detail.data');
+Route::get('/sales/data', [SalesDetailsController::class, 'getSalesDetails'])->name('sales.data');
 Route::get('/temp_purchases_detail/getPendingPurchases', [TempPurchaseDetailController::class, 'getPendingPurchases']);
 
 // RUTAS DE PRODUCTOS (ANTES DEL RESOURCE)
@@ -90,6 +93,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_purchases_detail/autoCompleteSuppliers/{query}', [TempPurchaseDetailController::class, 'autoCompleteSuppliers']);
     Route::get('/temp_purchases_detail/autoCompleteProducts/{query}', [TempPurchaseDetailController::class, 'autoCompleteProducts']);
 
+    // RUTAS DE VENTAS
     Route::resource('temp_sale', TempSaleController::class)->only(['index'])->names('temp_sale');
     Route::post('/temp_sales_detail/getSaleOnHold', [TempSaleDetailController::class, 'getSaleOnHold']);
     Route::get('/temp_sales_detail/getPendingSales', [TempSaleDetailController::class, 'getPendingSales']);
@@ -111,6 +115,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/temp_sales_detail/checkProductPrice/{product_id}', [TempSaleDetailController::class, 'checkProductPrice']);
     Route::post('/temp_sales_detail/updatePrice', [TempSaleDetailController::class, 'updatePrice']);
     Route::get('sales/{saleId}/receipt/{voucherId}/preview', [TempSaleDetailController::class, 'preview']);
+    Route::resource('sales', SalesDetailsController::class)->names('sales');
+    Route::get('/sales/{sale}/details', [SalesDetailsController::class, 'getSaleDetails'])->name('sales.get-details');
+    Route::put('/sales/{sale}/annul', [SalesDetailsController::class, 'annul'])->name('sales.annul');
+    Route::put('/sales/{sale}/return-product/{productId}', [SalesDetailsController::class, 'returnProduct'])->name('sales.return-product');
+
+    Route::get('/reports/sales/export-pdf', [SaleReportController::class, 'exportPdf'])->name('reports.sales.export-pdf');
+
+    // RUTAS DE SUCURSALES
     Route::get('/branches/getBrachDefaultData', [BranchesController::class, 'getBrachDefaultData']);
     Route::post('/branches/{id}/upload-logo', [BranchesController::class, 'uploadLogo']);
     Route::resource('branches', BranchesController::class)->names('branches');
