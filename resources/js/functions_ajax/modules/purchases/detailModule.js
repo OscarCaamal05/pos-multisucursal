@@ -57,7 +57,6 @@ export function initDetailModule() {
         bindDeleteEvents();
         bindDetailEvents();
         _listenProductEvents();
-        console.log('✅ Módulo de detalle de compra inicializado');
     } catch (error) {
         console.error('❌ Error al inicializar módulo de detalle:', error);
     }
@@ -394,7 +393,6 @@ export function loadTotals(tempPurchaseId) {
  */
 export function applyDiscount(discountApplied) {
     const tempId = $(DETAIL_CONFIG.selectors.tempPurchaseId).val();
-
     $.ajax({
         url: DETAIL_CONFIG.api.discount,
         method: 'POST',
@@ -501,7 +499,7 @@ export function cleanInputPurchase() {
     // Selects del documento
     $('#document-type').val(2).trigger('change');
     $('#voucher-type').val(1).trigger('change');
-    $('#invoice_number').val('');
+    $('#invoice-number').val('');
 
     // Limpiar localStorage del proveedor
     localStorage.removeItem('proveedorSeleccionado');

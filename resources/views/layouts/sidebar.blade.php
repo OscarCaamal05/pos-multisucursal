@@ -51,7 +51,7 @@
                                 <a href="{{ route('temp_sale.index') }}" class="nav-link">Realizar Venta</a>
                             </li>
                             <li class="nav-item">
-                                <a href="layouts-detached" class="nav-link">Reportes Ventas</a>
+                                <a href="{{ route('sales.index') }}" class="nav-link">Reportes Ventas</a>
                             </li>
                         </ul>
                     </div>

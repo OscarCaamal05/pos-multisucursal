@@ -852,13 +852,10 @@ export function cleanInputSale() {
     $('#invoice_number').val('');
 
     // Restablecer fecha al día actual
-    const dateEl = $('input[data-provider="flatpickr"]')[0];
-    if (dateEl && dateEl._flatpickr) {
-        const today = new Date();
-        const current = dateEl._flatpickr.selectedDates[0];
-        if (!current || current.toDateString() !== today.toDateString()) {
-            dateEl._flatpickr.setDate(today, true);
-        }
+    const dateEl = document.getElementById('date-operation');
+    const fp = dateEl?._flatpickr;
+    if (fp && fp.config) {
+        fp.setDate(new Date(), true);
     }
 }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Purchases;
 
 use App\Models\purchases;
 use App\Models\purchases_detail;
@@ -9,21 +9,23 @@ use App\Models\TempPurchaseDetail;
 use App\Models\Supplier;
 use App\Models\Product;
 use App\Http\Controllers\TempPurchaseController;
+use App\Services\InventoryService;
+use App\Services\TotalsCalculatorService;
 use Illuminate\Support\Facades\DB;
 
-class PurchaseProcessingService
+class PurchasesProcessingService
 {
     public function __construct(
         private TotalsCalculatorService $totalsService,
         private InventoryService $inventoryService,
     ) {}
 
-    public function process(array $data, string $method, int $tempId, int $userId, string $date): array
+    public function process(array $data, string $method, int $tempId, string $date): array
     {
         DB::beginTransaction();
 
         $tempPurchase = TempPurchase::where('id_temp_purchase', $tempId)
-            ->where('user_id', $userId)
+            ->where('user_id', auth()->id())
             ->where('status', 'abierta')
             ->first();
 
@@ -37,18 +39,19 @@ class PurchaseProcessingService
             throw new \Exception('No hay productos registrados en esta compra.');
         }
 
-        $totals = $this->totalsService->calculate($tempDetails, $tempPurchase->discount ?? 0);
+        $totals = $this->totalsService->calculateTotals($tempDetails, $tempPurchase->discount ?? 0);
 
-        $amountPaid = $this->resolveAmountPaid($method, $data);
+        // Obtiene el branch_id de la tabla branches basado en el id vinculado con el usuario
+        $branchId = auth()->user()->defaultBranchId() ?? 1; // Cambiar a 1 si no se encuentra un branch_id
 
         $purchase = purchases::create([
-            'user_id'        => $userId,
+            'user_id'        => auth()->id(),
             'supplier_id'    => $data['id_supplier'],
             'voucher_id'     => $data['id_voucher'],
             'document_id'    => $data['id_document'],
             'purchase_date'  => $date,
             'invoice_number' => $data['invoice_number'],
-            'amount_paid'    => $amountPaid,
+            'amount_paid'    => $data['amount_paid'] ?? 0,
             'subtotal'       => $totals['total_siva'],
             'discount'       => $totals['discount'],
             'tax'            => $totals['tax'],
@@ -58,10 +61,19 @@ class PurchaseProcessingService
             'notes'          => $data['notes'] ?? null,
         ]);
 
-        $this->registerPayments($purchase->id, $method, $data, $totals);
+        $this->registerPayment($purchase->id, $method, $data, $data['totals'] ?? $totals);
 
         foreach ($tempDetails as $tempDetail) {
-            $quantity = (float) $tempDetail->quantity * (float) $tempDetail->factor;
+
+            // Calcula la cantidad total considerando el factor de conversión para actualizar el stock correctamente
+            $inventoryQuantity = (float) $tempDetail->quantity * (float) $tempDetail->factor;
+
+            $product = Product::find($tempDetail->product_id);
+
+            if (!$product) {
+                DB::rollBack();
+                throw new \Exception('Producto no encontrado: ' . $tempDetail->product_id);
+            }
 
             purchases_detail::create([
                 'purchase_id'  => $purchase->id,
@@ -71,10 +83,11 @@ class PurchaseProcessingService
                 'quantity'     => (float) $tempDetail->quantity,
                 'unit_cost'    => (float) $tempDetail->purchase_price,
                 'discount'     => (float) $tempDetail->discount,
-                'subtotal'     => (float) $tempDetail->quantity * (float) $tempDetail->purchase_price,
+                'subtotal'     => (float) ($tempDetail->total ?? 0) - (float) ($tempDetail->discount ?? 0),
                 'total'        => (float) $tempDetail->total,
             ]);
 
+            // Actualizando los precios del producto solo si los nuevos precios son mayores a cero, de lo contrario se mantiene el precio actual
             Product::where('id', $tempDetail->product_id)->update([
                 'sale_price_1'      => $tempDetail->new_sale_price_1 > 0 ? $tempDetail->new_sale_price_1 : DB::raw('sale_price_1'),
                 'sale_price_2'      => $tempDetail->new_sale_price_2 > 0 ? $tempDetail->new_sale_price_2 : DB::raw('sale_price_2'),
@@ -84,7 +97,11 @@ class PurchaseProcessingService
                 'conversion_factor' => $tempDetail->factor > 0 ? $tempDetail->factor : DB::raw('conversion_factor'),
             ]);
 
-            $this->inventoryService->updateProductStock($tempDetail->product_id, $quantity);
+            $this->inventoryService->updateProductStock(
+                $tempDetail->product_id,
+                $inventoryQuantity,
+                'add'
+            );
 
             $this->inventoryService->registerInventoryMovement(
                 $tempDetail->product_id,
@@ -94,6 +111,8 @@ class PurchaseProcessingService
                 $tempDetail->total,
                 'entrada',
                 'compra',
+                $branchId,
+                $purchase->id
             );
         }
 
@@ -110,16 +129,7 @@ class PurchaseProcessingService
         ];
     }
 
-    private function resolveAmountPaid(string $method, array $data): float
-    {
-        return match ($method) {
-            'payment-box'    => (float) ($data['amount_paid'] ?? 0),
-            'payment-credit' => (float) ($data['credit_details']['current_credit'] ?? 0),
-            default          => 0.0,
-        };
-    }
-
-    private function registerPayments(int $purchaseId, string $method, array $data, array $totals): void
+    private function registerPayment(int $purchaseId, string $method, array $data, array $totals): void
     {
         if ($method === 'payment-box') {
             foreach ($data['payment_details'] as $type => $amount) {
@@ -155,10 +165,10 @@ class PurchaseProcessingService
 
             $supplier = Supplier::find($data['id_supplier']);
             if ($supplier) {
-                $supplier->credit_balance    += $totals['total'];
+                $supplier->credit_balance    += $creditAmount;
                 $supplier->credit_due_date    = $dueDate;
                 $supplier->payment_days_granted = $creditDays;
-                $supplier->credit_available   = max(0, $supplier->credit_limit_granted - $totals['total']);
+                $supplier->credit_available   -= $creditAmount;
                 $supplier->save();
             }
         }

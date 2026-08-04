@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Purchase;
+use App\Models\Sale;
 
-class payment_method extends Model
+class PaymentMethods extends Model
 {
+    protected $table = 'payment_methods';
     protected $fillable = [
         'transaction_id',
         'transaction_type',
@@ -16,12 +19,12 @@ class payment_method extends Model
 
     // Relación polimórfica según la transacción
     public function purchase() {
-        return $this->belongsTo(purchases::class, 'transaction_id', 'id')
+        return $this->belongsTo(Purchase::class, 'transaction_id', 'id')
             ->where('transaction_type', 'purchase');
     }
 
     public function sale() {
-        return $this->belongsTo(sales::class, 'transaction_id', 'id')
+        return $this->belongsTo(Sale::class, 'transaction_id', 'id')
             ->where('transaction_type', 'sale');
     }
 }
