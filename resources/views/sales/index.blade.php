@@ -152,6 +152,10 @@ Reportes de ventas
                                                         <th scope="row">Total</th>
                                                         <th class=""><span id="total-amount">0.00</span></th>
                                                     </tr>
+                                                    <tr class="fs-14 text-danger" id="total-returned-row" style="display:none;">
+                                                        <th scope="row">Devuelto</th>
+                                                        <th>-$<span id="total-returned">0.00</span></th>
+                                                    </tr>
                                                 </tbody>
                                             </table>
                                             <!--end table-->

@@ -337,6 +337,11 @@
             background: #2d2d4e;
         }
 
+        .returned-row td {
+            text-decoration: line-through;
+            color: #999;
+        }
+
         /* ===== IMPRESIÓN ===== */
         @media print {
             @page {
@@ -462,25 +467,18 @@
             </thead>
             <tbody>
                 @foreach ($details as $index => $detail)
-                <tr>
+                <tr class="{{ $detail->is_returned ? 'returned-row' : '' }}">
                     <td>{{ $index + 1 }}</td>
-                    <td>
-                        {{ $detail->product_code ?? '—' }}
-                    </td>
+                    <td>{{ $detail->product_code ?? '—' }}</td>
                     <td>
                         <strong>{{ $detail->product_name }}</strong>
-                    </td>
-                    <td class="text-center">
-                        {{ rtrim(rtrim(number_format($detail->quantity, 2), '0'), '.') }}
-                    </td>
-                    <td class="text-right">${{ number_format($detail->unit_price, 2) }}</td>
-                    <td class="text-right">
-                        @if ($detail->discount > 0)
-                        -${{ number_format($detail->discount, 2) }}
-                        @else
-                        —
+                        @if ($detail->is_returned)
+                        <br><span style="font-size:8px; color:#c0392b; text-decoration:none;">DEVUELTO</span>
                         @endif
                     </td>
+                    <td class="text-center">{{ rtrim(rtrim(number_format($detail->quantity, 2), '0'), '.') }}</td>
+                    <td class="text-right">${{ number_format($detail->unit_price, 2) }}</td>
+                    <td class="text-right">@if ($detail->discount > 0)-${{ number_format($detail->discount, 2) }}@else—@endif</td>
                     <td class="text-right">${{ number_format($detail->tax, 2) }}</td>
                     <td class="text-right">${{ number_format($detail->total, 2) }}</td>
                 </tr>
@@ -546,6 +544,17 @@
                         <td>TOTAL</td>
                         <td>${{ number_format($sale->total_amount, 2) }}</td>
                     </tr>
+
+                    @if ($totalReturned > 0)
+                    <tr>
+                        <td class="label-col" style="color:#c0392b;">Devuelto</td>
+                        <td style="color:#c0392b;">-${{ number_format($totalReturned, 2) }}</td>
+                    </tr>
+                    <tr class="total-final">
+                        <td>NETO A PAGAR</td>
+                        <td>${{ number_format($netTotal, 2) }}</td>
+                    </tr>
+                    @endif
                 </table>
             </div>
 

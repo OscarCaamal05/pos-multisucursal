@@ -83,8 +83,7 @@ class SaleAdjustmentService
 
         $detail->returned_quantity += $quantity;
 
-        // Validar si la cantidad devuelta es igual a la cantidad vendida
-        if ($detail->returned_quantity >= $detail->quantity) {
+        if (round($detail->returned_quantity, 2) >= round($detail->quantity, 2)) {
             $detail->is_returned = true;
         }
 

@@ -200,6 +200,12 @@
             border-radius: 4px;
         }
 
+        .returned-row .product-name,
+        .returned-row .product-detail {
+            text-decoration: line-through;
+            color: #999;
+        }
+
         .print-action button:hover {
             background: #eee;
         }
@@ -277,7 +283,7 @@
             </thead>
             <tbody>
                 @foreach ($details as $detail)
-                <tr class="product-row">
+                <tr class="product-row {{ $detail->is_returned ? 'returned-row' : '' }}">
                     <td>{{ rtrim(rtrim(number_format($detail->quantity, 2), '0'), '.') }}</td>
                     <td>
                         <div class="product-name">{{ $detail->product_name }}</div>
@@ -285,6 +291,9 @@
                             P.U. ${{ number_format($detail->unit_price, 2) }}
                             @if ($detail->discount > 0)
                             &nbsp;|&nbsp;Desc: ${{ number_format($detail->discount, 2) }}
+                            @endif
+                            @if ($detail->is_returned)
+                            &nbsp;|&nbsp;<strong>DEVUELTO</strong>
                             @endif
                         </div>
                     </td>
@@ -322,6 +331,17 @@
                 <span>${{ number_format($sale->total_amount, 2) }}</span>
             </div>
         </div>
+
+        @if ($totalReturned > 0)
+        <div class="row" style="color:#c0392b;">
+            <span>Devuelto:</span>
+            <span>-${{ number_format($totalReturned, 2) }}</span>
+        </div>
+        <div class="row total-final">
+            <span>NETO A PAGAR:</span>
+            <span>${{ number_format($netTotal, 2) }}</span>
+        </div>
+        @endif
 
         <div class="divider"></div>
 
