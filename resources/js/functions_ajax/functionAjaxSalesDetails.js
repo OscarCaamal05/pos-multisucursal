@@ -228,7 +228,6 @@ function bindEvents() {
         const data = salesDetailsTable.row($(this).closest('tr')).data();
         const saleId = selectedRowDetail ? selectedRowDetail.sale_id : data.id;
         selectedRowDetail = data ? data : null;
-        console.log(selectedRowDetail);
         $(DETAIL_CONFIG.selectors.saleId).val(saleId);
         showSaleDetails(saleId);
     });
@@ -267,7 +266,7 @@ function bindEvents() {
     $(DETAIL_CONFIG.selectors.tableDetails).on('click', '.btn-return-product', function () {
         const data = detailsTable.row($(this).closest('tr')).data();
         $('.product-name-label').text(data.product_name);
-        $('.return-quantity').val(data.quantity);
+        $('.return-quantity').val(data.remaining_quantity).attr('max', data.remaining_quantity);
         $(DETAIL_CONFIG.selectors.returnProductId).val(data.product_id);
         $(DETAIL_CONFIG.selectors.modalReturnProduct).modal('show');
     });
@@ -310,7 +309,6 @@ function bindEvents() {
             'printReceipt',
             'width=600,height=600,left=200,top=80,toolbar=no,menubar=no,scrollbars=yes,resizable=yes'
         );
-        console.log(selectedRowDetail.id, selectedRowDetail.voucher_id);
         printWindow.location.href = `/sales/${selectedRowDetail.id}/receipt/${selectedRowDetail.voucher_id}/preview`;
     });
 
@@ -436,7 +434,18 @@ function showSaleDetails(saleId) {
             $('#invoice-time').text(dateTime.time);
             $('#payment-status').html(formatStatus(response.sale.status));
             $('#total-amount').text(`$${response.sale.total_amount}`);
+            const totalReturned = Array.isArray(response.sale.payments)
+                ? Math.abs(response.sale.payments
+                    .filter(p => p.payment_method === 'devolucion')
+                    .reduce((sum, p) => sum + parseFloat(p.amount), 0))
+                : 0;
 
+            if (totalReturned > 0) {
+                $('#total-returned').text(totalReturned.toFixed(2));
+                $('#total-returned-row').show();
+            } else {
+                $('#total-returned-row').hide();
+            }
             // Cargo los detalles de pago
             if (response.sale.payments.payment_method === 'credito') {
                 const paymentDetails = `
@@ -522,10 +531,10 @@ function loadProductsDetailsTable(detailsData, saleStatus) {
             },
             {
                 data: null,
-                name: 'quantity',
+                name: 'remaining_quantity',
                 className: 'text-center fs-6',
                 render: (data, type, row) =>
-                    `<h5 class="text-body fs-14 ${getRowClass(row)}">${data.quantity}</h5>`
+                    `<h5 class="text-body fs-14 ${getRowClass(row)}">${data.remaining_quantity}</h5>`
             },
             {
                 data: null,
@@ -623,7 +632,6 @@ function returnProduct(saleId, productId, quantity = 1) {
         },
         dataType: 'json',
         success: (response) => {
-            console.log('id de la venta modificada', response.detail.id, 'detalles completos', response.detail);
             if (response.success) {
                 showAlert('success', 'Éxito', response.message);
                 salesDetailsTable.ajax.reload(null, false);

@@ -24,6 +24,11 @@ class SaleDetail extends Model
         'total',
     ];
 
+    protected $casts = [
+        'returned_quantity' => 'float',
+        'is_returned'        => 'boolean',
+    ];
+
     // Relación con Sale
     public function sale(): BelongsTo
     {
@@ -34,5 +39,12 @@ class SaleDetail extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    protected $appends = ['remaining_quantity'];
+
+    public function getRemainingQuantityAttribute(): float
+    {
+        return max(0, $this->quantity - $this->returned_quantity);
     }
 }

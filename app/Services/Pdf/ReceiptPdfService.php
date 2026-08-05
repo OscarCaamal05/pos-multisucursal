@@ -61,30 +61,30 @@ class ReceiptPdfService
     private function getSaleData(int $saleId): array
     {
         $sale = Sale::with(['customer', 'details.product', 'user', 'branch'])->findOrFail($saleId);
-
-        // Obtener los datos de la sucursal asociada a la venta
         $branch = branches::find($sale->branch_id);
-
-        // Agregar los métodos de pago
+ 
         $payments = DB::table('payment_methods')
             ->where('transaction_id', $saleId)
             ->where('transaction_type', 'sale')
             ->get();
 
+        $totalReturned = abs($payments->where('payment_method', 'devolucion')->sum('amount'));
 
         return [
-            'sale'      => $sale,
-            'customer'  => $sale->customer,
-            'details'   => $sale->details,
-            'user'      => $sale->user,
-            'payments'  => $payments, // ✅ Necesario para la sección de pagos
-            'fecha'     => now()->format('d/m/Y H:i:s'),
-            'business' => (object) [
+            'sale'          => $sale,
+            'customer'      => $sale->customer,
+            'details'       => $sale->details,
+            'user'          => $sale->user,
+            'payments'      => $payments,
+            'fecha'         => now()->format('d/m/Y H:i:s'),
+            'totalReturned' => $totalReturned,
+            'netTotal'      => $sale->total_amount - $totalReturned,
+            'business'      => (object) [
                 'name'    => $branch->name    ?? 'Tu negocio',
                 'address' => $branch->address ?? 'Tu dirección aquí',
                 'phone'   => $branch->phone   ?? 'Tu teléfono aquí',
                 'tax_id'  => $branch->tax_id  ?? 'Tu RFC aquí',
-                'logo' => $this->resolveLogoBase64($branch->logo_path),
+                'logo'    => $this->resolveLogoBase64($branch->logo_path),
             ],
         ];
     }
