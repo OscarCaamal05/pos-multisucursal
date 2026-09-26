@@ -468,7 +468,7 @@
                         <div class="col-md-6">
                             <div class="d-flex ">
                                 <select class="form-select" size="3" multiple aria-label="multiple select example" id="select-product-price">
-                                    
+
                                 </select>
                             </div>
                         </div>

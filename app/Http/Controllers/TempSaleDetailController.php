@@ -118,7 +118,12 @@ class TempSaleDetailController extends Controller
 
                 return response()->json(array_merge([
                     'status' => 'update',
-                    'temp_sale_id' => $tempSaleId
+                    'temp_sale_id' => $tempSaleId,
+                    'data_product' => [
+                        'id_temp_sale_detail' => $productInTempSale->id_temp_sale_detail,
+                        'product_name' => $productInTempSale->product_name,
+                        'unit_name' => $productInTempSale->unit_name,
+                    ]
                 ], $totals));
             }
 

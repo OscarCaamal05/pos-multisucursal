@@ -69,6 +69,7 @@ export function initDetailModule() {
         bindDetailEvents();
         bindKeyBoardShortcuts();
         bindKeyBoardEnter();
+        bindKeyBoardArrowNavigation();
         _listenProductEvents();
         bindCalculationEvents();
         syncReceiptFields();
@@ -508,6 +509,53 @@ function bindKeyBoardEnter() {
             $('#btn-save-product-price').trigger('click');
         }
     });
+/**
+ * Permite moverse entre las filas de la tabla con las flechas ↑/↓,
+ * manteniendo sincronizados el resaltado visual y selectedRowDetail.
+ */
+function bindKeyBoardArrowNavigation() {
+    $(document).on('keydown', function (e) {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+
+        // No interferir si el foco está en un campo de texto o hay un modal abierto
+        const activeTag = document.activeElement?.tagName;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+        if ($('.modal.show').length) return;
+
+        e.preventDefault();
+        navigateSelectedRow(e.key === 'ArrowDown' ? 1 : -1);
+    });
+}
+
+/**
+ * Mueve la selección a la fila anterior/siguiente según step (1 = abajo, -1 = arriba).
+ */
+function navigateSelectedRow(step) {
+    if (!tableDetails) return;
+
+    const nodes = tableDetails.rows({ order: 'current' }).nodes();
+    if (!nodes.length) return;
+
+    let currentIndex = -1;
+    nodes.each(function (node, i) {
+        if ($(node).hasClass('selected')) currentIndex = i;
+    });
+
+    // Si no hay fila seleccionada, arranca desde la primera/última según la dirección
+    let nextIndex = currentIndex === -1
+        ? (step > 0 ? 0 : nodes.length - 1)
+        : currentIndex + step;
+
+    nextIndex = Math.max(0, Math.min(nextIndex, nodes.length - 1));
+
+    const nextNode = nodes[nextIndex];
+    if (!nextNode) return;
+
+    $(`${DETAIL_CONFIG.selectors.table} tbody tr.selected`).removeClass('selected table-light');
+    $(nextNode).addClass('selected table-light');
+    selectedRowDetail = tableDetails.row(nextNode).data();
+
+    nextNode.scrollIntoView({ block: 'nearest' });
 }
 
 // =========================================
@@ -672,7 +720,6 @@ function updateProductPrice(detailId, newPrice) {
             }
 
             $('#modal-edit-product-price').modal('hide');
-            showAlert('success', 'Éxito', 'Precio actualizado correctamente.');
 
             // ✅ Notificar al módulo de detalle para recargar tabla y totales
             $(document).trigger('sale:productSaved', [response]);
@@ -906,26 +953,43 @@ function _listenProductEvents() {
             showTotals(totals);
         }
 
+        const newDetailId = totals?.data_product?.id_temp_sale_detail ?? null;
+
         // 2. Recargar la tabla temporal sin resetear la paginación
         if (tableDetails) {
-            tableDetails.ajax.reload(null, false);
+            tableDetails.ajax.reload(function () {
+                // 3. Resaltar y seleccionar la fila del producto recién agregado
+                // para poder usar de inmediato los atajos de teclado (F1-F4)
+                if (newDetailId) {
+                    selectRowByDetailId(newDetailId);
+
+                    // 4. Si el producto es de venta por KG, abrir el modal de cantidad automáticamente
+                    if (selectedRowDetail?.unit_name === 'KG') {
+                        openEditQuantityModal(selectedRowDetail);
+                    }
+                }
+            }, false);
         }
 
-        // 3. Limpiar el campo de búsqueda de productos y poner foco para agilizar la venta
+        // 5. Limpiar el campo de búsqueda de productos y poner foco para agilizar la venta
         $('#auto_complete_product').val('').trigger('focus');
+    });
+}
 
-        // 4. Limpiar la fila seleccionada para evitar errores al editar
-        selectedRowDetail = null;
+/**
+ * Resalta la fila correspondiente al id_temp_sale_detail dado y la deja como fila
+ * seleccionada (selectedRowDetail), habilitando los atajos de teclado sobre ella.
+ *
+ * @param {number} idTempSaleDetail
+ */
+function selectRowByDetailId(idTempSaleDetail) {
+    $(`${DETAIL_CONFIG.selectors.table} tbody tr.selected`).removeClass('selected table-light');
 
-        // 5. VALIDAR si el producto es de venta por KG
-        if (totals?.data_product?.unit_name === 'KG') {
-            selectedRowDetail = {
-                id_temp_sale_detail: totals.data_product.id_temp_sale_detail,
-                temp_sale_id: totals.temp_sale_id,
-                product_name: totals.data_product.product_name,
-                quantity: totals.data_product.quantity ?? 1
-            };
-            openEditQuantityModal(selectedRowDetail);
+    tableDetails.rows().every(function () {
+        const data = this.data();
+        if (Number(data.id_temp_sale_detail) === Number(idTempSaleDetail)) {
+            $(this.node()).addClass('selected table-light');
+            selectedRowDetail = data;
         }
     });
 }

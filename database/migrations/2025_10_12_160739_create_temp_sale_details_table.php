@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('temp_sale_id');
             $table->integer('product_id')->nullable();
             $table->string('product_name', 50);
-            $table->string('barcode', 50);
+            $table->string('barcode', 50)->nullable();
             $table->decimal('price', 10, 2);
             $table->decimal('factor', 10, 2);
             $table->decimal('quantity', 10, 2);
